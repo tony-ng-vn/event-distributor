@@ -1,0 +1,66 @@
+// Database schema for Event Radar.
+//
+// User     — people (synced from Clerk on sign-in)
+// Event    — one row per Luma link added to the shared feed
+// Accept   — join table: "this user clicked Accept on this event"
+//
+// Local dev: SQLite (DATABASE_URL=file:./dev.db)
+// Production: switch provider to postgresql — see docs/deploy/production.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Signed-in user (Clerk id stored in clerkId). google* fields are legacy calendar sync.
+model User {
+  id                 String   @id @default(cuid())
+  clerkId            String?  @unique
+  email              String   @unique
+  name               String?
+  image              String?
+  googleRefreshToken String?
+  googleAccessToken  String?
+  googleTokenExpiry  DateTime?
+  createdAt          DateTime @default(now())
+  accepts            Accept[]
+  eventsAdded        Event[]  @relation("AddedBy")
+}
+
+// A Luma event ingested into the shared feed (metadata from lu.ma HTML).
+model Event {
+  id            String   @id @default(cuid())
+  lumaUrl       String   @unique
+  title         String
+  description   String   @default("")
+  coverImageUrl String?
+  startAt       DateTime
+  endAt         DateTime
+  location      String   @default("")
+  isOnline      Boolean  @default(false)
+  meetingUrl    String?
+  hostName      String?
+  hostAvatarUrl String?
+  addedByUserId String?
+  addedBy       User?    @relation("AddedBy", fields: [addedByUserId], references: [id])
+  createdAt     DateTime @default(now())
+  accepts       Accept[]
+}
+
+// In-app "I'm going" — shows user on guest list; not the same as Luma RSVP.
+model Accept {
+  id                    String   @id @default(cuid())
+  eventId               String
+  userId                String
+  googleCalendarEventId String?
+  calendarSynced        Boolean  @default(false)
+  acceptedAt            DateTime @default(now())
+  event                 Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
