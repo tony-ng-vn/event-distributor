@@ -63,6 +63,8 @@ npx @insforge/cli secrets get ANON_KEY
 4. Build command: `npm run build`
 5. Deploy. Run `npm run db:migrate` against production if new migrations were added.
 
+Before pushing, run **`npm run check:deploy`** locally — it runs lint, typecheck, unit tests, and a production build (same gates as GitHub Actions / Vercel). Failures are cached in `.check-in/latest.json`.
+
 ## 4. Share with your friend
 
 Send them the Vercel URL. They should:

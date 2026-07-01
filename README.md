@@ -45,11 +45,20 @@ See **[docs/deploy/production.md](docs/deploy/production.md)** — Clerk + InsFo
 ## Scripts
 
 ```bash
-npm run dev          # Start dev server
-npm run build        # Production build
-npm test             # Integration tests (Vitest)
-npm run test:e2e     # E2E tests (Playwright)
+npm run dev            # Start dev server
+npm run check          # Fast local check-in (lint + typecheck + unit tests)
+npm run check:deploy   # Pre-push gate — adds production build (matches Vercel)
+npm run check:full     # Deploy gate + InsForge integration tests
+npm run build          # Production build
+npm test               # All Vitest tests
+npm run test:unit      # Unit tests only
+npm run test:integration  # InsForge integration tests
+npm run test:e2e       # E2E tests (Playwright)
 ```
+
+Failed check-ins cache output under `.check-in/latest.json` and `.check-in/latest.log` so you can inspect errors without re-running everything.
+
+**Before pushing:** run `npm run check:deploy` to catch TypeScript and build failures locally (the same class of error that broke the Vercel deploy).
 
 ## Docs
 
