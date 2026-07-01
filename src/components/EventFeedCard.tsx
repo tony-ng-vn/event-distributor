@@ -8,6 +8,7 @@
 
 import { formatCardDateTime } from "@/lib/dates";
 import { AttendeeStack } from "@/components/AttendeeStack";
+import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { LumaEventLink } from "@/components/LumaEventLink";
 import type { FeedEvent } from "@/types/feed";
 
@@ -118,16 +119,10 @@ export function EventFeedCard({
 
       <div className="px-4 pb-4">
         {accepted ? (
-          <div
-            className="rounded-xl border border-border bg-background-subtle px-4 py-3 text-sm"
-            data-testid="accepted-state"
-          >
-            <p className="font-semibold text-foreground">You&apos;re in</p>
-            <p className="mt-0.5 text-muted">Friends can see you&apos;re interested</p>
-          </div>
+          <EventResponseStatus variant="accepted" />
         ) : passed && showPassedActions ? (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-muted">You passed on this</p>
+            <EventResponseStatus variant="passed" />
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -149,7 +144,7 @@ export function EventFeedCard({
             </div>
           </div>
         ) : passed ? (
-          <p className="text-sm text-muted">Passed</p>
+          <EventResponseStatus variant="passed" />
         ) : (
           <div className="grid grid-cols-2 gap-2">
             <button

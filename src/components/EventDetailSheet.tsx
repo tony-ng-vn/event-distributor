@@ -6,6 +6,7 @@
 
 import { formatDateTime } from "@/lib/dates";
 import { AttendeeStack } from "@/components/AttendeeStack";
+import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { LumaEventLink } from "@/components/LumaEventLink";
 import type { FeedEvent } from "@/types/feed";
 
@@ -88,13 +89,10 @@ export function EventDetailSheet({
           />
 
           {accepted ? (
-            <div className="rounded-xl border border-border bg-background-subtle px-4 py-3 text-sm">
-              <p className="font-semibold text-foreground">You&apos;re in</p>
-              <p className="mt-0.5 text-muted">Friends can see you&apos;re interested</p>
-            </div>
+            <EventResponseStatus variant="accepted" />
           ) : passed && showPassedActions ? (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted">You passed on this</p>
+              <EventResponseStatus variant="passed" />
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -109,12 +107,24 @@ export function EventDetailSheet({
                 </button>
               </div>
             </div>
+          ) : passed ? (
+            <EventResponseStatus variant="passed" />
           ) : (
             <div className="flex gap-2">
-              <button type="button" onClick={onPass} className="btn-pass flex-1 py-3">
+              <button
+                type="button"
+                onClick={onPass}
+                className="btn-pass flex-1 py-3"
+                data-testid="pass-button"
+              >
                 Pass
               </button>
-              <button type="button" onClick={onAccept} className="btn-accept flex-1 py-3">
+              <button
+                type="button"
+                onClick={onAccept}
+                className="btn-accept flex-1 py-3"
+                data-testid="accept-button"
+              >
                 Accept
               </button>
             </div>

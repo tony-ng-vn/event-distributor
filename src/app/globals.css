@@ -26,6 +26,14 @@
   --hover-decline-bg: #fef2f2;
   --hover-decline-border: #fecaca;
   --hover-decline-text: #b91c1c;
+  --status-accept-bg: #ecfdf5;
+  --status-accept-border: #86efac;
+  --status-accept-text: #14532d;
+  --status-accept-icon-bg: #bbf7d0;
+  --status-pass-bg: #fef2f2;
+  --status-pass-border: #fca5a5;
+  --status-pass-text: #991b1b;
+  --status-pass-icon-bg: #fecaca;
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-duration: 220ms;
 }
@@ -149,6 +157,60 @@ body {
 
   .going-strip {
     @apply mx-4 mb-4 rounded-xl border border-border bg-background-subtle px-3.5 py-3;
+  }
+
+  .status-badge {
+    @apply flex items-start gap-3 rounded-xl border px-4 py-3 text-sm;
+  }
+
+  .status-badge-accept {
+    background: var(--status-accept-bg);
+    border-color: var(--status-accept-border);
+  }
+
+  .status-badge-pass {
+    background: var(--status-pass-bg);
+    border-color: var(--status-pass-border);
+  }
+
+  .status-badge-icon {
+    @apply mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-bold leading-none;
+  }
+
+  .status-badge-accept .status-badge-icon {
+    background: var(--status-accept-icon-bg);
+    color: var(--status-accept-text);
+  }
+
+  .status-badge-pass .status-badge-icon {
+    background: var(--status-pass-icon-bg);
+    color: var(--status-pass-text);
+  }
+
+  .status-badge-title {
+    @apply font-semibold leading-snug;
+  }
+
+  .status-badge-accept .status-badge-title {
+    color: var(--status-accept-text);
+  }
+
+  .status-badge-pass .status-badge-title {
+    color: var(--status-pass-text);
+  }
+
+  .status-badge-subtitle {
+    @apply mt-0.5 text-xs leading-snug;
+  }
+
+  .status-badge-accept .status-badge-subtitle {
+    color: var(--status-accept-text);
+    opacity: 0.85;
+  }
+
+  .status-badge-pass .status-badge-subtitle {
+    color: var(--status-pass-text);
+    opacity: 0.85;
   }
 
   .feed-summary {
