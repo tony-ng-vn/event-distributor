@@ -562,7 +562,7 @@ export function FeedApp() {
             >
               Add Luma link
             </button>
-            <AuthButton />
+            <AuthButton onNameUpdated={() => void syncEventsFromServer()} />
           </div>
         </div>
         <nav className="mx-auto hidden max-w-6xl gap-1 px-4 pb-0 lg:flex">

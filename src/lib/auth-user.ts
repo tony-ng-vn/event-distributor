@@ -137,13 +137,18 @@ export async function getViewerProfile(userId: string): Promise<ViewerProfile> {
   };
 }
 
+export function normalizeDisplayName(rawName: string): string {
+  const name = rawName.trim();
+  if (!name) throw new Error("Name cannot be empty");
+  if (name.length > 80) throw new Error("Name is too long");
+  return name;
+}
+
 export async function updateViewerDisplayName(
   userId: string,
   rawName: string,
 ): Promise<ViewerProfile> {
-  const name = rawName.trim();
-  if (!name) throw new Error("Name cannot be empty");
-  if (name.length > 80) throw new Error("Name is too long");
+  const name = normalizeDisplayName(rawName);
 
   const db = getInsforgeAdmin();
   const { data, error } = await db.database

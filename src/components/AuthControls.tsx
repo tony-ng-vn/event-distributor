@@ -6,12 +6,14 @@
  */
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import {
   Show,
   SignInButton,
   SignUpButton,
   UserButton,
 } from "@clerk/nextjs";
+import { EditDisplayNameModal } from "@/components/EditDisplayNameModal";
 
 /** Full-page card shown when the feed is for signed-in friends only. */
 export function SignInGate() {
@@ -111,7 +113,25 @@ export function SignInPromptModal({
 }
 
 /** Header auth control — sign-in/sign-up when logged out, profile when signed in. */
-export function AuthButton() {
+export function AuthButton({ onNameUpdated }: { onNameUpdated?: () => void }) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+
+  const loadProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/me");
+      if (!res.ok) return;
+      const data = (await res.json()) as { profile?: { name?: string | null } };
+      setDisplayName(data.profile?.name?.trim() ?? "");
+    } catch {
+      // Ignore — user can still open modal and retry save
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
+
   return (
     <div className="flex items-center gap-2">
       <Show when="signed-out">
@@ -127,8 +147,29 @@ export function AuthButton() {
         </SignUpButton>
       </Show>
       <Show when="signed-in">
+        <button
+          type="button"
+          onClick={() => {
+            void loadProfile();
+            setEditOpen(true);
+          }}
+          className="btn-secondary hidden whitespace-nowrap sm:inline-flex"
+          data-testid="edit-name-button"
+        >
+          Edit name
+        </button>
         <UserButton />
       </Show>
+
+      <EditDisplayNameModal
+        open={editOpen}
+        initialName={displayName}
+        onClose={() => setEditOpen(false)}
+        onSaved={(name) => {
+          setDisplayName(name);
+          onNameUpdated?.();
+        }}
+      />
     </div>
   );
 }
