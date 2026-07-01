@@ -53,6 +53,7 @@ export function IngestModal({
         attendees: [],
         viewerAccepted: false,
         viewerPassed: false,
+        addedBy: null,
       });
     } catch (err) {
       setPreview(null);

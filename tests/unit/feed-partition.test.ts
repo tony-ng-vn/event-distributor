@@ -24,6 +24,7 @@ function makeEvent(overrides: Partial<FeedEvent> = {}): FeedEvent {
     attendees: [],
     viewerAccepted: false,
     viewerPassed: false,
+    addedBy: null,
     ...overrides,
   };
 }
