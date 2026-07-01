@@ -11,9 +11,9 @@ import { isUserAdmin } from "@/lib/admin";
 import { getInsforgeAdmin } from "@/lib/db";
 import { newId } from "@/lib/ids";
 import {
-  fetchLumaMetadata,
-  isLumaUrl,
-  normalizeLumaUrl,
+  fetchEventMetadata,
+  isEventSourceUrl,
+  normalizeSourceUrl,
   type LumaMetadata,
 } from "@/lib/luma";
 
@@ -229,23 +229,23 @@ export async function listFeedEvents(viewerUserId?: string | null) {
   return listAllFeedEvents(viewerUserId);
 }
 
-/** POST ingest with preview:true — fetch Luma metadata without saving. */
+/** POST ingest with preview:true — fetch event metadata without saving. */
 export async function previewLumaIngest(lumaUrl: string): Promise<LumaMetadata> {
-  if (!isLumaUrl(lumaUrl)) {
-    throw new Error("URL must be a Luma event link (lu.ma or luma.com)");
+  if (!isEventSourceUrl(lumaUrl)) {
+    throw new Error("URL must be a valid https event link");
   }
-  const normalized = normalizeLumaUrl(lumaUrl);
-  return fetchLumaMetadata(normalized);
+  const normalized = normalizeSourceUrl(lumaUrl);
+  return fetchEventMetadata(normalized);
 }
 
-/** POST ingest — fetch Luma page and insert into shared feed (one URL per event). */
+/** POST ingest — fetch event page and insert into shared feed (one URL per event). */
 export async function ingestLumaEvent(lumaUrl: string, addedByUserId?: string) {
-  if (!isLumaUrl(lumaUrl)) {
-    throw new Error("URL must be a Luma event link (lu.ma or luma.com)");
+  if (!isEventSourceUrl(lumaUrl)) {
+    throw new Error("URL must be a valid https event link");
   }
 
   const db = getInsforgeAdmin();
-  const normalized = normalizeLumaUrl(lumaUrl);
+  const normalized = normalizeSourceUrl(lumaUrl);
 
   const { data: existing, error: existingError } = await db.database
     .from("events")
@@ -255,10 +255,10 @@ export async function ingestLumaEvent(lumaUrl: string, addedByUserId?: string) {
 
   if (existingError) throw new Error(existingError.message);
   if (existing) {
-    throw new Error("This Luma event is already in the feed");
+    throw new Error("This event is already in the feed");
   }
 
-  const metadata = await fetchLumaMetadata(normalized);
+  const metadata = await fetchEventMetadata(normalized);
 
   const { data: event, error } = await db.database
     .from("events")

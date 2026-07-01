@@ -1,5 +1,5 @@
 /**
- * Modal to paste a Luma URL — Preview fetches metadata, Add saves to feed.
+ * Modal to paste an event URL — Preview fetches metadata, Add saves to feed.
  *
  * Two-step API: POST /api/events/ingest with preview:true, then without preview.
  */
@@ -105,7 +105,8 @@ export function IngestModal({
         </div>
 
         <p className="mb-4 text-sm text-muted">
-          Paste a Luma link to bring your community together.
+          Paste an event link (Luma or any URL). Luma links get the richest
+          preview with date and location when available.
         </p>
 
         <input
@@ -115,7 +116,7 @@ export function IngestModal({
             setPreview(null);
             setError(null);
           }}
-          placeholder="https://lu.ma/your-event"
+          placeholder="https://lu.ma/your-event or any event page"
           className="input-field"
           data-testid="luma-url-input"
         />

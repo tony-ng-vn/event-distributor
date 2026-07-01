@@ -1,10 +1,10 @@
 /**
- * Outbound link to the original Luma event page.
+ * Outbound link to the original event page.
  * Hidden when the stored URL is missing or invalid.
  */
 "use client";
 
-import { resolveLumaEventHref } from "@/lib/luma";
+import { isLumaUrl, resolveEventHref } from "@/lib/luma";
 
 export function LumaEventLink({
   lumaUrl,
@@ -15,8 +15,10 @@ export function LumaEventLink({
   className?: string;
   fullWidth?: boolean;
 }) {
-  const href = resolveLumaEventHref(lumaUrl);
+  const href = resolveEventHref(lumaUrl);
   if (!href) return null;
+
+  const label = isLumaUrl(href) ? "View on Luma" : "Open event page";
 
   return (
     <a
@@ -28,7 +30,7 @@ export function LumaEventLink({
       } ${className}`.trim()}
       data-testid="luma-event-link"
     >
-      View on Luma
+      {label}
       <span aria-hidden="true">↗</span>
     </a>
   );

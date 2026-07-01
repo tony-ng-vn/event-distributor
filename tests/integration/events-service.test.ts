@@ -38,6 +38,30 @@ describe("events service", () => {
     );
   });
 
+  it("ingests a generic https event link into the shared feed", async () => {
+    const sourceUrl =
+      "https://www.anthropic.com/webinars/voice-and-intelligence?utm_medium=email";
+    const event = await ingestLumaEvent(sourceUrl);
+
+    expect(event.title).toBeTruthy();
+    expect(event.lumaUrl).toBe(
+      "https://anthropic.com/webinars/voice-and-intelligence",
+    );
+
+    const feed = await listFeedEvents();
+    expect(feed).toHaveLength(1);
+    expect(feed[0]?.id).toBe(event.id);
+  });
+
+  it("rejects non-https and unsafe event URLs", async () => {
+    await expect(
+      ingestLumaEvent("http://example.com/event"),
+    ).rejects.toThrow(/valid https/i);
+    await expect(
+      ingestLumaEvent("https://localhost/private-event"),
+    ).rejects.toThrow(/valid https/i);
+  });
+
   it("records accept without calendar sync", async () => {
     const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
     const user = await createUser({

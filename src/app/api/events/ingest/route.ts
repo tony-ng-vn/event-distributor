@@ -1,5 +1,5 @@
 /**
- * POST /api/events/ingest — add a Luma URL to the shared feed (signed-in only).
+ * POST /api/events/ingest — add an event URL to the shared feed (signed-in only).
  *
  * Body: { lumaUrl: string, preview?: boolean }
  *   preview: true  → fetch metadata only, don't save
