@@ -100,3 +100,12 @@ export async function resolveViewerIsAdmin(
   const user = await syncClerkUser();
   return user?.is_admin === true;
 }
+
+/** Requires a signed-in viewer (Clerk or E2E). Throws when missing. */
+export async function requireViewerUserId(request?: Request): Promise<string> {
+  const userId = await resolveViewerUserId(request);
+  if (!userId) {
+    throw new Error("Sign in required to view events");
+  }
+  return userId;
+}

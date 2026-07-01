@@ -105,7 +105,7 @@ export function EventFeedCard({
 
       <div className="going-strip">
         <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-          Who&apos;s going
+          Who&apos;s interested
         </p>
         <AttendeeStack
           attendees={event.attendees}
@@ -121,8 +121,8 @@ export function EventFeedCard({
             className="rounded-xl border border-border bg-background-subtle px-4 py-3 text-sm"
             data-testid="accepted-state"
           >
-            <p className="font-semibold text-foreground">You&apos;re going</p>
-            <p className="mt-0.5 text-muted">On the guest list</p>
+            <p className="font-semibold text-foreground">You&apos;re in</p>
+            <p className="mt-0.5 text-muted">Friends can see you&apos;re interested</p>
           </div>
         ) : passed && showPassedActions ? (
           <div className="space-y-2">

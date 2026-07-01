@@ -74,7 +74,7 @@ export function AdminEventCard({
 
           <div>
             <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Who&apos;s going
+              Who&apos;s interested
             </p>
             <AttendeeStack
               attendees={event.attendees}

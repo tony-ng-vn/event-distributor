@@ -6,8 +6,8 @@ import {
 } from "@/lib/attendees";
 
 describe("formatAttendeeSummary", () => {
-  it("returns empty-state copy when nobody is going", () => {
-    expect(formatAttendeeSummary([], 0)).toBe("Be the first to go");
+  it("returns empty-state copy when nobody is interested", () => {
+    expect(formatAttendeeSummary([], 0)).toBe("Be the first to say you're in");
   });
 
   it("names two attendees and remaining count", () => {

@@ -13,6 +13,61 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 
+/** Full-page card shown when the feed is for signed-in friends only. */
+export function SignInGate() {
+  return (
+    <div className="app-shell flex min-h-dvh flex-col">
+      <header className="glass-header">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight text-foreground">
+              Events
+            </h1>
+            <p className="text-sm text-muted">Shared plans with your group</p>
+          </div>
+          <AuthButton />
+        </div>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-10">
+        <div
+          className="glass-card rounded-2xl p-8 text-center"
+          data-testid="sign-in-gate"
+        >
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+            Sign in to see your group&apos;s events
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            This feed is private to people in your group. Sign in to browse shared
+            Luma links, mark events you&apos;re interested in, and see who else
+            is planning to go. RSVP on Luma separately when you&apos;re ready.
+          </p>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className="btn-primary w-full py-3 sm:w-auto sm:px-8"
+                data-testid="sign-in-gate-button"
+              >
+                Sign in
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button
+                type="button"
+                className="btn-secondary w-full py-3 sm:w-auto sm:px-8"
+                data-testid="sign-up-gate-button"
+              >
+                Create account
+              </button>
+            </SignUpButton>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
 /** Modal when user tries Accept without being signed in. */
 export function SignInPromptModal({
   open,

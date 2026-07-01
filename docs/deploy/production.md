@@ -67,11 +67,11 @@ Before pushing, run **`npm run check:deploy`** locally — it runs lint, typeche
 
 ## 4. Share with your friend
 
-Send them the Vercel URL. They should:
+Send them the Vercel URL. They must **sign in** to see the feed. Then they can:
 
 1. **Sign up / sign in** (Clerk).
 2. **Paste Luma links** to add events to the shared feed.
-3. **Accept** events to show on the guest list (RSVP on Luma separately).
+3. **Accept** to show they're interested (RSVP on Luma separately when ready).
 
 ## Troubleshooting
 

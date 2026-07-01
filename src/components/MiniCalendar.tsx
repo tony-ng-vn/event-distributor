@@ -125,7 +125,7 @@ export function CalendarEventList({
   if (events.length === 0) {
     return (
       <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted">
-        No gatherings you&apos;re going to yet.
+        No events you&apos;re interested in yet.
       </p>
     );
   }
@@ -169,7 +169,7 @@ export function CalendarEventList({
           </button>
           <div className="going-strip">
             <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Who&apos;s going
+              Who&apos;s interested
             </p>
             <AttendeeStack
               attendees={event.attendees}

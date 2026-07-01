@@ -6,6 +6,37 @@ import { expect, test } from "@playwright/test";
 
 const E2E_SECRET = "local-e2e-secret";
 
+async function authenticatePage(
+  page: import("@playwright/test").Page,
+  request: import("@playwright/test").APIRequestContext,
+) {
+  const userRes = await request.put("/api/e2e/seed", {
+    headers: {
+      "x-e2e-secret": E2E_SECRET,
+      "Content-Type": "application/json",
+    },
+    data: { email: "e2e@test.local", name: "E2E Tester" },
+  });
+  expect(userRes.ok()).toBeTruthy();
+  const userBody = await userRes.json();
+  const userId = userBody.user.id as string;
+
+  await page.addInitScript(
+    ({ viewerId, secret }) => {
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = async (input, init = {}) => {
+        const headers = new Headers(init.headers);
+        headers.set("x-e2e-user-id", viewerId);
+        headers.set("x-e2e-secret", secret);
+        return originalFetch(input, { ...init, headers });
+      };
+    },
+    { viewerId: userId, secret: E2E_SECRET },
+  );
+
+  return userId;
+}
+
 test.describe("shared Luma feed", () => {
   test.beforeEach(async ({ request }) => {
     const response = await request.delete("/api/e2e/seed", {
@@ -14,7 +45,11 @@ test.describe("shared Luma feed", () => {
     expect(response.ok()).toBeTruthy();
   });
 
-  async function waitForFeed(page: import("@playwright/test").Page) {
+  async function waitForFeed(
+    page: import("@playwright/test").Page,
+    request: import("@playwright/test").APIRequestContext,
+  ) {
+    await authenticatePage(page, request);
     await page.goto("/");
     await page.waitForResponse(
       (response) =>
@@ -22,8 +57,14 @@ test.describe("shared Luma feed", () => {
     );
   }
 
+  test("shows sign-in gate when not authenticated", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("sign-in-gate")).toBeVisible();
+    await expect(page.getByTestId("empty-feed")).toBeHidden();
+  });
+
   test("shows empty feed then seeded event", async ({ page, request }) => {
-    await waitForFeed(page);
+    await waitForFeed(page, request);
     await expect(page.getByTestId("empty-feed")).toBeVisible();
 
     const seed = await request.post("/api/e2e/seed", {
@@ -42,7 +83,7 @@ test.describe("shared Luma feed", () => {
       headers: { "x-e2e-secret": E2E_SECRET },
     });
 
-    await waitForFeed(page);
+    await waitForFeed(page, request);
     await expect(page.getByTestId("feed-new-events")).toBeVisible();
     await expect(page.getByRole("heading", { name: "AI Builders Meetup" })).toBeVisible();
 
@@ -53,8 +94,8 @@ test.describe("shared Luma feed", () => {
     await expect(page.getByRole("heading", { name: "AI Builders Meetup" })).toBeVisible();
   });
 
-  test("ingests a Luma URL through the UI", async ({ page }) => {
-    await waitForFeed(page);
+  test("ingests a Luma URL through the UI", async ({ page, request }) => {
+    await waitForFeed(page, request);
     await page.getByTestId("add-luma-button").click();
     await page.getByTestId("luma-url-input").fill("https://lu.ma/playwright-event");
     await page.getByTestId("preview-button").click();
@@ -63,7 +104,7 @@ test.describe("shared Luma feed", () => {
     await expect(page.getByRole("heading", { name: "AI Builders Meetup" })).toBeVisible();
   });
 
-  test("accept records attendee and shows going state in UI", async ({
+  test("accept records attendee and shows interested state in UI", async ({
     page,
     request,
   }) => {
@@ -73,28 +114,7 @@ test.describe("shared Luma feed", () => {
     const seedBody = await seed.json();
     const eventId = seedBody.event.id as string;
 
-    const userRes = await request.put("/api/e2e/seed", {
-      headers: {
-        "x-e2e-secret": E2E_SECRET,
-        "Content-Type": "application/json",
-      },
-      data: { email: "e2e@test.local", name: "E2E Tester" },
-    });
-    const userBody = await userRes.json();
-    const userId = userBody.user.id as string;
-
-    await page.addInitScript(
-      ({ viewerId, secret }) => {
-        const originalFetch = window.fetch.bind(window);
-        window.fetch = async (input, init = {}) => {
-          const headers = new Headers(init.headers);
-          headers.set("x-e2e-user-id", viewerId);
-          headers.set("x-e2e-secret", secret);
-          return originalFetch(input, { ...init, headers });
-        };
-      },
-      { viewerId: userId, secret: E2E_SECRET },
-    );
+    const userId = await authenticatePage(page, request);
 
     const accept = await request.post(`/api/events/${eventId}/accept`, {
       headers: {
@@ -110,6 +130,6 @@ test.describe("shared Luma feed", () => {
         response.url().includes("/api/events") && response.status() === 200,
     );
     await expect(page.getByTestId("accepted-state")).toBeVisible();
-    await expect(page.getByText("1 going")).toBeVisible();
+    await expect(page.getByText("1 interested")).toBeVisible();
   });
 });

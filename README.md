@@ -1,13 +1,13 @@
 # Event Radar
 
-Shared Luma event feed — paste Luma links, see who's going, and mark events you're joining.
+Shared Luma event feed for your friend group — paste links, see who's interested, mark events you're in.
 
 ## Features
 
-- **Shared feed** — one global dashboard of upcoming Luma events
+- **Friends-only feed** — sign in to see and share events with your group
 - **Luma URL ingest** — paste `lu.ma` links; metadata fetched via Open Graph
-- **Accept / Pass** — accept shows you on the guest list; pass hides locally only
-- **Who's going** — avatar stack + count from accept records
+- **Accept / Pass** — accept shows interest in-app (not Luma RSVP); pass moves events to your past list
+- **Who's interested** — avatar stack + count from in-app accept records
 - **Clerk auth** — sign up / sign in for guest list identity (RSVP on Luma separately)
 - **Responsive UI** — social feed layout, mobile tabs (Feed / Calendar / My Events)
 

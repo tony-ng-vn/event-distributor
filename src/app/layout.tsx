@@ -36,7 +36,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Event Radar — Shared Luma Feed",
   description:
-    "Browse shared Luma events and see who's going with your community.",
+    "Private shared Luma feed for your group — see who's interested in each event.",
 };
 
 export default function RootLayout({

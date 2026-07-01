@@ -36,7 +36,7 @@ export function AttendeeStack({
   if (acceptCount === 0) {
     return (
       <p className="text-sm text-muted" data-testid="attendee-empty">
-        Be the first to go
+        Be the first to say you&apos;re in
       </p>
     );
   }
@@ -55,7 +55,7 @@ export function AttendeeStack({
       if (names.length === 0) {
         return (
           <span className="text-sm text-foreground-secondary">
-            {acceptCount} going
+            {acceptCount} interested
           </span>
         );
       }
@@ -82,7 +82,7 @@ export function AttendeeStack({
     if (showCount) {
       return (
         <span className="text-sm text-foreground-secondary">
-          {acceptCount} going
+          {acceptCount} interested
         </span>
       );
     }

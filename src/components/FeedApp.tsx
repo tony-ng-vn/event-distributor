@@ -10,10 +10,11 @@
  */
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { partitionFeedEvents } from "@/lib/feed-partition";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
-import { AuthButton, SignInPromptModal } from "@/components/AuthControls";
+import { AuthButton, SignInGate, SignInPromptModal } from "@/components/AuthControls";
 import { CalendarEventList, MiniCalendar } from "@/components/MiniCalendar";
 import { AdminEventCard } from "@/components/AdminEventCard";
 import { EventDetailSheet } from "@/components/EventDetailSheet";
@@ -32,6 +33,7 @@ function wait(ms: number) {
 }
 
 export function FeedApp() {
+  const { isLoaded, isSignedIn } = useAuth();
   // Server data
   const [events, setEvents] = useState<FeedEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,9 +143,16 @@ export function FeedApp() {
   }, [activeTab, viewerIsAdmin]);
 
   useEffect(() => {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      setLoading(false);
+      setEvents([]);
+      setError(null);
+      return;
+    }
     loadFeed();
     setPassedIds(getPassedEventIds());
-  }, [loadFeed]);
+  }, [loadFeed, isLoaded, isSignedIn]);
 
   useEffect(() => {
     if (!toast) return;
@@ -231,7 +240,7 @@ export function FeedApp() {
 
       if (!response.ok) throw new Error(data.error ?? "Accept failed");
 
-      setToast("You're going");
+      setToast("Marked as interested");
       await syncEventsFromServer(
         detailEvent?.id === eventId ? eventId : null,
       );
@@ -522,6 +531,18 @@ export function FeedApp() {
     ["mine", "My Events"],
   ] as const;
 
+  if (!isLoaded) {
+    return (
+      <div className="app-shell mx-auto max-w-6xl px-4 py-6">
+        <FeedSkeleton />
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return <SignInGate />;
+  }
+
   return (
     <div className="app-shell">
       <header className="glass-header sticky top-0 z-30">
@@ -530,7 +551,7 @@ export function FeedApp() {
             <h1 className="text-lg font-semibold tracking-tight text-foreground">
               Events
             </h1>
-            <p className="text-sm text-muted">Who in your group is going</p>
+            <p className="text-sm text-muted">Who in your group is interested</p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <button

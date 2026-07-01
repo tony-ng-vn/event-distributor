@@ -24,7 +24,7 @@ export function formatAttendeeSummary(
   attendees: NamedAttendee[],
   acceptCount: number,
 ): string {
-  if (acceptCount === 0) return "Be the first to go";
+  if (acceptCount === 0) return "Be the first to say you're in";
 
   const names = attendees
     .map((attendee) => attendee.name?.trim())
@@ -33,7 +33,7 @@ export function formatAttendeeSummary(
 
   const remaining = acceptCount - names.length;
 
-  if (names.length === 0) return `${acceptCount} going`;
+  if (names.length === 0) return `${acceptCount} interested`;
   if (remaining <= 0) {
     return names.length === 1 ? names[0] : `${names[0]} and ${names[1]}`;
   }

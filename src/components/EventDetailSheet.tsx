@@ -88,8 +88,8 @@ export function EventDetailSheet({
 
           {accepted ? (
             <div className="rounded-xl border border-border bg-background-subtle px-4 py-3 text-sm">
-              <p className="font-semibold text-foreground">You&apos;re going</p>
-              <p className="mt-0.5 text-muted">On the guest list</p>
+              <p className="font-semibold text-foreground">You&apos;re in</p>
+              <p className="mt-0.5 text-muted">Friends can see you&apos;re interested</p>
             </div>
           ) : passed && showPassedActions ? (
             <div className="space-y-2">
