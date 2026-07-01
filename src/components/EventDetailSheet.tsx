@@ -6,6 +6,7 @@
 
 import { formatDateTime } from "@/lib/dates";
 import { AttendeeStack } from "@/components/AttendeeStack";
+import { LumaEventLink } from "@/components/LumaEventLink";
 import type { FeedEvent } from "@/types/feed";
 
 export function EventDetailSheet({
@@ -119,14 +120,7 @@ export function EventDetailSheet({
             </div>
           )}
 
-          <a
-            href={event.lumaUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex text-sm font-medium text-foreground-secondary hover:text-foreground"
-          >
-            View on Luma ↗
-          </a>
+          <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
 
           {isAdmin && onDelete && (
             <button

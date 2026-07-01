@@ -2,17 +2,43 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { isLumaUrl, parseLumaHtml } from "@/lib/luma";
+import {
+  isLumaUrl,
+  normalizeLumaUrl,
+  parseLumaHtml,
+  resolveLumaEventHref,
+} from "@/lib/luma";
 
 const fixturePath = join(process.cwd(), "tests/fixtures/luma-demo-head.html");
 
-describe("luma cover image extraction", () => {
+describe("luma URL helpers", () => {
   it("accepts lu.ma URLs", () => {
     expect(isLumaUrl("https://lu.ma/demo-event")).toBe(true);
     expect(isLumaUrl("https://luma.com/demo")).toBe(true);
     expect(isLumaUrl("https://example.com/event")).toBe(false);
   });
 
+  it("normalizes Luma URLs for deduplication", () => {
+    expect(normalizeLumaUrl("https://www.lu.ma/demo/?ref=abc#section")).toBe(
+      "https://lu.ma/demo",
+    );
+    expect(normalizeLumaUrl("https://lu.ma/demo/")).toBe("https://lu.ma/demo");
+  });
+
+  it("resolves outbound Luma links only for valid URLs", () => {
+    expect(resolveLumaEventHref("https://lu.ma/demo-event")).toBe(
+      "https://lu.ma/demo-event",
+    );
+    expect(resolveLumaEventHref("  https://lu.ma/demo-event  ")).toBe(
+      "https://lu.ma/demo-event",
+    );
+    expect(resolveLumaEventHref("")).toBeNull();
+    expect(resolveLumaEventHref(null)).toBeNull();
+    expect(resolveLumaEventHref("https://example.com/event")).toBeNull();
+  });
+});
+
+describe("luma cover image extraction", () => {
   it("parses Open Graph metadata from HTML", () => {
     const html = `
       <html>

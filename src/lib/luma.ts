@@ -25,6 +25,17 @@ export function isLumaUrl(urlString: string): boolean {
   }
 }
 
+/** Outbound link target for stored event URLs; null when missing or not Luma. */
+export function resolveLumaEventHref(
+  urlString: string | null | undefined,
+): string | null {
+  const trimmed = urlString?.trim();
+  if (!trimmed || !isLumaUrl(trimmed)) {
+    return null;
+  }
+  return trimmed;
+}
+
 /** Strip query/hash and trailing slash so duplicate URLs match the same event. */
 export function normalizeLumaUrl(urlString: string): string {
   const url = new URL(urlString);

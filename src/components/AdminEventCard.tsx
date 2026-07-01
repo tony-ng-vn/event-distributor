@@ -6,6 +6,7 @@
 import { formatCardDateTime } from "@/lib/dates";
 import { getAttendeeInitials } from "@/lib/attendees";
 import { AttendeeStack } from "@/components/AttendeeStack";
+import { LumaEventLink } from "@/components/LumaEventLink";
 import type { FeedEvent } from "@/types/feed";
 
 export function AdminEventCard({
@@ -104,6 +105,8 @@ export function AdminEventCard({
                 : event.location || "Location TBD"}
           </p>
         </button>
+
+        <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
       </div>
     </article>
   );

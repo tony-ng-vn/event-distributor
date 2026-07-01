@@ -7,6 +7,7 @@
 "use client";
 
 import { AttendeeStack } from "@/components/AttendeeStack";
+import { LumaEventLink } from "@/components/LumaEventLink";
 import {
   addMonths,
   formatMonthYear,
@@ -177,6 +178,9 @@ export function CalendarEventList({
               showSocialCopy
               showCount={false}
             />
+          </div>
+          <div className="px-4 pb-4">
+            <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
           </div>
         </div>
       ))}

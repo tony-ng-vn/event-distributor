@@ -8,6 +8,7 @@
 
 import { formatCardDateTime } from "@/lib/dates";
 import { AttendeeStack } from "@/components/AttendeeStack";
+import { LumaEventLink } from "@/components/LumaEventLink";
 import type { FeedEvent } from "@/types/feed";
 
 type CardStatus = "pending" | "accepted" | "passed" | "accepting";
@@ -171,14 +172,7 @@ export function EventFeedCard({
           </div>
         )}
 
-        <a
-          href={event.lumaUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-3 inline-flex text-sm font-medium text-foreground-secondary hover:text-foreground"
-        >
-          View on Luma ↗
-        </a>
+        <LumaEventLink lumaUrl={event.lumaUrl} className="mt-3" />
       </div>
     </article>
   );
