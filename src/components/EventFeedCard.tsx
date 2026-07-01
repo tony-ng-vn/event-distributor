@@ -7,7 +7,7 @@
 "use client";
 
 import { formatCardDateTime } from "@/lib/dates";
-import { AttendeeStack } from "@/components/AttendeeStack";
+import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { LumaEventLink } from "@/components/LumaEventLink";
 import type { FeedEvent } from "@/types/feed";
@@ -105,17 +105,7 @@ export function EventFeedCard({
         </button>
       </div>
 
-      <div className="going-strip">
-        <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-          Who&apos;s interested
-        </p>
-        <AttendeeStack
-          attendees={event.attendees}
-          acceptCount={event.acceptCount}
-          showSocialCopy
-          showCount={false}
-        />
-      </div>
+      <EventAttendeeSections event={event} showSocialCopy showCount={false} />
 
       <div className="px-4 pb-4">
         {accepted ? (

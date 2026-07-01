@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatAttendeeSummary,
+  formatPassSummary,
   getAttendeeInitials,
 } from "@/lib/attendees";
 
@@ -23,6 +24,25 @@ describe("formatAttendeeSummary", () => {
     expect(formatAttendeeSummary([{ name: "Maya" }], 4)).toBe(
       "Maya and 3 others",
     );
+  });
+});
+
+describe("formatPassSummary", () => {
+  it("returns subtle empty-state copy when nobody passed", () => {
+    expect(formatPassSummary([], 0)).toBe("Nobody passed yet");
+  });
+
+  it("names two passers and remaining count", () => {
+    expect(
+      formatPassSummary(
+        [{ name: "Sam" }, { name: "Riley" }, { name: "Alex" }],
+        5,
+      ),
+    ).toBe("Sam, Riley and 3 others");
+  });
+
+  it("handles count-only when names are missing", () => {
+    expect(formatPassSummary([{ name: null }], 2)).toBe("2 passed");
   });
 });
 

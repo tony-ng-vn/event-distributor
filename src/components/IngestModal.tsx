@@ -51,6 +51,8 @@ export function IngestModal({
         createdAt: new Date().toISOString(),
         acceptCount: 0,
         attendees: [],
+        passCount: 0,
+        passAttendees: [],
         viewerAccepted: false,
         viewerPassed: false,
         addedBy: null,

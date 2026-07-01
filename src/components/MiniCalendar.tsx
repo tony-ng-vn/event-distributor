@@ -6,7 +6,7 @@
  */
 "use client";
 
-import { AttendeeStack } from "@/components/AttendeeStack";
+import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { LumaEventLink } from "@/components/LumaEventLink";
 import {
   addMonths,
@@ -168,17 +168,7 @@ export function CalendarEventList({
               {new Date(event.startAt).toLocaleString()}
             </p>
           </button>
-          <div className="going-strip">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Who&apos;s interested
-            </p>
-            <AttendeeStack
-              attendees={event.attendees}
-              acceptCount={event.acceptCount}
-              showSocialCopy
-              showCount={false}
-            />
-          </div>
+          <EventAttendeeSections event={event} showSocialCopy showCount={false} />
           <div className="px-4 pb-4">
             <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
           </div>

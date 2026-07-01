@@ -22,6 +22,8 @@ function makeEvent(overrides: Partial<FeedEvent> = {}): FeedEvent {
     createdAt: "2026-07-01T00:00:00.000Z",
     acceptCount: 0,
     attendees: [],
+    passCount: 0,
+    passAttendees: [],
     viewerAccepted: false,
     viewerPassed: false,
     addedBy: null,

@@ -5,7 +5,7 @@
 
 import { formatCardDateTime } from "@/lib/dates";
 import { getAttendeeInitials } from "@/lib/attendees";
-import { AttendeeStack } from "@/components/AttendeeStack";
+import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { LumaEventLink } from "@/components/LumaEventLink";
 import type { FeedEvent } from "@/types/feed";
 
@@ -73,17 +73,7 @@ export function AdminEventCard({
             </div>
           </div>
 
-          <div>
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
-              Who&apos;s interested
-            </p>
-            <AttendeeStack
-              attendees={event.attendees}
-              acceptCount={event.acceptCount}
-              showSocialCopy
-              showCount={false}
-            />
-          </div>
+          <EventAttendeeSections event={event} showSocialCopy showCount={false} />
         </div>
 
         <button

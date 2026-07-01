@@ -24,16 +24,46 @@ export function formatAttendeeSummary(
   attendees: NamedAttendee[],
   acceptCount: number,
 ): string {
-  if (acceptCount === 0) return "Be the first to say you're in";
+  return formatAttendeeGroupSummary(attendees, acceptCount, "interested");
+}
+
+/** Builds human-readable social proof text for the "who passed" row. */
+export function formatPassSummary(
+  attendees: NamedAttendee[],
+  passCount: number,
+): string {
+  return formatAttendeeGroupSummary(attendees, passCount, "passed");
+}
+
+type AttendeeGroupVariant = "interested" | "passed";
+
+function formatAttendeeGroupSummary(
+  attendees: NamedAttendee[],
+  totalCount: number,
+  variant: AttendeeGroupVariant,
+): string {
+  if (totalCount === 0) {
+    switch (variant) {
+      case "interested":
+        return "Be the first to say you're in";
+      case "passed":
+        return "Nobody passed yet";
+      default: {
+        const _exhaustive: never = variant;
+        return _exhaustive;
+      }
+    }
+  }
 
   const names = attendees
     .map((attendee) => attendee.name?.trim())
     .filter((name): name is string => Boolean(name))
     .slice(0, 2);
 
-  const remaining = acceptCount - names.length;
+  const remaining = totalCount - names.length;
+  const countLabel = variant === "interested" ? "interested" : "passed";
 
-  if (names.length === 0) return `${acceptCount} interested`;
+  if (names.length === 0) return `${totalCount} ${countLabel}`;
   if (remaining <= 0) {
     return names.length === 1 ? names[0] : `${names[0]} and ${names[1]}`;
   }

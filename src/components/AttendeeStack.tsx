@@ -1,6 +1,6 @@
 /**
- * Overlapping avatar circles + optional "7 interested" social copy.
- * When interactive, opens a modal with the full interested list.
+ * Overlapping avatar circles + optional social copy.
+ * When interactive, opens a modal with the full interested or passed list.
  */
 "use client";
 
@@ -15,13 +15,55 @@ const AVATAR_CLASSES = [
   "bg-neutral-400 text-neutral-800",
 ] as const;
 
+type AttendeeStackVariant = "interested" | "passed";
+
 function avatarClass(index: number): string {
   return AVATAR_CLASSES[index % AVATAR_CLASSES.length];
+}
+
+function emptyStateCopy(variant: AttendeeStackVariant): string {
+  switch (variant) {
+    case "interested":
+      return "Be the first to say you're in";
+    case "passed":
+      return "Nobody passed yet";
+    default: {
+      const _exhaustive: never = variant;
+      return _exhaustive;
+    }
+  }
+}
+
+function countLabel(variant: AttendeeStackVariant, count: number): string {
+  switch (variant) {
+    case "interested":
+      return `${count} interested`;
+    case "passed":
+      return `${count} passed`;
+    default: {
+      const _exhaustive: never = variant;
+      return _exhaustive;
+    }
+  }
+}
+
+function listAriaLabel(variant: AttendeeStackVariant, eventTitle: string): string {
+  switch (variant) {
+    case "interested":
+      return `See who is interested in ${eventTitle}`;
+    case "passed":
+      return `See who passed on ${eventTitle}`;
+    default: {
+      const _exhaustive: never = variant;
+      return _exhaustive;
+    }
+  }
 }
 
 export function AttendeeStack({
   attendees,
   acceptCount,
+  variant = "interested",
   size = "md",
   showCount = true,
   showSocialCopy = false,
@@ -30,6 +72,7 @@ export function AttendeeStack({
 }: {
   attendees: FeedEvent["attendees"];
   acceptCount: number;
+  variant?: AttendeeStackVariant;
   size?: "sm" | "md";
   showCount?: boolean;
   showSocialCopy?: boolean;
@@ -38,11 +81,16 @@ export function AttendeeStack({
 }) {
   const [listOpen, setListOpen] = useState(false);
   const avatarSize = size === "sm" ? "h-7 w-7 text-[10px]" : "h-8 w-8 text-[11px]";
+  const emptyTestId =
+    variant === "passed" ? "pass-attendee-empty" : "attendee-empty";
 
   if (acceptCount === 0) {
     return (
-      <p className="text-sm text-muted" data-testid="attendee-empty">
-        Be the first to say you&apos;re in
+      <p
+        className={`text-sm ${variant === "passed" ? "text-muted" : "text-muted"}`}
+        data-testid={emptyTestId}
+      >
+        {emptyStateCopy(variant)}
       </p>
     );
   }
@@ -62,7 +110,7 @@ export function AttendeeStack({
       if (names.length === 0) {
         return (
           <span className="text-sm text-foreground-secondary">
-            {acceptCount} interested
+            {countLabel(variant, acceptCount)}
           </span>
         );
       }
@@ -89,7 +137,7 @@ export function AttendeeStack({
     if (showCount) {
       return (
         <span className="text-sm text-foreground-secondary">
-          {acceptCount} interested
+          {countLabel(variant, acceptCount)}
         </span>
       );
     }
@@ -130,6 +178,11 @@ export function AttendeeStack({
     </>
   );
 
+  const stackTestId =
+    variant === "passed" ? "pass-attendee-stack" : "attendee-stack";
+  const stackButtonTestId =
+    variant === "passed" ? "pass-attendee-stack-button" : "attendee-stack-button";
+
   return (
     <>
       {canOpenList ? (
@@ -137,13 +190,13 @@ export function AttendeeStack({
           type="button"
           onClick={() => setListOpen(true)}
           className="flex w-full items-center gap-2.5 rounded-lg text-left transition hover:opacity-90"
-          aria-label={`See who is interested in ${eventTitle}`}
-          data-testid="attendee-stack-button"
+          aria-label={listAriaLabel(variant, eventTitle)}
+          data-testid={stackButtonTestId}
         >
           {content}
         </button>
       ) : (
-        <div className="flex items-center gap-2.5" data-testid="attendee-stack">
+        <div className="flex items-center gap-2.5" data-testid={stackTestId}>
           {content}
         </div>
       )}
@@ -154,6 +207,7 @@ export function AttendeeStack({
         eventTitle={eventTitle}
         attendees={attendees}
         acceptCount={acceptCount}
+        variant={variant}
       />
     </>
   );

@@ -5,7 +5,7 @@
 "use client";
 
 import { formatDateTime } from "@/lib/dates";
-import { AttendeeStack } from "@/components/AttendeeStack";
+import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { LumaEventLink } from "@/components/LumaEventLink";
 import type { FeedEvent } from "@/types/feed";
@@ -83,10 +83,7 @@ export function EventDetailSheet({
             </p>
           )}
 
-          <AttendeeStack
-            attendees={event.attendees}
-            acceptCount={event.acceptCount}
-          />
+          <EventAttendeeSections event={event} interactive showCount />
 
           {accepted ? (
             <EventResponseStatus variant="accepted" />

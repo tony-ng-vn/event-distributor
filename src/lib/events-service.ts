@@ -46,6 +46,8 @@ export type FeedEvent = {
   createdAt: string;
   acceptCount: number;
   attendees: AttendeeSummary[];
+  passCount: number;
+  passAttendees: AttendeeSummary[];
   viewerAccepted: boolean;
   viewerPassed: boolean;
   addedBy: CreatorSummary | null;
@@ -64,6 +66,12 @@ type InsforgeAcceptRow = {
   users: InsforgeUser | InsforgeUser[] | null;
 };
 
+type InsforgePassRow = {
+  id: string;
+  passed_at: string;
+  users: InsforgeUser | InsforgeUser[] | null;
+};
+
 type InsforgeEventRow = {
   id: string;
   luma_url: string;
@@ -79,6 +87,7 @@ type InsforgeEventRow = {
   host_avatar_url: string | null;
   created_at: string;
   accepts: InsforgeAcceptRow[] | null;
+  passes: InsforgePassRow[] | null;
   added_by_user: InsforgeUser | InsforgeUser[] | null;
 };
 
@@ -103,20 +112,26 @@ function serializeCreator(
   };
 }
 
-function serializeEvent(
-  event: InsforgeEventRow,
-  viewerUserId?: string | null,
-  viewerPassed = false,
-): FeedEvent {
-  const accepts = event.accepts ?? [];
-  const attendees = accepts
-    .map((accept) => normalizeUser(accept.users))
+function mapAttendeeSummaries(
+  rows: { users: InsforgeUser | InsforgeUser[] | null }[],
+): AttendeeSummary[] {
+  return rows
+    .map((row) => normalizeUser(row.users))
     .filter((user): user is InsforgeUser => user !== null)
     .map((user) => ({
       id: user.id,
       name: user.name,
       image: user.image,
     }));
+}
+
+function serializeEvent(
+  event: InsforgeEventRow,
+  viewerUserId?: string | null,
+  viewerPassed = false,
+): FeedEvent {
+  const attendees = mapAttendeeSummaries(event.accepts ?? []);
+  const passAttendees = mapAttendeeSummaries(event.passes ?? []);
 
   return {
     id: event.id,
@@ -134,6 +149,8 @@ function serializeEvent(
     createdAt: event.created_at,
     acceptCount: attendees.length,
     attendees,
+    passCount: passAttendees.length,
+    passAttendees,
     viewerAccepted: viewerUserId
       ? attendees.some((a) => a.id === viewerUserId)
       : false,
@@ -143,7 +160,7 @@ function serializeEvent(
 }
 
 const eventSelect =
-  "*, added_by_user:users!added_by_user_id(id, name, image, email), accepts(id, accepted_at, users(id, name, image))";
+  "*, added_by_user:users!added_by_user_id(id, name, image, email), accepts(id, accepted_at, users(id, name, image)), passes(id, passed_at, users(id, name, image))";
 
 async function fetchUpcomingEventRows() {
   const db = getInsforgeAdmin();
@@ -164,6 +181,12 @@ async function fetchUpcomingEventRows() {
       event.accepts.sort(
         (a, b) =>
           new Date(a.accepted_at).getTime() - new Date(b.accepted_at).getTime(),
+      );
+    }
+    if (event.passes) {
+      event.passes.sort(
+        (a, b) =>
+          new Date(a.passed_at).getTime() - new Date(b.passed_at).getTime(),
       );
     }
   });

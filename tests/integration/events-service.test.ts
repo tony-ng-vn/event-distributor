@@ -88,6 +88,28 @@ describe("events service", () => {
     expect(result.title).toBeNull();
   });
 
+  it("includes pass attendees on feed events", async () => {
+    const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
+    const passer = await createUser({
+      email: "passer@example.com",
+      name: "Passer User",
+    });
+    const otherPasser = await createUser({
+      email: "other-passer@example.com",
+      name: "Other Passer",
+    });
+
+    await passEvent(event.id, passer.id);
+    await passEvent(event.id, otherPasser.id);
+
+    const feed = await listFeedEvents();
+    expect(feed[0]?.passCount).toBe(2);
+    expect(feed[0]?.passAttendees.map((person) => person.name)).toEqual([
+      "Passer User",
+      "Other Passer",
+    ]);
+  });
+
   it("includes passed events in feed with viewerPassed flag for that user only", async () => {
     const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
     const passer = await createUser({

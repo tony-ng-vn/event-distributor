@@ -1,10 +1,34 @@
 /**
- * Full list of people interested in an event (in-app Accept, not Luma RSVP).
+ * Full list of people interested in or passed on an event (in-app, not Luma RSVP).
  */
 "use client";
 
 import { getAttendeeInitials } from "@/lib/attendees";
 import type { FeedEvent } from "@/types/feed";
+
+type AttendeeListVariant = "interested" | "passed";
+
+function modalCopy(variant: AttendeeListVariant, count: number): {
+  title: string;
+  description: string;
+} {
+  switch (variant) {
+    case "interested":
+      return {
+        title: "Who's interested",
+        description: `${count} ${count === 1 ? "person" : "people"} marked interested in-app — RSVP on Luma separately.`,
+      };
+    case "passed":
+      return {
+        title: "Who passed",
+        description: `${count} ${count === 1 ? "person" : "people"} passed in-app — not a Luma RSVP decline.`,
+      };
+    default: {
+      const _exhaustive: never = variant;
+      return _exhaustive;
+    }
+  }
+}
 
 export function AttendeeListModal({
   open,
@@ -12,14 +36,20 @@ export function AttendeeListModal({
   eventTitle,
   attendees,
   acceptCount,
+  variant = "interested",
 }: {
   open: boolean;
   onClose: () => void;
   eventTitle: string;
   attendees: FeedEvent["attendees"];
   acceptCount: number;
+  variant?: AttendeeListVariant;
 }) {
   if (!open) return null;
+
+  const copy = modalCopy(variant, acceptCount);
+  const modalTestId =
+    variant === "passed" ? "pass-attendee-list-modal" : "attendee-list-modal";
 
   return (
     <div
@@ -29,7 +59,7 @@ export function AttendeeListModal({
     >
       <div
         className="glass-card w-full max-w-md rounded-2xl p-6"
-        data-testid="attendee-list-modal"
+        data-testid={modalTestId}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -41,7 +71,7 @@ export function AttendeeListModal({
               id="attendee-list-title"
               className="text-lg font-semibold text-foreground"
             >
-              Who&apos;s interested
+              {copy.title}
             </h2>
             <p className="mt-1 line-clamp-2 text-sm text-muted">{eventTitle}</p>
           </div>
@@ -55,10 +85,7 @@ export function AttendeeListModal({
           </button>
         </div>
 
-        <p className="mb-3 text-xs text-muted">
-          {acceptCount} {acceptCount === 1 ? "person" : "people"} marked interested
-          in-app — RSVP on Luma separately.
-        </p>
+        <p className="mb-3 text-xs text-muted">{copy.description}</p>
 
         <ul className="max-h-72 space-y-2 overflow-y-auto">
           {attendees.map((attendee) => (

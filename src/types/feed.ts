@@ -26,6 +26,12 @@ export type FeedEvent = {
     name: string | null;
     image: string | null;
   }[];
+  passCount: number;
+  passAttendees: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  }[];
   /** True when the signed-in viewer has clicked Accept on this event. */
   viewerAccepted: boolean;
   /** True when the signed-in viewer has passed on this event. */
