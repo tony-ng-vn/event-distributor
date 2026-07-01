@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option B — Social Row</title>
+  <link rel="stylesheet" href="luma-base.css">
+  <style>
+    .app-header {
+      align-items: flex-start;
+    }
+
+    .app-header .sub {
+      font-size: 0.8125rem;
+      color: var(--fg-muted);
+      margin-top: 0.125rem;
+    }
+
+    .summary {
+      margin: 0 1.25rem 1rem;
+      padding: 0.875rem 1rem;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .summary .avatars span {
+      width: 32px;
+      height: 32px;
+      font-size: 0.625rem;
+    }
+
+    .summary-text {
+      font-size: 0.8125rem;
+      color: var(--fg-secondary);
+      line-height: 1.4;
+    }
+
+    .summary-text strong {
+      color: var(--fg);
+      font-weight: 600;
+    }
+
+    .feed {
+      padding: 0 1rem 6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .event-card {
+      border-radius: var(--radius-lg);
+    }
+
+    .card-top {
+      display: flex;
+      gap: 0.875rem;
+      padding: 1rem;
+    }
+
+    .thumb {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+      overflow: hidden;
+      background: var(--surface-muted);
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .date {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--fg-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 0.2rem;
+    }
+
+    .host {
+      font-size: 0.8125rem;
+      color: var(--fg-muted);
+    }
+
+    .going-strip {
+      margin: 0 1rem 1rem;
+      padding: 0.75rem 0.875rem;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+    }
+
+    .going-label {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--fg-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .going-friends {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .going-copy {
+      font-size: 0.8125rem;
+      color: var(--fg-secondary);
+      line-height: 1.35;
+    }
+
+    .going-copy em {
+      font-style: normal;
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    .actions-row {
+      padding: 0 1rem 1rem;
+    }
+
+    .add-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 390px;
+      margin: 0 auto;
+      padding: 0.875rem 1rem calc(0.875rem + env(safe-area-inset-bottom));
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .add-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--fg);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      font-weight: 300;
+      flex-shrink: 0;
+    }
+
+    .add-bar span:last-child {
+      font-size: 0.8125rem;
+      color: var(--fg-muted);
+    }
+  </style>
+</head>
+<body class="preview">
+  <div class="phone-frame">
+    <header class="app-header">
+      <div>
+        <h1>Events</h1>
+        <p class="sub">Who in your group is going</p>
+      </div>
+      <button class="sign-in" type="button">Sign in</button>
+    </header>
+
+    <section class="summary">
+      <div class="avatars">
+        <span class="av1">MK</span>
+        <span class="av2">JL</span>
+        <span class="av3">TN</span>
+        <span class="av-more">+2</span>
+      </div>
+      <p class="summary-text"><strong>5 friends</strong> have plans this week · 3 events shared</p>
+    </section>
+
+    <div class="feed">
+      <article class="event-card">
+        <div class="card-top">
+          <div class="thumb">
+            <img src="https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=1,anim=false,background=white,quality=75,width=1920,height=1920/uploads/ke/63109e17-3fa4-4589-ae12-68b4530dc920.png" alt="AI Demo Night cover">
+          </div>
+          <div class="meta">
+            <p class="date">Wed, Jul 1 · 5:30 PM</p>
+            <h2 class="title">AI Demo Night</h2>
+            <p class="host">ClickHouse · Langfuse · LibreChat · MongoDB</p>
+          </div>
+        </div>
+        <div class="going-strip">
+          <p class="going-label">Who's going</p>
+          <div class="going-friends">
+            <div class="avatars">
+              <span class="av1">MK</span>
+              <span class="av2">JL</span>
+              <span class="av3">TN</span>
+              <span class="av-more">+4</span>
+            </div>
+            <p class="going-copy"><em>Maya, Jordan</em> and 5 others</p>
+          </div>
+        </div>
+        <div class="actions-row">
+          <button class="btn btn-secondary" type="button">Pass</button>
+          <button class="btn btn-primary" type="button">Accept</button>
+        </div>
+      </article>
+
+      <article class="event-card">
+        <div class="card-top">
+          <div class="thumb">
+            <img src="https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=1,anim=false,background=white,quality=75,width=1920,height=1920/uploads/ke/63109e17-3fa4-4589-ae12-68b4530dc920.png" alt="AI Demo Night cover">
+          </div>
+          <div class="meta">
+            <p class="date">Wed, Jul 1 · 6:15 PM</p>
+            <h2 class="title">AI Demo Night — Live Demos</h2>
+            <p class="host">CANOPY Jackson Square · San Francisco</p>
+          </div>
+        </div>
+        <div class="going-strip">
+          <p class="going-label">Who's going</p>
+          <div class="going-friends">
+            <div class="avatars">
+              <span class="av2">AR</span>
+              <span class="av1">DP</span>
+              <span class="av-more">+2</span>
+            </div>
+            <p class="going-copy"><em>8–10 live demos</em> from builders shipping AI</p>
+          </div>
+        </div>
+        <div class="actions-row">
+          <button class="btn btn-secondary" type="button">Pass</button>
+          <button class="btn btn-primary" type="button">Accept</button>
+        </div>
+      </article>
+
+      <article class="event-card">
+        <div class="card-top">
+          <div class="thumb">
+            <img src="https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=1,anim=false,background=white,quality=75,width=1920,height=1920/uploads/ke/63109e17-3fa4-4589-ae12-68b4530dc920.png" alt="AI Demo Night cover">
+          </div>
+          <div class="meta">
+            <p class="date">Wed, Jul 1 · 7:30 PM</p>
+            <h2 class="title">AI Demo Night — Networking</h2>
+            <p class="host">Free · RSVP required · Space limited</p>
+          </div>
+        </div>
+        <div class="going-strip">
+          <p class="going-label">Who's going</p>
+          <div class="going-friends">
+            <div class="avatars">
+              <span class="av3">SM</span>
+              <span class="av1">KC</span>
+            </div>
+            <p class="going-copy"><em>Developers & founders</em> — be the third</p>
+          </div>
+        </div>
+        <div class="actions-row">
+          <button class="btn btn-secondary" type="button">Pass</button>
+          <button class="btn btn-primary" type="button">Accept</button>
+        </div>
+      </article>
+    </div>
+
+    <div class="add-bar">
+      <span class="add-icon">+</span>
+      <span>Paste a Luma link to share with the group</span>
+    </div>
+  </div>
+</body>
+</html>

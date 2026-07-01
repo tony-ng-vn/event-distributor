@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option C — Event Page</title>
+  <link rel="stylesheet" href="luma-base.css">
+  <style>
+    .scroll {
+      height: calc(100vh - 57px);
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+
+    .scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Hero — Luma event page structure */
+    .hero {
+      position: relative;
+    }
+
+    .hero .cover {
+      aspect-ratio: 4 / 3;
+    }
+
+    .hero-body {
+      padding: 1.25rem 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-body .pill {
+      margin-bottom: 0.625rem;
+    }
+
+    .hero-body .date {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--fg-secondary);
+      margin-bottom: 0.375rem;
+    }
+
+    .hero-body .title {
+      font-size: 1.375rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 0.375rem;
+    }
+
+    .hero-body .host {
+      font-size: 0.875rem;
+      color: var(--fg-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .going-block {
+      padding: 0.875rem 1rem;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.25rem;
+    }
+
+    .going-block .label {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--fg-muted);
+      margin-bottom: 0.625rem;
+    }
+
+    .going-block .row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .going-block .count {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    .going-block .names {
+      font-size: 0.8125rem;
+      color: var(--fg-secondary);
+    }
+
+    /* Secondary list */
+    .section-label {
+      padding: 1rem 1.25rem 0.5rem;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--fg-muted);
+    }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 160ms ease;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .list-row:hover {
+        background: var(--bg-subtle);
+      }
+    }
+
+    .list-row:active {
+      background: var(--surface-muted);
+    }
+
+    .list-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--surface-muted);
+    }
+
+    .list-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .list-meta h3 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.125rem;
+    }
+
+    .list-meta p {
+      font-size: 0.75rem;
+      color: var(--fg-muted);
+    }
+
+    .fab {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--fg);
+      color: #fff;
+      border: none;
+      font-size: 1.375rem;
+      font-weight: 300;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .fab:active {
+      transform: scale(0.97);
+    }
+
+    @media (min-width: 768px) {
+      body.preview .fab {
+        right: calc(50% - 195px + 1.25rem);
+      }
+    }
+  </style>
+</head>
+<body class="preview">
+  <div class="phone-frame">
+    <header class="app-header">
+      <h1>Events</h1>
+      <button class="sign-in" type="button">Sign in</button>
+    </header>
+
+    <div class="scroll">
+      <article class="hero">
+        <div class="cover">
+          <img src="https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=1,anim=false,background=white,quality=75,width=1920,height=1920/uploads/ke/63109e17-3fa4-4589-ae12-68b4530dc920.png" alt="AI Demo Night cover">
+        </div>
+        <div class="hero-body">
+          <span class="pill">Featured in San Francisco</span>
+          <p class="date">Wednesday, July 1 · 5:30 – 8:30 PM PT</p>
+          <h2 class="title">AI Demo Night</h2>
+          <p class="host">ClickHouse · Langfuse · LibreChat · MongoDB</p>
+
+          <div class="going-block">
+            <p class="label">Going</p>
+            <div class="row">
+              <div class="avatars">
+                <span class="av1">MK</span>
+                <span class="av2">JL</span>
+                <span class="av3">TN</span>
+                <span class="av-more">+4</span>
+              </div>
+              <div>
+                <p class="count">7 going</p>
+                <p class="names">Maya, Jordan and 5 others</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button class="btn btn-secondary" type="button">Pass</button>
+            <button class="btn btn-primary" type="button">Accept</button>
+          </div>
+        </div>
+      </article>
+
+      <p class="section-label">More this week</p>
+
+      <div class="list-row">
+        <div class="list-thumb">
+          <img src="https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=1,anim=false,background=white,quality=75,width=1920,height=1920/uploads/ke/63109e17-3fa4-4589-ae12-68b4530dc920.png" alt="">
+        </div>
+        <div class="list-meta">
+          <h3>AI Demo Night — Live Demos</h3>
+          <p>Wed · 6:15 PM · 8–10 demos</p>
+        </div>
+      </div>
+
+      <div class="list-row">
+        <div class="list-thumb">
+          <img src="https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=1,anim=false,background=white,quality=75,width=1920,height=1920/uploads/ke/63109e17-3fa4-4589-ae12-68b4530dc920.png" alt="">
+        </div>
+        <div class="list-meta">
+          <h3>AI Demo Night — Networking</h3>
+          <p>Wed · 7:30 PM · Free RSVP</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="fab" type="button" aria-label="Add event">+</button>
+  </div>
+</body>
+</html>
