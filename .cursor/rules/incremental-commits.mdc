@@ -1,0 +1,16 @@
+---
+description: Prefer small logical git commits after each unit of work
+alwaysApply: true
+---
+
+# Incremental commits
+
+When the user asks for commits or you finish a logical unit of work in this repo:
+
+1. **Commit often** — After each coherent change (feature slice, fix, refactor, tests for that slice), create a focused commit instead of batching everything into one dump.
+2. **One concern per commit** — Keep commits small and reviewable: e.g. schema/migrations separate from UI, API routes separate from unrelated styling.
+3. **Message quality** — Use clear imperative subjects (what/why in 1–2 sentences in the body when helpful). Do not commit secrets (`.env`, `.env.local`, `.insforge/`, credentials).
+4. **Verify** — Run relevant tests or typecheck when the change warrants it; run `git status` after committing to confirm a clean tree for that slice.
+5. **Push** — Only push when the user explicitly requests it.
+
+Prefer **multiple small commits** over **one large commit**, unless the user asks for a single squashed commit.
