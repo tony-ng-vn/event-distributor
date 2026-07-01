@@ -4,7 +4,7 @@
  */
 "use client";
 
-import { resolveEventHref } from "@/lib/luma";
+import { isLumaUrl, resolveEventHref } from "@/lib/luma";
 
 export function LumaEventLink({
   lumaUrl,
@@ -18,6 +18,8 @@ export function LumaEventLink({
   const href = resolveEventHref(lumaUrl);
   if (!href) return null;
 
+  const label = isLumaUrl(href) ? "View on Luma" : "Open event page";
+
   return (
     <a
       href={href}
@@ -28,7 +30,7 @@ export function LumaEventLink({
       } ${className}`.trim()}
       data-testid="luma-event-link"
     >
-      View link
+      {label}
       <span aria-hidden="true">↗</span>
     </a>
   );
