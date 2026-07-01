@@ -20,8 +20,8 @@ export async function DELETE(
       );
     }
 
-    await deleteEvent(id, userId);
-    return NextResponse.json({ ok: true });
+    const result = await deleteEvent(id, userId);
+    return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Delete failed";
     const status = /admin privileges/i.test(message) ? 403 : 400;

@@ -68,10 +68,24 @@ describe("events service", () => {
 
     await expect(deleteEvent(event.id, regular.id)).rejects.toThrow(/admin/i);
 
-    await deleteEvent(event.id, admin.id);
+    const result = await deleteEvent(event.id, admin.id);
+    expect(result.deleted).toBe(true);
+    expect(result.title).toBe(event.title);
 
     const feed = await listFeedEvents();
     expect(feed).toHaveLength(0);
+  });
+
+  it("treats delete of a missing event as idempotent success", async () => {
+    const admin = await createUser({
+      email: "admin@example.com",
+      name: "Admin User",
+      isAdmin: true,
+    });
+
+    const result = await deleteEvent("missing-event-id", admin.id);
+    expect(result.deleted).toBe(false);
+    expect(result.title).toBeNull();
   });
 
   it("includes passed events in feed with viewerPassed flag for that user only", async () => {

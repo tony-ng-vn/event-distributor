@@ -22,6 +22,7 @@ export function EventFeedCard({
   onOpen,
   showPassedActions = false,
   isAdmin = false,
+  isExiting = false,
 }: {
   event: FeedEvent;
   status: CardStatus;
@@ -32,6 +33,7 @@ export function EventFeedCard({
   onOpen: () => void;
   showPassedActions?: boolean;
   isAdmin?: boolean;
+  isExiting?: boolean;
 }) {
   const accepted = status === "accepted" || event.viewerAccepted;
   const passed = status === "passed" || event.viewerPassed;
@@ -45,7 +47,7 @@ export function EventFeedCard({
     <article
       className={`glass-card relative overflow-hidden rounded-2xl transition ${
         passed && !accepted ? "opacity-75" : ""
-      }`}
+      } ${isExiting ? "event-card-exiting" : ""}`}
       data-testid={`event-card-${event.id}`}
     >
       {isAdmin && onDelete && (

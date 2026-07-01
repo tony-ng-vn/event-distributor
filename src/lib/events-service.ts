@@ -5,7 +5,7 @@
  *   1. ingestLumaEvent — paste lu.ma URL → fetch metadata → save Event row
  *   2. listFeedEvents — load events + who accepted (Accept → User)
  *   3. acceptEvent — signed-in user joins guest list (creates Accept row)
- *   4. passEvent — signed-in user hides event from their feed (creates Pass row)
+ *   4. passEvent — signed-in user marks event as passed (creates Pass row)
  */
 import { isUserAdmin } from "@/lib/admin";
 import { getInsforgeAdmin } from "@/lib/db";
@@ -320,7 +320,7 @@ export async function acceptEvent(eventId: string, userId: string) {
   return serializeEvent(updated as InsforgeEventRow, userId);
 }
 
-/** POST /api/events/[id]/pass — hide event from viewer feed (synced per user). */
+/** POST /api/events/[id]/pass — mark event as passed for viewer (Past events section). */
 export async function passEvent(eventId: string, userId: string) {
   const db = getInsforgeAdmin();
 
@@ -377,8 +377,16 @@ export async function unpassEvent(eventId: string, userId: string) {
   if (deleteError) throw new Error(deleteError.message);
 }
 
+export type DeleteEventResult = {
+  title: string | null;
+  deleted: boolean;
+};
+
 /** DELETE /api/events/[id] — remove event from shared feed (admin only). */
-export async function deleteEvent(eventId: string, userId: string) {
+export async function deleteEvent(
+  eventId: string,
+  userId: string,
+): Promise<DeleteEventResult> {
   const admin = await isUserAdmin(userId);
   if (!admin) {
     throw new Error("Admin privileges required to delete events");
@@ -386,21 +394,31 @@ export async function deleteEvent(eventId: string, userId: string) {
 
   const db = getInsforgeAdmin();
 
-  const { data: event, error: eventError } = await db.database
+  const { data: deletedRows, error: deleteError } = await db.database
+    .from("events")
+    .delete()
+    .eq("id", eventId)
+    .select("id, title");
+
+  if (deleteError) throw new Error(deleteError.message);
+
+  const deleted = (deletedRows ?? []) as Array<{ id: string; title: string }>;
+  if (deleted.length > 0) {
+    return { title: deleted[0]?.title ?? null, deleted: true };
+  }
+
+  const { data: existing, error: existingError } = await db.database
     .from("events")
     .select("id")
     .eq("id", eventId)
     .maybeSingle();
 
-  if (eventError) throw new Error(eventError.message);
-  if (!event) throw new Error("Event not found");
+  if (existingError) throw new Error(existingError.message);
+  if (existing) {
+    throw new Error("Could not delete event");
+  }
 
-  const { error: deleteError } = await db.database
-    .from("events")
-    .delete()
-    .eq("id", eventId);
-
-  if (deleteError) throw new Error(deleteError.message);
+  return { title: null, deleted: false };
 }
 
 /** Wipes all data — used by tests only. */

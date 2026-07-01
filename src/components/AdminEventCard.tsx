@@ -12,17 +12,21 @@ export function AdminEventCard({
   event,
   onDelete,
   onOpen,
+  isExiting = false,
 }: {
   event: FeedEvent;
   onDelete: () => void;
   onOpen: () => void;
+  isExiting?: boolean;
 }) {
   const creator = event.addedBy;
   const creatorLabel = creator?.name?.trim() || creator?.email || "Unknown user";
 
   return (
     <article
-      className="glass-card relative overflow-hidden rounded-2xl transition"
+      className={`glass-card relative overflow-hidden rounded-2xl transition ${
+        isExiting ? "event-card-exiting" : ""
+      }`}
       data-testid={`admin-event-card-${event.id}`}
     >
       <button

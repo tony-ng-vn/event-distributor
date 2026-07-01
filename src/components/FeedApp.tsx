@@ -26,6 +26,12 @@ import type { FeedEvent, FeedFilter, MobileTab } from "@/types/feed";
 
 type CardState = Record<string, "pending" | "accepted" | "passed" | "accepting">;
 
+const MOTION_MS = 220;
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function FeedApp() {
   // Server data
   const [events, setEvents] = useState<FeedEvent[]>([]);
@@ -47,13 +53,17 @@ export function FeedApp() {
   );
   const [toast, setToast] = useState<string | null>(null);
   const [viewerIsAdmin, setViewerIsAdmin] = useState(false);
+  const [exitingEventIds, setExitingEventIds] = useState<Record<string, true>>({});
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Record<string, true>>({});
 
   /** Load shared feed from API; merge server viewerAccepted into cardState. */
-  const loadFeed = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadFeed = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
-      const response = await fetch("/api/events");
+      const response = await fetch("/api/events", { cache: "no-store" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Failed to load feed");
       setEvents(data.events);
@@ -68,17 +78,23 @@ export function FeedApp() {
         return next;
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load feed");
+      if (!options?.silent) {
+        setError(err instanceof Error ? err.message : "Failed to load feed");
+      }
     } finally {
-      setLoading(false);
+      if (!options?.silent) {
+        setLoading(false);
+      }
     }
   }, []);
 
   /** Load all events including passed ones (Admin tab). */
-  const loadAdminEvents = useCallback(async () => {
-    setAdminEventsLoading(true);
+  const loadAdminEvents = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setAdminEventsLoading(true);
+    }
     try {
-      const response = await fetch("/api/events?scope=all");
+      const response = await fetch("/api/events?scope=all", { cache: "no-store" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Failed to load events");
       setAdminEvents(data.events);
@@ -93,9 +109,13 @@ export function FeedApp() {
         return next;
       });
     } catch (err) {
-      setToast(err instanceof Error ? err.message : "Failed to load events");
+      if (!options?.silent) {
+        setToast(err instanceof Error ? err.message : "Failed to load events");
+      }
     } finally {
-      setAdminEventsLoading(false);
+      if (!options?.silent) {
+        setAdminEventsLoading(false);
+      }
     }
   }, []);
 
@@ -130,6 +150,29 @@ export function FeedApp() {
     setAdminEvents((prev) =>
       prev?.map((event) => (event.id === eventId ? updated : event)) ?? prev,
     );
+  }
+
+  /** Drop one event from all client state after backend confirms removal. */
+  function removeEventFromState(eventId: string) {
+    setEvents((prev) => prev.filter((event) => event.id !== eventId));
+    setAdminEvents((prev) =>
+      prev?.filter((event) => event.id !== eventId) ?? prev,
+    );
+    setCardState((prev) => {
+      const next = { ...prev };
+      delete next[eventId];
+      return next;
+    });
+    setPassedIds((prev) => prev.filter((id) => id !== eventId));
+    if (detailEvent?.id === eventId) setDetailEvent(null);
+  }
+
+  /** Reconcile UI with server lists after a mutation. */
+  async function syncEventsFromServer() {
+    await loadFeed({ silent: true });
+    if (adminEvents !== null) {
+      await loadAdminEvents({ silent: true });
+    }
   }
 
   /** Partition feed into New vs Past; apply calendar date filter and filter pills. */
@@ -286,29 +329,64 @@ export function FeedApp() {
 
   /** DELETE event — admin only; removes from shared feed for everyone. */
   async function handleDelete(eventId: string) {
-    if (!window.confirm("Delete this event from the shared feed for everyone?")) {
+    if (pendingDeleteIds[eventId]) return;
+
+    const localTitle =
+      events.find((event) => event.id === eventId)?.title ??
+      adminEvents?.find((event) => event.id === eventId)?.title ??
+      detailEvent?.id === eventId
+        ? detailEvent.title
+        : "Event";
+
+    if (
+      !window.confirm("Delete this event from the shared feed for everyone?")
+    ) {
       return;
     }
 
+    setPendingDeleteIds((prev) => ({ ...prev, [eventId]: true }));
+
     try {
-      const response = await fetch(`/api/events/${eventId}`, {
+      const response = await fetch(`/api/events/${encodeURIComponent(eventId)}`, {
         method: "DELETE",
+        cache: "no-store",
       });
-      const data = await response.json();
+      const data = (await response.json()) as {
+        error?: string;
+        title?: string | null;
+        deleted?: boolean;
+      };
 
       if (response.status === 401) {
         setConnectOpen(true);
         return;
       }
 
-      if (!response.ok) throw new Error(data.error ?? "Delete failed");
+      if (!response.ok) {
+        throw new Error(data.error ?? "Delete failed");
+      }
 
-      setEvents((prev) => prev.filter((event) => event.id !== eventId));
-      setAdminEvents((prev) => prev?.filter((event) => event.id !== eventId) ?? prev);
-      setToast("Event deleted");
+      const deletedTitle = data.title ?? localTitle;
+      setToast(`"${deletedTitle}" deleted`);
       if (detailEvent?.id === eventId) setDetailEvent(null);
+
+      setExitingEventIds((prev) => ({ ...prev, [eventId]: true }));
+      await wait(MOTION_MS);
+      removeEventFromState(eventId);
+      setExitingEventIds((prev) => {
+        const next = { ...prev };
+        delete next[eventId];
+        return next;
+      });
+      await syncEventsFromServer();
     } catch (err) {
       setToast(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setPendingDeleteIds((prev) => {
+        const next = { ...prev };
+        delete next[eventId];
+        return next;
+      });
     }
   }
 
@@ -321,6 +399,7 @@ export function FeedApp() {
             event={event}
             status={cardState[event.id] ?? "pending"}
             isAdmin={viewerIsAdmin}
+            isExiting={Boolean(exitingEventIds[event.id])}
             onAccept={() => performAccept(event.id)}
             onPass={() => handlePass(event.id)}
             onDelete={() => handleDelete(event.id)}
@@ -449,6 +528,7 @@ export function FeedApp() {
             <AdminEventCard
               key={event.id}
               event={event}
+              isExiting={Boolean(exitingEventIds[event.id])}
               onDelete={() => handleDelete(event.id)}
               onOpen={() => setDetailEvent(event)}
             />
@@ -541,6 +621,7 @@ export function FeedApp() {
               <CalendarEventList
                 events={acceptedEvents}
                 isAdmin={viewerIsAdmin}
+                exitingEventIds={exitingEventIds}
                 onDelete={handleDelete}
                 onSelectEvent={setDetailEvent}
               />
@@ -550,6 +631,7 @@ export function FeedApp() {
             <CalendarEventList
               events={acceptedEvents}
               isAdmin={viewerIsAdmin}
+              exitingEventIds={exitingEventIds}
               onDelete={handleDelete}
               onSelectEvent={setDetailEvent}
             />
@@ -571,6 +653,7 @@ export function FeedApp() {
             <CalendarEventList
               events={acceptedEvents}
               isAdmin={viewerIsAdmin}
+              exitingEventIds={exitingEventIds}
               onDelete={handleDelete}
               onSelectEvent={setDetailEvent}
             />

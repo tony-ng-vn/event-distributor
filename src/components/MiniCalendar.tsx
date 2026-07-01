@@ -114,11 +114,13 @@ export function CalendarEventList({
   onSelectEvent,
   isAdmin = false,
   onDelete,
+  exitingEventIds = {},
 }: {
   events: FeedEvent[];
   onSelectEvent?: (event: FeedEvent) => void;
   isAdmin?: boolean;
   onDelete?: (eventId: string) => void;
+  exitingEventIds?: Record<string, true>;
 }) {
   if (events.length === 0) {
     return (
@@ -133,7 +135,9 @@ export function CalendarEventList({
       {events.map((event) => (
         <div
           key={event.id}
-          className="glass-card relative overflow-hidden rounded-xl"
+          className={`glass-card relative overflow-hidden rounded-xl ${
+            exitingEventIds[event.id] ? "event-card-exiting" : ""
+          }`}
           data-testid={`calendar-event-${event.id}`}
         >
           {isAdmin && onDelete && (

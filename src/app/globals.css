@@ -188,4 +188,30 @@ body {
       color: var(--hover-decline-text);
     }
   }
+
+  .event-card-exiting {
+    opacity: 0;
+    transform: scale(0.98) translateY(-6px);
+    max-height: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-width: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--motion-duration) var(--motion-ease),
+      transform var(--motion-duration) var(--motion-ease),
+      max-height calc(var(--motion-duration) * 1.4) var(--motion-ease),
+      margin var(--motion-duration) var(--motion-ease),
+      padding var(--motion-duration) var(--motion-ease),
+      border-width var(--motion-duration) var(--motion-ease);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .event-card-exiting {
+      transition: none;
+    }
+  }
 }
