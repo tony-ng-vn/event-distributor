@@ -31,7 +31,7 @@ export async function syncClerkUser() {
     clerkUser.emailAddresses[0]?.emailAddress;
   if (!email) return null;
 
-  const name = clerkUser.fullName ?? clerkUser.firstName ?? null;
+  const clerkName = clerkUser.fullName ?? clerkUser.firstName ?? null;
   const image = clerkUser.imageUrl ?? null;
   const isAdmin = isAdminEmail(email);
   const db = getInsforgeAdmin();
@@ -45,6 +45,7 @@ export async function syncClerkUser() {
   if (existingError) throw new Error(existingError.message);
 
   if (existing) {
+    const name = existing.name?.trim() ? existing.name : clerkName;
     const { data: updated, error: updateError } = await db.database
       .from("users")
       .update({ email, name, image, is_admin: isAdmin })
@@ -63,7 +64,7 @@ export async function syncClerkUser() {
         id: newId(),
         clerk_id: clerkId,
         email,
-        name,
+        name: clerkName,
         image,
         is_admin: isAdmin,
       },
@@ -108,4 +109,56 @@ export async function requireViewerUserId(request?: Request): Promise<string> {
     throw new Error("Sign in required to view events");
   }
   return userId;
+}
+
+export type ViewerProfile = {
+  id: string;
+  email: string;
+  name: string | null;
+  image: string | null;
+};
+
+export async function getViewerProfile(userId: string): Promise<ViewerProfile> {
+  const db = getInsforgeAdmin();
+  const { data, error } = await db.database
+    .from("users")
+    .select("id, email, name, image")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("User not found");
+
+  return {
+    id: data.id as string,
+    email: data.email as string,
+    name: (data.name as string | null) ?? null,
+    image: (data.image as string | null) ?? null,
+  };
+}
+
+export async function updateViewerDisplayName(
+  userId: string,
+  rawName: string,
+): Promise<ViewerProfile> {
+  const name = rawName.trim();
+  if (!name) throw new Error("Name cannot be empty");
+  if (name.length > 80) throw new Error("Name is too long");
+
+  const db = getInsforgeAdmin();
+  const { data, error } = await db.database
+    .from("users")
+    .update({ name })
+    .eq("id", userId)
+    .select("id, email, name, image")
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return {
+    id: data.id as string,
+    email: data.email as string,
+    name: (data.name as string | null) ?? null,
+    image: (data.image as string | null) ?? null,
+  };
 }
