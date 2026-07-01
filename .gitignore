@@ -33,9 +33,36 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# insforge linked project (contains API key)
+.insforge/
+
+# database (legacy prisma sqlite — removed)
+/prisma/dev.db
+/prisma/test.db
+/prisma/e2e.db
+/prisma/*.db-journal
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# clerk configuration (can include secrets)
+/.clerk/
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf
