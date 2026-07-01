@@ -1,6 +1,27 @@
+/**
+ * Root layout — wraps every page.
+ *
+ * - ClerkProvider: sign-in/session for the whole app
+ * - Geist fonts + globals.css design tokens
+ * - metadata: browser tab title and SEO description
+ */
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+/** Match Clerk sign-in UI to our black/white Luma-style theme. */
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#0a0a0a",
+    colorText: "#0a0a0a",
+    colorBackground: "#ffffff",
+  },
+  elements: {
+    formButtonPrimary:
+      "rounded-full bg-foreground text-white hover:bg-foreground/90",
+  },
+} as const;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +34,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Event Distributor",
-  description: "Schedule events and distribute them to your audience across channels",
+  title: "Event Radar — Shared Luma Feed",
+  description:
+    "Browse shared Luma events and see who's going with your community.",
 };
 
 export default function RootLayout({
@@ -26,8 +48,20 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body
+        className="min-h-full flex flex-col font-sans"
+        suppressHydrationWarning
+      >
+        <ClerkProvider
+          appearance={clerkAppearance}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+        >
+          {children}
+        </ClerkProvider>
+      </body>
     </html>
   );
 }
