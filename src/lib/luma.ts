@@ -1,8 +1,8 @@
 /**
- * Luma URL parsing and event metadata extraction.
+ * Event URL parsing and metadata extraction.
  *
- * When someone pastes a lu.ma link, we fetch the HTML and pull out title, date,
- * cover image, etc. from JSON-LD and Open Graph tags (same data Luma puts in the page).
+ * Luma links use the same path as generic https URLs: fetch HTML and pull title,
+ * date, cover image, etc. from JSON-LD and Open Graph tags.
  *
  * LUMA_FETCH_MODE=mock returns fake data for local dev without network.
  *
@@ -25,7 +25,52 @@ export function isLumaUrl(urlString: string): boolean {
   }
 }
 
-/** Outbound link target for stored event URLs; null when missing or not Luma. */
+const BLOCKED_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1"]);
+
+function isPrivateIpv4(host: string): boolean {
+  const parts = host.split(".").map(Number);
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) {
+    return false;
+  }
+
+  const [a, b] = parts;
+  if (a === 10) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 127) return true;
+  if (a === 169 && b === 254) return true;
+  return false;
+}
+
+/** True for public https URLs safe to fetch server-side (blocks localhost/private IPs). */
+export function isEventSourceUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString.trim());
+    if (url.protocol !== "https:") return false;
+
+    const host = url.hostname.toLowerCase();
+    if (BLOCKED_HOSTS.has(host)) return false;
+    if (host.endsWith(".local")) return false;
+    if (isPrivateIpv4(host)) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Outbound link target for stored event URLs; null when missing or invalid. */
+export function resolveEventHref(
+  urlString: string | null | undefined,
+): string | null {
+  const trimmed = urlString?.trim();
+  if (!trimmed || !isEventSourceUrl(trimmed)) {
+    return null;
+  }
+  return trimmed;
+}
+
+/** @deprecated Use resolveEventHref — kept for callers that only need Luma links. */
 export function resolveLumaEventHref(
   urlString: string | null | undefined,
 ): string | null {
@@ -47,6 +92,9 @@ export function normalizeLumaUrl(urlString: string): string {
   }
   return url.toString().replace(/\/$/, "");
 }
+
+/** Alias for normalizeLumaUrl — works for Luma and generic event links. */
+export const normalizeSourceUrl = normalizeLumaUrl;
 
 export interface LumaMetadata {
   title: string;
@@ -223,13 +271,16 @@ function getMetaContent(html: string, property: string): string | null {
 }
 
 /** Main parser — tries JSON-LD Event schema, then og: meta tags. */
-export function parseLumaHtml(html: string, lumaUrl: string): LumaMetadata {
+export function parseEventHtml(html: string, sourceUrl: string): LumaMetadata {
   const jsonLd = parseJsonLdEvent(html);
+  const defaultTitle = isLumaUrl(sourceUrl)
+    ? "Untitled Luma Event"
+    : "Untitled Event";
   const title =
     jsonLd?.title ||
     getMetaContent(html, "og:title") ||
     getMetaContent(html, "twitter:title") ||
-    "Untitled Luma Event";
+    defaultTitle;
   const description =
     jsonLd?.description ||
     getMetaContent(html, "og:description") ||
@@ -238,7 +289,7 @@ export function parseLumaHtml(html: string, lumaUrl: string): LumaMetadata {
 
   const coverImageUrl = extractCoverImageUrl(
     html,
-    lumaUrl,
+    sourceUrl,
     jsonLd?.coverImageUrl,
   );
 
@@ -254,8 +305,12 @@ export function parseLumaHtml(html: string, lumaUrl: string): LumaMetadata {
     (Boolean(meetingUrl) ||
       /online|virtual|zoom/i.test(location + description));
 
+  const cleanedTitle = isLumaUrl(sourceUrl)
+    ? title.replace(/\s*[|\-–—]\s*Luma\s*$/i, "").trim()
+    : title.trim();
+
   return {
-    title: title.replace(/\s*[|\-–—]\s*Luma\s*$/i, "").trim(),
+    title: cleanedTitle,
     description,
     coverImageUrl,
     startAt,
@@ -267,13 +322,18 @@ export function parseLumaHtml(html: string, lumaUrl: string): LumaMetadata {
   };
 }
 
-/** Fetches lu.ma HTML (live) or returns MOCK_METADATA (mock mode). */
-export async function fetchLumaMetadata(lumaUrl: string): Promise<LumaMetadata> {
+/** @deprecated Use parseEventHtml */
+export function parseLumaHtml(html: string, lumaUrl: string): LumaMetadata {
+  return parseEventHtml(html, lumaUrl);
+}
+
+/** Fetches event page HTML (live) or returns MOCK_METADATA (mock mode). */
+export async function fetchEventMetadata(sourceUrl: string): Promise<LumaMetadata> {
   if (process.env.LUMA_FETCH_MODE === "mock") {
     return { ...MOCK_METADATA, startAt: new Date(MOCK_METADATA.startAt) };
   }
 
-  const response = await fetch(lumaUrl, {
+  const response = await fetch(sourceUrl, {
     headers: {
       "User-Agent": "EventDistributor/1.0 (+https://github.com/tony-ng-vn/event-distributor)",
       Accept: "text/html",
@@ -282,9 +342,14 @@ export async function fetchLumaMetadata(lumaUrl: string): Promise<LumaMetadata> 
   });
 
   if (!response.ok) {
-    throw new Error(`Could not fetch Luma page (${response.status})`);
+    throw new Error(`Could not fetch event page (${response.status})`);
   }
 
   const html = await response.text();
-  return parseLumaHtml(html, lumaUrl);
+  return parseEventHtml(html, sourceUrl);
+}
+
+/** @deprecated Use fetchEventMetadata */
+export async function fetchLumaMetadata(lumaUrl: string): Promise<LumaMetadata> {
+  return fetchEventMetadata(lumaUrl);
 }

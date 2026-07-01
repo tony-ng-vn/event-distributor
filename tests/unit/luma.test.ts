@@ -3,10 +3,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  isEventSourceUrl,
   isLumaUrl,
   normalizeLumaUrl,
+  normalizeSourceUrl,
+  parseEventHtml,
   parseLumaHtml,
-  resolveLumaEventHref,
+  resolveEventHref,
 } from "@/lib/luma";
 
 const fixturePath = join(process.cwd(), "tests/fixtures/luma-demo-head.html");
@@ -25,16 +28,65 @@ describe("luma URL helpers", () => {
     expect(normalizeLumaUrl("https://lu.ma/demo/")).toBe("https://lu.ma/demo");
   });
 
-  it("resolves outbound Luma links only for valid URLs", () => {
-    expect(resolveLumaEventHref("https://lu.ma/demo-event")).toBe(
+  it("accepts https event source URLs and rejects unsafe ones", () => {
+    expect(
+      isEventSourceUrl(
+        "https://www.anthropic.com/webinars/voice-and-intelligence",
+      ),
+    ).toBe(true);
+    expect(isEventSourceUrl("https://lu.ma/demo-event")).toBe(true);
+    expect(isEventSourceUrl("http://example.com/event")).toBe(false);
+    expect(isEventSourceUrl("javascript:alert(1)")).toBe(false);
+    expect(isEventSourceUrl("https://localhost/event")).toBe(false);
+    expect(isEventSourceUrl("https://127.0.0.1/event")).toBe(false);
+    expect(isEventSourceUrl("https://192.168.1.1/event")).toBe(false);
+    expect(isEventSourceUrl("not-a-url")).toBe(false);
+  });
+
+  it("normalizes generic source URLs for deduplication", () => {
+    expect(
+      normalizeSourceUrl(
+        "https://www.anthropic.com/webinars/demo?utm_medium=email#section",
+      ),
+    ).toBe("https://anthropic.com/webinars/demo");
+  });
+
+  it("resolves outbound links for any valid event source URL", () => {
+    expect(resolveEventHref("https://lu.ma/demo-event")).toBe(
       "https://lu.ma/demo-event",
     );
-    expect(resolveLumaEventHref("  https://lu.ma/demo-event  ")).toBe(
+    expect(resolveEventHref("  https://lu.ma/demo-event  ")).toBe(
       "https://lu.ma/demo-event",
     );
-    expect(resolveLumaEventHref("")).toBeNull();
-    expect(resolveLumaEventHref(null)).toBeNull();
-    expect(resolveLumaEventHref("https://example.com/event")).toBeNull();
+    expect(
+      resolveEventHref("https://www.anthropic.com/webinars/demo"),
+    ).toBe("https://www.anthropic.com/webinars/demo");
+    expect(resolveEventHref("")).toBeNull();
+    expect(resolveEventHref(null)).toBeNull();
+    expect(resolveEventHref("http://example.com/event")).toBeNull();
+    expect(resolveEventHref("https://localhost/event")).toBeNull();
+  });
+});
+
+describe("generic event HTML parsing", () => {
+  it("parses Open Graph metadata from non-Luma pages", () => {
+    const html = `
+      <html>
+        <head>
+          <meta property="og:title" content="Voice and Intelligence Webinar | Anthropic" />
+          <meta property="og:description" content="Live demos and best practices." />
+          <meta property="og:image" content="https://cdn.example.com/cover.png" />
+        </head>
+      </html>
+    `;
+
+    const metadata = parseEventHtml(
+      html,
+      "https://www.anthropic.com/webinars/voice-and-intelligence",
+    );
+    expect(metadata.title).toContain("Voice and Intelligence Webinar");
+    expect(metadata.description).toContain("Live demos");
+    expect(metadata.coverImageUrl).toBe("https://cdn.example.com/cover.png");
   });
 });
 
