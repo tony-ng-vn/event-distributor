@@ -30,10 +30,17 @@ export type FeedEvent = {
   viewerAccepted: boolean;
   /** True when the signed-in viewer has passed on this event. */
   viewerPassed: boolean;
+  /** User who ingested the event into the shared feed, if known. */
+  addedBy: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    email: string | null;
+  } | null;
 };
 
 /** Filter pills above the feed: all | pending | accepted */
 export type FeedFilter = "all" | "pending" | "accepted";
 
-/** Bottom nav on mobile: Feed | All Events | Calendar | My Events */
-export type MobileTab = "feed" | "all-events" | "calendar" | "mine";
+/** Bottom nav on mobile: Feed | Admin | Calendar | My Events */
+export type MobileTab = "feed" | "admin" | "calendar" | "mine";

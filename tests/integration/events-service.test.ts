@@ -100,6 +100,27 @@ describe("events service", () => {
     expect(anonFeed[0]?.viewerPassed).toBe(false);
   });
 
+  it("includes creator on feed events when added_by_user_id is set", async () => {
+    const creator = await createUser({
+      email: "creator@example.com",
+      name: "Creator User",
+    });
+    const event = await ingestLumaEvent(
+      "https://lu.ma/demo-ai-meetup",
+      creator.id,
+    );
+
+    expect(event.addedBy).toEqual({
+      id: creator.id,
+      name: "Creator User",
+      image: null,
+      email: "creator@example.com",
+    });
+
+    const feed = await listAllFeedEvents();
+    expect(feed[0]?.addedBy?.name).toBe("Creator User");
+  });
+
   it("listAllFeedEvents includes passed events with viewerPassed flag", async () => {
     const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
     const passer = await createUser({

@@ -23,6 +23,13 @@ export type AttendeeSummary = {
   image: string | null;
 };
 
+export type CreatorSummary = {
+  id: string;
+  name: string | null;
+  image: string | null;
+  email: string | null;
+};
+
 export type FeedEvent = {
   id: string;
   lumaUrl: string;
@@ -41,12 +48,14 @@ export type FeedEvent = {
   attendees: AttendeeSummary[];
   viewerAccepted: boolean;
   viewerPassed: boolean;
+  addedBy: CreatorSummary | null;
 };
 
 type InsforgeUser = {
   id: string;
   name: string | null;
   image: string | null;
+  email?: string | null;
 };
 
 type InsforgeAcceptRow = {
@@ -70,6 +79,7 @@ type InsforgeEventRow = {
   host_avatar_url: string | null;
   created_at: string;
   accepts: InsforgeAcceptRow[] | null;
+  added_by_user: InsforgeUser | InsforgeUser[] | null;
 };
 
 function normalizeUser(
@@ -77,6 +87,20 @@ function normalizeUser(
 ): InsforgeUser | null {
   if (!users) return null;
   return Array.isArray(users) ? (users[0] ?? null) : users;
+}
+
+function serializeCreator(
+  users: InsforgeUser | InsforgeUser[] | null | undefined,
+): CreatorSummary | null {
+  const user = normalizeUser(users);
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    name: user.name,
+    image: user.image,
+    email: user.email ?? null,
+  };
 }
 
 function serializeEvent(
@@ -114,11 +138,12 @@ function serializeEvent(
       ? attendees.some((a) => a.id === viewerUserId)
       : false,
     viewerPassed,
+    addedBy: serializeCreator(event.added_by_user),
   };
 }
 
 const eventSelect =
-  "*, accepts(id, accepted_at, users(id, name, image))";
+  "*, added_by_user:users!added_by_user_id(id, name, image, email), accepts(id, accepted_at, users(id, name, image))";
 
 async function fetchUpcomingEventRows() {
   const db = getInsforgeAdmin();
