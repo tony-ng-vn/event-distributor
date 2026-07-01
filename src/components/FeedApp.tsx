@@ -435,14 +435,14 @@ export function FeedApp() {
         >
           <p className="font-medium text-foreground">No events yet</p>
           <p className="mt-2 text-sm text-muted">
-            Paste a Luma link to share with your group.
+            Paste a link to share with your group.
           </p>
           <button
             type="button"
             onClick={() => setIngestOpen(true)}
             className="btn-primary mt-5"
           >
-            Add Luma link
+            Add link
           </button>
         </div>
       ) : visibleEventCount === 0 ? (
@@ -498,7 +498,7 @@ export function FeedApp() {
         <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
           <p className="font-medium text-foreground">No events yet</p>
           <p className="mt-2 text-sm text-muted">
-            Paste a Luma link to share with your group.
+            Paste a link to share with your group.
           </p>
         </div>
       ) : (
@@ -560,9 +560,9 @@ export function FeedApp() {
               className="btn-primary hidden sm:inline-flex"
               data-testid="add-luma-button"
             >
-              Add Luma link
+              Add link
             </button>
-            <AuthButton onNameUpdated={() => void syncEventsFromServer()} />
+            <AuthButton />
           </div>
         </div>
         <nav className="mx-auto hidden max-w-6xl gap-1 px-4 pb-0 lg:flex">
@@ -663,7 +663,7 @@ export function FeedApp() {
             +
           </span>
           <span className="text-sm text-muted">
-            Paste a Luma link to share with the group
+            Paste a link to share with the group
           </span>
         </button>
       </div>

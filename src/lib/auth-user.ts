@@ -45,7 +45,7 @@ export async function syncClerkUser() {
   if (existingError) throw new Error(existingError.message);
 
   if (existing) {
-    const name = existing.name?.trim() ? existing.name : clerkName;
+    const name = clerkName ?? existing.name;
     const { data: updated, error: updateError } = await db.database
       .from("users")
       .update({ email, name, image, is_admin: isAdmin })
@@ -111,59 +111,3 @@ export async function requireViewerUserId(request?: Request): Promise<string> {
   return userId;
 }
 
-export type ViewerProfile = {
-  id: string;
-  email: string;
-  name: string | null;
-  image: string | null;
-};
-
-export async function getViewerProfile(userId: string): Promise<ViewerProfile> {
-  const db = getInsforgeAdmin();
-  const { data, error } = await db.database
-    .from("users")
-    .select("id, email, name, image")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("User not found");
-
-  return {
-    id: data.id as string,
-    email: data.email as string,
-    name: (data.name as string | null) ?? null,
-    image: (data.image as string | null) ?? null,
-  };
-}
-
-export function normalizeDisplayName(rawName: string): string {
-  const name = rawName.trim();
-  if (!name) throw new Error("Name cannot be empty");
-  if (name.length > 80) throw new Error("Name is too long");
-  return name;
-}
-
-export async function updateViewerDisplayName(
-  userId: string,
-  rawName: string,
-): Promise<ViewerProfile> {
-  const name = normalizeDisplayName(rawName);
-
-  const db = getInsforgeAdmin();
-  const { data, error } = await db.database
-    .from("users")
-    .update({ name })
-    .eq("id", userId)
-    .select("id, email, name, image")
-    .single();
-
-  if (error) throw new Error(error.message);
-
-  return {
-    id: data.id as string,
-    email: data.email as string,
-    name: (data.name as string | null) ?? null,
-    image: (data.image as string | null) ?? null,
-  };
-}

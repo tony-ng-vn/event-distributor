@@ -6,14 +6,12 @@
  */
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import {
   Show,
   SignInButton,
   SignUpButton,
   UserButton,
 } from "@clerk/nextjs";
-import { EditDisplayNameModal } from "@/components/EditDisplayNameModal";
 
 /** Full-page card shown when the feed is for signed-in friends only. */
 export function SignInGate() {
@@ -41,8 +39,8 @@ export function SignInGate() {
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-muted">
             This feed is private to people in your group. Sign in to browse shared
-            Luma links, mark events you&apos;re interested in, and see who else
-            is planning to go. RSVP on Luma separately when you&apos;re ready.
+            event links, mark events you&apos;re interested in, and see who else
+            is planning to go. RSVP on the event page separately when you&apos;re ready.
           </p>
           <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
             <SignInButton mode="modal">
@@ -91,7 +89,7 @@ export function SignInPromptModal({
         </h2>
         <p className="mt-2 text-sm text-muted">
           Your name and avatar appear on the guest list so friends know who&apos;s
-          joining. RSVP on Luma separately when you&apos;re ready.
+          joining. RSVP on the event page separately when you&apos;re ready.
         </p>
         <div className="mt-6 flex gap-2">
           <button type="button" onClick={onClose} className="btn-secondary flex-1 py-3">
@@ -113,25 +111,7 @@ export function SignInPromptModal({
 }
 
 /** Header auth control — sign-in/sign-up when logged out, profile when signed in. */
-export function AuthButton({ onNameUpdated }: { onNameUpdated?: () => void }) {
-  const [editOpen, setEditOpen] = useState(false);
-  const [displayName, setDisplayName] = useState("");
-
-  const loadProfile = useCallback(async () => {
-    try {
-      const res = await fetch("/api/me");
-      if (!res.ok) return;
-      const data = (await res.json()) as { profile?: { name?: string | null } };
-      setDisplayName(data.profile?.name?.trim() ?? "");
-    } catch {
-      // Ignore — user can still open modal and retry save
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadProfile();
-  }, [loadProfile]);
-
+export function AuthButton() {
   return (
     <div className="flex items-center gap-2">
       <Show when="signed-out">
@@ -147,29 +127,8 @@ export function AuthButton({ onNameUpdated }: { onNameUpdated?: () => void }) {
         </SignUpButton>
       </Show>
       <Show when="signed-in">
-        <button
-          type="button"
-          onClick={() => {
-            void loadProfile();
-            setEditOpen(true);
-          }}
-          className="btn-secondary hidden whitespace-nowrap sm:inline-flex"
-          data-testid="edit-name-button"
-        >
-          Edit name
-        </button>
         <UserButton />
       </Show>
-
-      <EditDisplayNameModal
-        open={editOpen}
-        initialName={displayName}
-        onClose={() => setEditOpen(false)}
-        onSaved={(name) => {
-          setDisplayName(name);
-          onNameUpdated?.();
-        }}
-      />
     </div>
   );
 }
