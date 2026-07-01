@@ -1,3 +1,10 @@
+/**
+ * Date/time helpers for the feed, calendar, and event cards.
+ *
+ * No external libraries — plain JavaScript Date + toLocaleDateString.
+ * Used by: MiniCalendar, EventFeedCard, EventDetailSheet, FeedApp filters
+ */
+
 export function startOfDay(date: Date): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -40,6 +47,7 @@ export function getWeekStart(date: Date): Date {
   return addDays(d, -day);
 }
 
+/** 6 rows × 7 days = standard month calendar grid. */
 export function getMonthGrid(date: Date): Date[] {
   const first = startOfMonth(date);
   const gridStart = getWeekStart(first);
@@ -130,4 +138,37 @@ export function eventOccursOnDay(isoStart: string, isoEnd: string, day: Date): b
 
 export function isUpcoming(iso: string): boolean {
   return new Date(iso) >= new Date();
+}
+
+/** Card subtitle, e.g. "Wed, Jul 1, 5:30 PM". */
+export function formatCardDateTime(iso: string): string {
+  const date = new Date(iso);
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/** "Today, 5:30 PM" / "Tomorrow, …" when close; otherwise full date. */
+export function formatRelativeDateTime(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const tomorrow = addDays(startOfDay(now), 1);
+  const dayAfter = addDays(startOfDay(now), 2);
+
+  const time = formatTime(date);
+  if (isSameDay(date, now)) return `Today, ${time}`;
+  if (isSameDay(date, tomorrow)) return `Tomorrow, ${time}`;
+  if (isSameDay(date, dayAfter)) return `Day after tomorrow, ${time}`;
+
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
