@@ -3,15 +3,14 @@
  *
  * Data flow:
  *   mount → fetch /api/events → setEvents
- *   Accept → POST /api/events/[id]/accept → update card + guest list
- *   Pass   → POST /api/events/[id]/pass (signed-in) or sessionStorage (anonymous)
- *   Ingest → IngestModal → POST /api/events/ingest
+ *   Mutations (add/accept/pass/unpass/delete) → API → syncEventsFromServer()
+ *   Anonymous pass → sessionStorage only (no backend pass row)
  *
  * Responsive: 2-col feed on desktop, bottom tabs on mobile, calendar sidebar lg+.
  */
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { partitionFeedEvents } from "@/lib/feed-partition";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
 import { AuthButton, SignInPromptModal } from "@/components/AuthControls";
@@ -55,9 +54,16 @@ export function FeedApp() {
   const [viewerIsAdmin, setViewerIsAdmin] = useState(false);
   const [exitingEventIds, setExitingEventIds] = useState<Record<string, true>>({});
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Record<string, true>>({});
+  const adminEventsLoadedRef = useRef(false);
+
+  useEffect(() => {
+    adminEventsLoadedRef.current = adminEvents !== null;
+  }, [adminEvents]);
 
   /** Load shared feed from API; merge server viewerAccepted into cardState. */
-  const loadFeed = useCallback(async (options?: { silent?: boolean }) => {
+  const loadFeed = useCallback(async (options?: { silent?: boolean }): Promise<
+    FeedEvent[] | null
+  > => {
     if (!options?.silent) {
       setLoading(true);
       setError(null);
@@ -77,10 +83,12 @@ export function FeedApp() {
         }
         return next;
       });
+      return data.events as FeedEvent[];
     } catch (err) {
       if (!options?.silent) {
         setError(err instanceof Error ? err.message : "Failed to load feed");
       }
+      return null;
     } finally {
       if (!options?.silent) {
         setLoading(false);
@@ -89,7 +97,9 @@ export function FeedApp() {
   }, []);
 
   /** Load all events including passed ones (Admin tab). */
-  const loadAdminEvents = useCallback(async (options?: { silent?: boolean }) => {
+  const loadAdminEvents = useCallback(async (options?: { silent?: boolean }): Promise<
+    FeedEvent[] | null
+  > => {
     if (!options?.silent) {
       setAdminEventsLoading(true);
     }
@@ -108,10 +118,12 @@ export function FeedApp() {
         }
         return next;
       });
+      return data.events as FeedEvent[];
     } catch (err) {
       if (!options?.silent) {
         setToast(err instanceof Error ? err.message : "Failed to load events");
       }
+      return null;
     } finally {
       if (!options?.silent) {
         setAdminEventsLoading(false);
@@ -142,16 +154,6 @@ export function FeedApp() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  /** Update one event across feed and admin state. */
-  function patchEvent(eventId: string, updated: FeedEvent) {
-    setEvents((prev) =>
-      prev.map((event) => (event.id === eventId ? updated : event)),
-    );
-    setAdminEvents((prev) =>
-      prev?.map((event) => (event.id === eventId ? updated : event)) ?? prev,
-    );
-  }
-
   /** Drop one event from all client state after backend confirms removal. */
   function removeEventFromState(eventId: string) {
     setEvents((prev) => prev.filter((event) => event.id !== eventId));
@@ -168,10 +170,14 @@ export function FeedApp() {
   }
 
   /** Reconcile UI with server lists after a mutation. */
-  async function syncEventsFromServer() {
-    await loadFeed({ silent: true });
-    if (adminEvents !== null) {
+  async function syncEventsFromServer(detailEventId?: string | null) {
+    const feedEvents = await loadFeed({ silent: true });
+    if (adminEventsLoadedRef.current) {
       await loadAdminEvents({ silent: true });
+    }
+    if (detailEventId && feedEvents) {
+      const updated = feedEvents.find((event) => event.id === detailEventId);
+      if (updated) setDetailEvent(updated);
     }
   }
 
@@ -214,9 +220,10 @@ export function FeedApp() {
   async function performAccept(eventId: string) {
     setCardState((prev) => ({ ...prev, [eventId]: "accepting" }));
     try {
-      const response = await fetch(`/api/events/${eventId}/accept`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/events/${encodeURIComponent(eventId)}/accept`,
+        { method: "POST", cache: "no-store" },
+      );
       const data = await response.json();
 
       if (response.status === 401) {
@@ -228,60 +235,41 @@ export function FeedApp() {
 
       if (!response.ok) throw new Error(data.error ?? "Accept failed");
 
-      patchEvent(eventId, data.event);
-      setCardState((prev) => ({ ...prev, [eventId]: "accepted" }));
-      setEvents((prev) => {
-        const exists = prev.some((event) => event.id === eventId);
-        if (exists) {
-          return prev.map((event) => (event.id === eventId ? data.event : event));
-        }
-        return [...prev, data.event].sort(
-          (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
-        );
-      });
       setToast("You're going");
-      if (detailEvent?.id === eventId) setDetailEvent(data.event);
+      await syncEventsFromServer(
+        detailEvent?.id === eventId ? eventId : null,
+      );
     } catch (err) {
       setCardState((prev) => ({ ...prev, [eventId]: "pending" }));
       setToast(err instanceof Error ? err.message : "Accept failed");
     }
   }
 
-  /** Hide event from viewer feed — server sync when signed in, sessionStorage otherwise. */
+  /** Mark event passed — server sync when signed in, sessionStorage otherwise. */
   async function handlePass(eventId: string) {
     try {
-      const response = await fetch(`/api/events/${eventId}/pass`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/events/${encodeURIComponent(eventId)}/pass`,
+        { method: "POST", cache: "no-store" },
+      );
 
       if (response.status === 401) {
         passEvent(eventId);
         setPassedIds(getPassedEventIds());
-      } else if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error ?? "Pass failed");
-      } else {
-        setEvents((prev) =>
-          prev.map((event) =>
-            event.id === eventId ? { ...event, viewerPassed: true } : event,
-          ),
-        );
-        setAdminEvents((prev) =>
-          prev?.map((event) =>
-            event.id === eventId
-              ? { ...event, viewerPassed: true }
-              : event,
-          ) ?? prev,
-        );
+        setCardState((prev) => ({ ...prev, [eventId]: "passed" }));
+        setToast("Passed · Moved to past events");
+        return;
       }
 
-      setCardState((prev) => ({ ...prev, [eventId]: "passed" }));
-      setToast("Passed · Moved to past events");
-      if (detailEvent?.id === eventId) {
-        setDetailEvent((prev) =>
-          prev ? { ...prev, viewerPassed: true } : prev,
-        );
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error ?? "Pass failed");
       }
+
+      setToast("Passed · Moved to past events");
+      await syncEventsFromServer(
+        detailEvent?.id === eventId ? eventId : null,
+      );
     } catch (err) {
       setToast(err instanceof Error ? err.message : "Pass failed");
     }
@@ -290,9 +278,10 @@ export function FeedApp() {
   /** Restore a passed event to the viewer feed. */
   async function handleUnpass(eventId: string) {
     try {
-      const response = await fetch(`/api/events/${eventId}/pass`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/events/${encodeURIComponent(eventId)}/pass`,
+        { method: "DELETE", cache: "no-store" },
+      );
 
       if (response.status === 401) {
         setConnectOpen(true);
@@ -304,24 +293,10 @@ export function FeedApp() {
         throw new Error(data.error ?? "Undo pass failed");
       }
 
-      setAdminEvents((prev) => {
-        if (!prev) return prev;
-        return prev.map((event) =>
-          event.id === eventId ? { ...event, viewerPassed: false } : event,
-        );
-      });
-      setEvents((prev) =>
-        prev.map((event) =>
-          event.id === eventId ? { ...event, viewerPassed: false } : event,
-        ),
-      );
-      setCardState((prev) => ({ ...prev, [eventId]: "pending" }));
       setToast("Pass undone · Back in your feed");
-      if (detailEvent?.id === eventId) {
-        setDetailEvent((prev) =>
-          prev ? { ...prev, viewerPassed: false } : prev,
-        );
-      }
+      await syncEventsFromServer(
+        detailEvent?.id === eventId ? eventId : null,
+      );
     } catch (err) {
       setToast(err instanceof Error ? err.message : "Undo pass failed");
     }
@@ -702,23 +677,9 @@ export function FeedApp() {
       <IngestModal
         open={ingestOpen}
         onClose={() => setIngestOpen(false)}
-        onAdded={(event) => {
-          const withFlags = { ...event, viewerPassed: false };
-          setEvents((prev) =>
-            [...prev, withFlags].sort(
-              (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
-            ),
-          );
-          setAdminEvents((prev) =>
-            prev
-              ? [...prev, withFlags].sort(
-                  (a, b) =>
-                    new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
-                )
-              : prev,
-          );
-          setCardState((prev) => ({ ...prev, [event.id]: "pending" }));
+        onAdded={async () => {
           setToast("Event added to the shared feed");
+          await syncEventsFromServer();
         }}
       />
 
