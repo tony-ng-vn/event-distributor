@@ -17,6 +17,7 @@ import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
 import { AuthButton, SignInPromptModal } from "@/components/AuthControls";
 import { CalendarEventList, MiniCalendar } from "@/components/MiniCalendar";
 import { AdminEventCard } from "@/components/AdminEventCard";
+import { EventDetailSheet } from "@/components/EventDetailSheet";
 import { EventFeedCard } from "@/components/EventFeedCard";
 import { FeedSkeleton } from "@/components/FeedSkeleton";
 import { FeedSummary } from "@/components/FeedSummary";
@@ -32,8 +33,8 @@ export function FeedApp() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FeedFilter>("all");
   const [activeTab, setActiveTab] = useState<MobileTab>("feed");
-  const [allEvents, setAllEvents] = useState<FeedEvent[] | null>(null);
-  const [allEventsLoading, setAllEventsLoading] = useState(false);
+  const [adminEvents, setAdminEvents] = useState<FeedEvent[] | null>(null);
+  const [adminEventsLoading, setAdminEventsLoading] = useState(false);
   const [passedIds, setPassedIds] = useState<string[]>([]);
   const [cardState, setCardState] = useState<CardState>({});
   const [ingestOpen, setIngestOpen] = useState(false);
@@ -73,14 +74,14 @@ export function FeedApp() {
     }
   }, []);
 
-  /** Load all events including passed ones (All Events tab). */
-  const loadAllEvents = useCallback(async () => {
-    setAllEventsLoading(true);
+  /** Load all events including passed ones (Admin tab). */
+  const loadAdminEvents = useCallback(async () => {
+    setAdminEventsLoading(true);
     try {
       const response = await fetch("/api/events?scope=all");
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Failed to load events");
-      setAllEvents(data.events);
+      setAdminEvents(data.events);
       setViewerIsAdmin(data.viewerIsAdmin === true);
       setCardState((prev) => {
         const next = { ...prev };
@@ -94,15 +95,21 @@ export function FeedApp() {
     } catch (err) {
       setToast(err instanceof Error ? err.message : "Failed to load events");
     } finally {
-      setAllEventsLoading(false);
+      setAdminEventsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (activeTab === "all-events" && allEvents === null && !allEventsLoading) {
-      void loadAllEvents();
+    if (activeTab === "admin" && adminEvents === null && !adminEventsLoading) {
+      void loadAdminEvents();
     }
-  }, [activeTab, allEvents, allEventsLoading, loadAllEvents]);
+  }, [activeTab, adminEvents, adminEventsLoading, loadAdminEvents]);
+
+  useEffect(() => {
+    if (activeTab === "admin" && !viewerIsAdmin) {
+      setActiveTab("feed");
+    }
+  }, [activeTab, viewerIsAdmin]);
 
   useEffect(() => {
     loadFeed();
@@ -115,12 +122,12 @@ export function FeedApp() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  /** Update one event across feed and all-events state. */
+  /** Update one event across feed and admin state. */
   function patchEvent(eventId: string, updated: FeedEvent) {
     setEvents((prev) =>
       prev.map((event) => (event.id === eventId ? updated : event)),
     );
-    setAllEvents((prev) =>
+    setAdminEvents((prev) =>
       prev?.map((event) => (event.id === eventId ? updated : event)) ?? prev,
     );
   }
@@ -216,7 +223,7 @@ export function FeedApp() {
             event.id === eventId ? { ...event, viewerPassed: true } : event,
           ),
         );
-        setAllEvents((prev) =>
+        setAdminEvents((prev) =>
           prev?.map((event) =>
             event.id === eventId
               ? { ...event, viewerPassed: true }
@@ -254,7 +261,7 @@ export function FeedApp() {
         throw new Error(data.error ?? "Undo pass failed");
       }
 
-      setAllEvents((prev) => {
+      setAdminEvents((prev) => {
         if (!prev) return prev;
         return prev.map((event) =>
           event.id === eventId ? { ...event, viewerPassed: false } : event,
@@ -297,7 +304,7 @@ export function FeedApp() {
       if (!response.ok) throw new Error(data.error ?? "Delete failed");
 
       setEvents((prev) => prev.filter((event) => event.id !== eventId));
-      setAllEvents((prev) => prev?.filter((event) => event.id !== eventId) ?? prev);
+      setAdminEvents((prev) => prev?.filter((event) => event.id !== eventId) ?? prev);
       setToast("Event deleted");
       if (detailEvent?.id === eventId) setDetailEvent(null);
     } catch (err) {
@@ -414,22 +421,22 @@ export function FeedApp() {
     </div>
   );
 
-  const allEventsContent = (
-    <div className="space-y-4" data-testid="all-events-tab">
+  const adminContent = (
+    <div className="space-y-4" data-testid="admin-tab">
       <div>
         <p className="text-sm font-medium text-foreground">
-          {allEventsLoading
+          {adminEventsLoading
             ? "Loading events..."
-            : `${allEvents?.length ?? 0} event${allEvents?.length === 1 ? "" : "s"}`}
+            : `${adminEvents?.length ?? 0} event${adminEvents?.length === 1 ? "" : "s"}`}
         </p>
         <p className="text-sm text-muted">
-          Every shared event, including ones you passed on
+          Who added each event and who&apos;s going
         </p>
       </div>
 
-      {allEventsLoading ? (
+      {adminEventsLoading ? (
         <FeedSkeleton />
-      ) : !allEvents || allEvents.length === 0 ? (
+      ) : !adminEvents || adminEvents.length === 0 ? (
         <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
           <p className="font-medium text-foreground">No events yet</p>
           <p className="mt-2 text-sm text-muted">
@@ -438,16 +445,10 @@ export function FeedApp() {
         </div>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
-          {allEvents.map((event) => (
-            <EventFeedCard
+          {adminEvents.map((event) => (
+            <AdminEventCard
               key={event.id}
               event={event}
-              status={cardState[event.id] ?? "pending"}
-              showPassedActions
-              isAdmin={viewerIsAdmin}
-              onAccept={() => performAccept(event.id)}
-              onPass={() => handlePass(event.id)}
-              onUnpass={() => handleUnpass(event.id)}
               onDelete={() => handleDelete(event.id)}
               onOpen={() => setDetailEvent(event)}
             />
@@ -457,14 +458,16 @@ export function FeedApp() {
     </div>
   );
 
-  const mainTabs = [
-    ["feed", "Feed"],
-    ["all-events", "All Events"],
-  ] as const;
+  const mainTabs = viewerIsAdmin
+    ? ([
+        ["feed", "Feed"],
+        ["admin", "Admin"],
+      ] as const)
+    : ([["feed", "Feed"]] as const);
 
   const mobileTabs = [
     ["feed", "Feed"],
-    ["all-events", "All Events"],
+    ...(viewerIsAdmin ? ([["admin", "Admin"]] as const) : []),
     ["calendar", "Calendar"],
     ["mine", "My Events"],
   ] as const;
@@ -515,10 +518,8 @@ export function FeedApp() {
           {feedContent}
         </section>
 
-        <section
-          className={activeTab === "all-events" ? "block" : "hidden lg:hidden"}
-        >
-          {allEventsContent}
+        <section className={activeTab === "admin" ? "block" : "hidden lg:hidden"}>
+          {adminContent}
         </section>
 
         <section
@@ -594,7 +595,11 @@ export function FeedApp() {
       </div>
 
       <nav className="glass-header fixed inset-x-0 bottom-0 z-30 lg:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-4">
+        <div
+          className={`mx-auto grid max-w-lg ${
+            viewerIsAdmin ? "grid-cols-4" : "grid-cols-3"
+          }`}
+        >
           {mobileTabs.map(([tab, label]) => (
             <button
               key={tab}
@@ -621,7 +626,7 @@ export function FeedApp() {
               (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
             ),
           );
-          setAllEvents((prev) =>
+          setAdminEvents((prev) =>
             prev
               ? [...prev, withFlags].sort(
                   (a, b) =>
@@ -642,7 +647,7 @@ export function FeedApp() {
         onUnpass={() => detailEvent && handleUnpass(detailEvent.id)}
         onDelete={() => detailEvent && handleDelete(detailEvent.id)}
         isAdmin={viewerIsAdmin}
-        showPassedActions={activeTab === "all-events"}
+        showPassedActions={activeTab === "admin"}
         accepted={
           detailEvent
             ? detailEvent.viewerAccepted || cardState[detailEvent.id] === "accepted"
