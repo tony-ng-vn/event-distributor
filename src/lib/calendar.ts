@@ -36,7 +36,7 @@ export interface CalendarSyncResult {
 export function buildCalendarEventPayload(event: CalendarEvent, user: CalendarUser) {
   return {
     summary: event.title,
-    description: `${event.description}\n\nView on Luma: ${event.lumaUrl}`,
+    description: `${event.description}\n\nEvent link: ${event.lumaUrl}`,
     location: event.isOnline
       ? (event.meetingUrl ?? "Online")
       : event.location || undefined,
