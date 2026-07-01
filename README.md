@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Event Radar
 
-## Getting Started
+Shared Luma event feed — paste Luma links, see who's going, and mark events you're joining.
 
-First, run the development server:
+## Features
+
+- **Shared feed** — one global dashboard of upcoming Luma events
+- **Luma URL ingest** — paste `lu.ma` links; metadata fetched via Open Graph
+- **Accept / Pass** — accept shows you on the guest list; pass hides locally only
+- **Who's going** — avatar stack + count from accept records
+- **Clerk auth** — sign up / sign in for guest list identity (RSVP on Luma separately)
+- **Responsive UI** — social feed layout, mobile tabs (Feed / Calendar / My Events)
+
+## Quick start
 
 ```bash
+npm install
+npx @insforge/cli link --project-id <your-project-id>   # once per machine
+cp .env.example .env.local   # add Clerk + InsForge keys
+npm run db:migrate
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env.local`:
 
-## Learn More
+| Variable | Description |
+|----------|-------------|
+| `INSFORGE_URL` / `INSFORGE_API_KEY` | InsForge backend (server-only admin key) |
+| `NEXT_PUBLIC_INSFORGE_URL` / `NEXT_PUBLIC_INSFORGE_ANON_KEY` | InsForge public client config |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
+| `CLERK_SECRET_KEY` | Clerk secret key |
+| `NEXT_PUBLIC_CLERK_*_URL` | Sign-in/up paths (defaults in `.env.example`) |
+| `LUMA_FETCH_MODE` | `mock` for local dev; `live` in production |
 
-To learn more about Next.js, take a look at the following resources:
+E2E variables (`E2E_TEST`, `E2E_TEST_SECRET`) are injected by Playwright — not needed for daily dev.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Production
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See **[docs/deploy/production.md](docs/deploy/production.md)** — Clerk + InsForge + Vercel checklist for sharing with friends.
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev          # Start dev server
+npm run build        # Production build
+npm test             # Integration tests (Vitest)
+npm run test:e2e     # E2E tests (Playwright)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Docs
+
+- [Production deploy](docs/deploy/production.md)
+- [PRD](docs/prd/shared-event-feed-mvp.md)
+- [ADR-0001](docs/adr/0001-shared-luma-event-feed-architecture.md)
+- [GitHub Issue #1](https://github.com/tony-ng-vn/event-distributor/issues/1)
+
+## Architecture
+
+- **Next.js App Router** + **InsForge Postgres** + **Clerk**
+- **Event API** (`/api/events`, `/api/events/ingest`, `/api/events/[id]/accept`) as the shared-state boundary
+- Client-only pass tracking via `sessionStorage`
