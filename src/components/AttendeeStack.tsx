@@ -1,10 +1,11 @@
 /**
- * Overlapping avatar circles + optional "7 going" or "Maya, Jordan and 5 others" text.
- *
- * Used inside EventFeedCard (showSocialCopy) and EventDetailSheet (showCount default).
+ * Overlapping avatar circles + optional "7 interested" social copy.
+ * When interactive, opens a modal with the full interested list.
  */
 "use client";
 
+import { useState } from "react";
+import { AttendeeListModal } from "@/components/AttendeeListModal";
 import { getAttendeeInitials } from "@/lib/attendees";
 import type { FeedEvent } from "@/types/feed";
 
@@ -24,13 +25,18 @@ export function AttendeeStack({
   size = "md",
   showCount = true,
   showSocialCopy = false,
+  interactive = false,
+  eventTitle = "Event",
 }: {
   attendees: FeedEvent["attendees"];
   acceptCount: number;
   size?: "sm" | "md";
   showCount?: boolean;
   showSocialCopy?: boolean;
+  interactive?: boolean;
+  eventTitle?: string;
 }) {
+  const [listOpen, setListOpen] = useState(false);
   const avatarSize = size === "sm" ? "h-7 w-7 text-[10px]" : "h-8 w-8 text-[11px]";
 
   if (acceptCount === 0) {
@@ -43,6 +49,7 @@ export function AttendeeStack({
 
   const visible = attendees.slice(0, 4);
   const overflow = acceptCount - visible.length;
+  const canOpenList = interactive && acceptCount > 0;
 
   function renderCaption() {
     if (showSocialCopy) {
@@ -90,8 +97,8 @@ export function AttendeeStack({
     return null;
   }
 
-  return (
-    <div className="flex items-center gap-2.5" data-testid="attendee-stack">
+  const content = (
+    <>
       <div className="flex -space-x-2">
         {visible.map((attendee, index) => (
           <span
@@ -112,12 +119,42 @@ export function AttendeeStack({
           </span>
         ))}
         {overflow > 0 && (
-          <span className={`inline-flex ${avatarSize} items-center justify-center rounded-full border-2 border-surface bg-surface-muted text-[10px] font-semibold text-muted`}>
+          <span
+            className={`inline-flex ${avatarSize} items-center justify-center rounded-full border-2 border-surface bg-surface-muted text-[10px] font-semibold text-muted`}
+          >
             +{overflow}
           </span>
         )}
       </div>
       {renderCaption()}
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {canOpenList ? (
+        <button
+          type="button"
+          onClick={() => setListOpen(true)}
+          className="flex w-full items-center gap-2.5 rounded-lg text-left transition hover:opacity-90"
+          aria-label={`See who is interested in ${eventTitle}`}
+          data-testid="attendee-stack-button"
+        >
+          {content}
+        </button>
+      ) : (
+        <div className="flex items-center gap-2.5" data-testid="attendee-stack">
+          {content}
+        </div>
+      )}
+
+      <AttendeeListModal
+        open={listOpen}
+        onClose={() => setListOpen(false)}
+        eventTitle={eventTitle}
+        attendees={attendees}
+        acceptCount={acceptCount}
+      />
+    </>
   );
 }
