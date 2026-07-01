@@ -1,5 +1,5 @@
 /**
- * Vitest global setup — loads InsForge credentials for integration tests.
+ * Integration test setup — loads InsForge credentials.
  */
 import { beforeAll } from "vitest";
 import { existsSync, readFileSync } from "node:fs";

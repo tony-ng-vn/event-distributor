@@ -159,7 +159,7 @@ function parseJsonLdEvent(html: string): Partial<LumaMetadata> | null {
 
       const location = event.location as Record<string, unknown> | string | undefined;
       let locationStr = "";
-      let isOnline = false;
+      const isOnline = false;
       let meetingUrl: string | null = null;
 
       if (typeof location === "string") {

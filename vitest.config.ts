@@ -1,16 +1,36 @@
-/** Vitest config — unit + integration tests under tests/, @ alias → src/ */
+/** Vitest config — unit + integration test projects under tests/, @ alias → src/ */
 import { defineConfig } from "vitest/config";
 import path from "node:path";
 
 export default defineConfig({
   test: {
-    environment: "node",
-    setupFiles: ["./tests/setup.ts"],
-    include: ["tests/**/*.test.ts"],
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    projects: [
+      {
+        test: {
+          name: "unit",
+          environment: "node",
+          setupFiles: ["./tests/setup.unit.ts"],
+          include: ["tests/unit/**/*.test.ts"],
+        },
+        resolve: {
+          alias: {
+            "@": path.resolve(__dirname, "./src"),
+          },
+        },
+      },
+      {
+        test: {
+          name: "integration",
+          environment: "node",
+          setupFiles: ["./tests/setup.integration.ts"],
+          include: ["tests/integration/**/*.test.ts"],
+        },
+        resolve: {
+          alias: {
+            "@": path.resolve(__dirname, "./src"),
+          },
+        },
+      },
+    ],
   },
 });

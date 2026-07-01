@@ -47,9 +47,6 @@ export function FeedApp() {
   const [calendarDate, setCalendarDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [connectOpen, setConnectOpen] = useState(false);
-  const [pendingAcceptEventId, setPendingAcceptEventId] = useState<string | null>(
-    null,
-  );
   const [toast, setToast] = useState<string | null>(null);
   const [viewerIsAdmin, setViewerIsAdmin] = useState(false);
   const [exitingEventIds, setExitingEventIds] = useState<Record<string, true>>({});
@@ -228,7 +225,6 @@ export function FeedApp() {
 
       if (response.status === 401) {
         setCardState((prev) => ({ ...prev, [eventId]: "pending" }));
-        setPendingAcceptEventId(eventId);
         setConnectOpen(true);
         return;
       }
@@ -705,10 +701,7 @@ export function FeedApp() {
 
       <SignInPromptModal
         open={connectOpen}
-        onClose={() => {
-          setConnectOpen(false);
-          setPendingAcceptEventId(null);
-        }}
+        onClose={() => setConnectOpen(false)}
       />
 
       {toast && (
