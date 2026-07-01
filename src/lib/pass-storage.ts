@@ -4,7 +4,7 @@
  * Signed-in users persist passes server-side via POST /api/events/[id]/pass.
  * Anonymous users hide events locally until the browser tab closes.
  *
- * Used by: FeedApp (filter visible events when not signed in)
+ * Used by: FeedApp (anonymous pass → Past events section)
  */
 const STORAGE_KEY = "event-distributor-passed";
 

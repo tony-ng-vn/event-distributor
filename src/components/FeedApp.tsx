@@ -12,12 +12,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { isSameDay } from "@/lib/dates";
 import { partitionFeedEvents } from "@/lib/feed-partition";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
 import { AuthButton, SignInPromptModal } from "@/components/AuthControls";
 import { CalendarEventList, MiniCalendar } from "@/components/MiniCalendar";
-import { EventDetailSheet } from "@/components/EventDetailSheet";
+import { AdminEventCard } from "@/components/AdminEventCard";
 import { EventFeedCard } from "@/components/EventFeedCard";
 import { FeedSkeleton } from "@/components/FeedSkeleton";
 import { FeedSummary } from "@/components/FeedSummary";
@@ -306,6 +305,25 @@ export function FeedApp() {
     }
   }
 
+  function renderFeedCards(sectionEvents: FeedEvent[]) {
+    return (
+      <div className="grid gap-3 lg:grid-cols-2">
+        {sectionEvents.map((event) => (
+          <EventFeedCard
+            key={event.id}
+            event={event}
+            status={cardState[event.id] ?? "pending"}
+            isAdmin={viewerIsAdmin}
+            onAccept={() => performAccept(event.id)}
+            onPass={() => handlePass(event.id)}
+            onDelete={() => handleDelete(event.id)}
+            onOpen={() => setDetailEvent(event)}
+          />
+        ))}
+      </div>
+    );
+  }
+
   const feedContent = (
     <div className="space-y-4">
       {!loading && summaryEvents.length > 0 && (
@@ -317,7 +335,7 @@ export function FeedApp() {
           <p className="text-sm font-medium text-foreground">
             {loading
               ? "Loading events..."
-              : `${visibleEvents.length} event${visibleEvents.length === 1 ? "" : "s"}`}
+              : `${visibleEventCount} event${visibleEventCount === 1 ? "" : "s"}`}
           </p>
           {!loading && pendingCount > 0 && (
             <p className="text-sm text-muted">
@@ -362,7 +380,7 @@ export function FeedApp() {
             Add Luma link
           </button>
         </div>
-      ) : visibleEvents.length === 0 ? (
+      ) : visibleEventCount === 0 ? (
         <div
           className="glass-card rounded-2xl p-10 text-center"
           data-testid="caught-up"
@@ -373,19 +391,24 @@ export function FeedApp() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {visibleEvents.map((event) => (
-            <EventFeedCard
-              key={event.id}
-              event={event}
-              status={cardState[event.id] ?? "pending"}
-              isAdmin={viewerIsAdmin}
-              onAccept={() => performAccept(event.id)}
-              onPass={() => handlePass(event.id)}
-              onDelete={() => handleDelete(event.id)}
-              onOpen={() => setDetailEvent(event)}
-            />
-          ))}
+        <div className="space-y-6">
+          {newEvents.length > 0 && (
+            <section data-testid="feed-new-events">
+              <h2 className="mb-3 text-[0.6875rem] font-medium uppercase tracking-wider text-muted">
+                New events
+              </h2>
+              {renderFeedCards(newEvents)}
+            </section>
+          )}
+
+          {pastEvents.length > 0 && (
+            <section data-testid="feed-past-events">
+              <h2 className="mb-3 text-[0.6875rem] font-medium uppercase tracking-wider text-muted">
+                Past events
+              </h2>
+              {renderFeedCards(pastEvents)}
+            </section>
+          )}
         </div>
       )}
     </div>
