@@ -309,9 +309,8 @@ export function FeedApp() {
     const localTitle =
       events.find((event) => event.id === eventId)?.title ??
       adminEvents?.find((event) => event.id === eventId)?.title ??
-      detailEvent?.id === eventId
-        ? detailEvent.title
-        : "Event";
+      (detailEvent?.id === eventId ? detailEvent.title : null) ??
+      "Event";
 
     if (
       !window.confirm("Delete this event from the shared feed for everyone?")
