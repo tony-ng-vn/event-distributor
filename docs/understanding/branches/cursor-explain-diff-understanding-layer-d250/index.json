@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-07-02T17:19:37.626Z",
+  "branch": "cursor/explain-diff-understanding-layer-d250",
+  "branchSlug": "cursor-explain-diff-understanding-layer-d250",
+  "base": "main",
+  "commitCount": 4,
+  "pendingExplainers": [
+    "64f3c9a",
+    "cc1f952",
+    "daabbfa",
+    "b744660"
+  ],
+  "entries": [
+    {
+      "sequence": 1,
+      "sha": "64f3c9a",
+      "fullSha": "64f3c9ab3622acdecfbb0a08061435ddc2735e45",
+      "summary": "Add explain-diff and explain-micro-world agent skills",
+      "tier": "full",
+      "tierSuggested": "full",
+      "tierReason": "287 lines, 2 file(s)",
+      "linesChanged": 287,
+      "filesChanged": 2,
+      "explainerDir": null,
+      "explainerPath": null,
+      "explainerFormat": null,
+      "needsExplainer": true
+    },
+    {
+      "sequence": 2,
+      "sha": "cc1f952",
+      "fullSha": "cc1f952ecc9737e18d06b5bdb6a004fcf5db59c0",
+      "summary": "Add understanding-layer workflow rule and documentation",
+      "tier": "full",
+      "tierSuggested": "full",
+      "tierReason": "172 lines, 5 file(s)",
+      "linesChanged": 172,
+      "filesChanged": 5,
+      "explainerDir": null,
+      "explainerPath": null,
+      "explainerFormat": null,
+      "needsExplainer": true
+    },
+    {
+      "sequence": 3,
+      "sha": "daabbfa",
+      "fullSha": "daabbfacdc8c663fdc3952c1399e3e9b4a610318",
+      "summary": "Add explainer templates and understanding-diff helper script",
+      "tier": "full",
+      "tierSuggested": "full",
+      "tierReason": "712 lines, 6 file(s)",
+      "linesChanged": 712,
+      "filesChanged": 6,
+      "explainerDir": null,
+      "explainerPath": null,
+      "explainerFormat": null,
+      "needsExplainer": true
+    },
+    {
+      "sequence": 4,
+      "sha": "b744660",
+      "fullSha": "b74466001eb612535f95907571c7d56f8ea2ebd2",
+      "summary": "Add sample PR explainer demonstrating the understanding layer",
+      "tier": "full",
+      "tierSuggested": "full",
+      "tierReason": "455 lines, 4 file(s)",
+      "linesChanged": 455,
+      "filesChanged": 4,
+      "explainerDir": null,
+      "explainerPath": null,
+      "explainerFormat": null,
+      "needsExplainer": true
+    }
+  ]
+}

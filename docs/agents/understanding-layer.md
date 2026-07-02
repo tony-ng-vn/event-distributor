@@ -1,78 +1,92 @@
 # Understanding layer
 
-How humans stay in the loop while agents ship code — explainers, quizzes, and micro-worlds.
+How humans stay in the loop while agents ship code — explainers, quizzes, micro-worlds, and a clear **reading order**.
 
 ## Problem
 
-Long agent runs produce large diffs. Raw `git diff` is hard to review, easy to skim without understanding, and impossible to "quiz yourself" on. Context compounds across commits.
+Long agent runs produce many commits. Raw `git diff` is hard to review. You need incremental teaching docs — but not an essay for every typo.
 
 ## Solution
 
-An **understanding layer** generated **incrementally**:
+One **`understanding` skill bundle** (not a background rule) runs the full pipeline when you checkpoint or finish substantive work:
 
-| When | What | Skill |
-|------|------|-------|
-| Each focused commit | Literate diff + quiz (+ optional micro-world proposal) | `explain-diff` |
-| Hands-on exploration needed | Interactive playground | `explain-micro-world` |
-| PR ready for review | Roll-up explainer linking commit docs | `explain-diff` |
+| Step | What |
+|------|------|
+| Classify commits | `skip` · `light` · `full` per [commit policy](.cursor/skills/understanding/commit-policy.md) |
+| Write explainers | Literate diff + quiz for light/full only |
+| Reading order | Chronological table so many docs stay navigable |
+| Micro-worlds | Optional; propose → human picks → build |
+| PR roll-up | Branch story + links to per-commit docs |
+| Checkpoint | Pause or continue per human preference |
+
+## Start here (humans)
+
+```text
+docs/understanding/branches/<your-branch>/reading-order.md
+```
+
+Read **top → bottom** (oldest commit first). Skipped commits appear as `—` so the sequence stays clear.
+
+## Start here (agents)
+
+Read `.cursor/skills/understanding/SKILL.md` and run the **understanding task** checklist.
+
+```bash
+npm run understanding:index -- --branch "$(git branch --show-current)" --base main
+npm run understanding:diff -- --commit <sha>
+```
 
 ## Layout
 
 ```
 docs/understanding/
 ├── README.md
-├── _templates/          # HTML + Markdown scaffolds
-├── _patterns/           # Reusable micro-world patterns (human-approved)
-├── commits/
-│   └── 2026-07-02-a1b2c3d-add-feed-filter/
-│       ├── explainer.html
-│       ├── explainer.md
-│       ├── diff-context.json   # machine-readable diff summary (optional)
-│       └── micro-world/        # if built
-└── prs/
-    └── cursor-feature-d250/
-        ├── explainer.html
-        ├── explainer.md
-        └── index.md              # links to commit explainers
+├── branches/<branch-slug>/
+│   ├── reading-order.md    ← primary navigation (incremental order)
+│   ├── index.json          ← machine-readable tiers + pending explainers
+│   └── README.md
+├── commits/<date>-<sha>-<slug>/
+│   ├── explainer.html      (full tier)
+│   ├── explainer.md
+│   └── meta.json           (optional tier override)
+├── prs/<branch-slug>/
+│   ├── explainer.html
+│   └── index.md
+├── _templates/
+└── _patterns/
 ```
 
-## For humans
+## Commit tiers (summary)
 
-1. After an agent commits, open the matching folder under `docs/understanding/commits/`.
-2. Read **Background** and **Intuition** first.
-3. Skim the **Code** walkthrough.
-4. Take the **Quiz** — if you miss questions, re-read or ask for a micro-world.
-5. At PR time, read the roll-up under `docs/understanding/prs/`.
+| Tier | Explainer | Quiz |
+|------|-----------|------|
+| **skip** | None — row in reading order only | — |
+| **light** | Short `explainer.md` | 2 questions |
+| **full** | `explainer.html` + `.md` | 5 questions |
 
-Open `explainer.html` in a browser for the interactive quiz.
+Trivial commits: ≤15 lines, mechanical, or `[skip-understanding]` in message.
 
-## For agents
+## Checkpoints
 
-See `.cursor/rules/understanding-layer.mdc` and skills:
+| Mode | Behavior |
+|------|----------|
+| **pause** | Run understanding task → point human to reading-order → stop |
+| **continue** | Run understanding task → keep coding |
+| **pr** | Include PR roll-up |
 
-- `.cursor/skills/explain-diff/SKILL.md`
-- `.cursor/skills/explain-micro-world/SKILL.md`
-
-Helper:
-
-```bash
-node scripts/understanding-diff.mjs --commit HEAD
-node scripts/understanding-diff.mjs --branch my-branch --base main
-```
-
-## Design influences
-
-- [Geoffrey Litt — explain-diff](https://gist.github.com/geoffreylitt/a29df1b5f9865506e8952488eac3d524) — literate diffs + embedded quizzes
-- Andy Matuschak & Michael Nielsen — spaced repetition inside essays
-- Seymour Papert — *Mathland* / micro-worlds for learning by inhabiting
+See `.cursor/skills/understanding/checkpoints.md`.
 
 ## PR description snippet
-
-When opening a PR, include:
 
 ```markdown
 ## Review guide
 
-- **PR explainer:** docs/understanding/prs/<branch>/explainer.html
-- **Per-commit:** docs/understanding/prs/<branch>/index.md
+- **Reading order:** docs/understanding/branches/<branch>/reading-order.md
+- **PR roll-up:** docs/understanding/prs/<branch>/explainer.html
 ```
+
+## Design influences
+
+- [Geoffrey Litt — explain-diff](https://gist.github.com/geoffreylitt/a29df1b5f9865506e8952488eac3d524)
+- Andy Matuschak & Michael Nielsen — quizzes embedded in essays
+- Seymour Papert — micro-worlds / Mathland

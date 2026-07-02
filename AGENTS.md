@@ -2,14 +2,19 @@
 
 ### Understanding layer (human-in-the-loop)
 
-After each incremental commit — and again when a PR is ready — generate teaching docs so the human can review, quiz themselves, and optionally explore micro-worlds. See `docs/agents/understanding-layer.md`.
+Run the **`understanding` skill bundle** at checkpoints or after substantive work — not automatically after every commit. See `docs/agents/understanding-layer.md`.
 
-| Skill | When |
-|-------|------|
-| `explain-diff` | After every focused commit; roll-up at PR time (`.cursor/skills/explain-diff/SKILL.md`) |
-| `explain-micro-world` | When hands-on exploration would help; propose first, build after human picks (`.cursor/skills/explain-micro-world/SKILL.md`) |
+| What | Where |
+|------|-------|
+| **Skill bundle (start here)** | `.cursor/skills/understanding/SKILL.md` |
+| Reading order (humans) | `docs/understanding/branches/<branch>/reading-order.md` |
+| Commit tiers | `.cursor/skills/understanding/commit-policy.md` |
+| Checkpoints | `.cursor/skills/understanding/checkpoints.md` |
 
-Helper: `node scripts/understanding-diff.mjs --commit HEAD`
+```bash
+npm run understanding:index -- --branch "$(git branch --show-current)" --base main
+npm run understanding:diff -- --commit <sha>
+```
 
 ### Issue tracker
 

@@ -1,21 +1,14 @@
 # PR understanding index
 
 **Branch:** <!-- branch name -->  
-**Base:** <!-- main -->  
-**PR explainer:** [explainer.html](./explainer.html)
+**Base:** <!-- main -->
 
-## Commit-by-commit story
+## Read in order
 
-Read in order — each link is a literate diff + quiz for one commit.
+**[reading-order.md](../branches/<branch-slug>/reading-order.md)** — chronological list of every commit on this branch (including skipped). Start at #1.
 
-| # | Commit | Summary | Explainer |
-|---|--------|---------|-----------|
-| 1 | `<!-- short sha -->` | <!-- subject --> | [open](./../commits/<!-- folder -->/explainer.html) |
+## PR roll-up
 
-<!-- Add rows as commits land. -->
+**[explainer.html](./explainer.html)** — whole-branch story (read after per-commit entries, or alone for a quick pass).
 
-## Micro-worlds
-
-| Commit | Proposal | Built |
-|--------|----------|-------|
-| <!-- sha --> | [proposal](./../commits/<!-- folder -->/micro-world-proposal.md) | <!-- link or — --> |
+<!-- Embed or link the reading-order table here after running understanding:index -->

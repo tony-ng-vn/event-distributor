@@ -1,22 +1,12 @@
 # PR understanding index
 
 **Branch:** `cursor/explain-diff-understanding-layer-d250`  
-**Base:** `main`  
-**PR explainer:** [explainer.html](./explainer.html)
+**Base:** `main`
 
-## Commit-by-commit story
+## Read in order
 
-| # | Commit | Summary | Explainer |
-|---|--------|---------|-----------|
-| 1 | `64f3c9a` | Add explain-diff and explain-micro-world agent skills | — (skills only; see PR roll-up) |
-| 2 | `cc1f952` | Add understanding-layer workflow rule and documentation | — |
-| 3 | `daabbfa` | Add explainer templates and understanding-diff helper script | — |
-| 4 | *(this commit)* | Add sample PR explainer (dogfood) | [open](./explainer.html) |
+**[reading-order.md](../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md)** — chronological list of every commit on this branch. Start at #1.
 
-Per-commit explainers will be generated for future agent work on application code. This PR introduces the infrastructure.
+## PR roll-up
 
-## Micro-worlds
-
-| Commit | Proposal | Built |
-|--------|----------|-------|
-| — | — | — |
+**[explainer.html](./explainer.html)** — whole-branch story (good for a quick pass; per-commit explainers pending in reading order).

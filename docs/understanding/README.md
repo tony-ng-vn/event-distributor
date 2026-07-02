@@ -1,29 +1,40 @@
 # Understanding layer
 
-Teaching documents for agent-written code — one folder per commit and per PR.
+Teaching documents for agent-written code.
 
-## Quick start
+## Where to read (incremental order)
+
+**Open your branch's reading order** — commits listed oldest-first:
+
+```text
+docs/understanding/branches/<branch-slug>/reading-order.md
+```
+
+Example: `docs/understanding/branches/cursor-explain-diff-understanding-layer-d250/reading-order.md`
+
+| Column | Meaning |
+|--------|---------|
+| **#** | Read in this order |
+| **Tier** | `full` · `light` · `skip` |
+| **Read** | Link to explainer, `—` if skipped, `*(pending)*` if not written yet |
+
+Many commits → many docs is fine. **Order is what matters.**
+
+## Other paths
 
 | I want to… | Open |
 |------------|------|
-| Understand the latest commit | `commits/` — newest dated folder |
-| Review a whole branch | `prs/<branch-slug>/explainer.html` |
-| Copy the HTML scaffold | `_templates/explainer.html` |
-| See micro-world ideas | `commits/.../micro-world-proposal.md` |
-
-## Conventions
-
-**Folder names**
-
-- Commits: `YYYY-MM-DD-<7-char-sha>-<kebab-slug>`
-- PRs: branch name with slashes replaced by `-` (e.g. `cursor-feature-d250`)
-
-**Files**
-
-- `explainer.html` — full interactive doc (preferred for reading)
-- `explainer.md` — same content, git-friendly
-- `diff-context.json` — output of `scripts/understanding-diff.mjs` (for agents)
+| PR roll-up | `prs/<branch-slug>/explainer.html` |
+| Full-tier template | `_templates/explainer.html` |
+| Light-tier template | `_templates/explainer-light.md` |
+| Micro-world ideas | `commits/.../micro-world-proposal.md` |
 
 ## Agents
 
-Read `docs/agents/understanding-layer.md` and use the `explain-diff` skill after each commit.
+Run the **`understanding` skill bundle**: `.cursor/skills/understanding/SKILL.md`
+
+```bash
+npm run understanding:index -- --branch "$(git branch --show-current)" --base main
+```
+
+Not every commit gets an explainer — see commit policy in the skill bundle.
