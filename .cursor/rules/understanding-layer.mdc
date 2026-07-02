@@ -1,0 +1,44 @@
+---
+description: After each incremental commit, generate the understanding layer (explainer + quiz)
+alwaysApply: true
+---
+
+# Understanding layer (human-in-the-loop)
+
+Agents that change code must help the human **understand and verify** work as it lands — not only at PR time.
+
+## After every focused commit
+
+1. **Commit** the code slice (see `incremental-commits` rule).
+2. **Run** `explain-diff` skill for that commit:
+   - `node scripts/understanding-diff.mjs --commit HEAD`
+   - Write `docs/understanding/commits/<YYYY-MM-DD>-<short-sha>-<slug>/explainer.html` and `explainer.md`
+3. **Quiz** is mandatory in every explainer (5 questions by default).
+4. If hands-on learning would help, **propose** a micro-world (`explain-micro-world` skill) — build only after human picks an option.
+
+Do not defer explainers until the feature is "done". Understanding debt compounds like technical debt.
+
+## When the branch / PR is ready
+
+1. **Run** `explain-diff` for the full branch vs base (`main`):
+   - `node scripts/understanding-diff.mjs --branch <branch> --base main`
+   - Write `docs/understanding/prs/<branch-slug>/explainer.html` and `explainer.md`
+2. Link to per-commit explainers in the PR explainer index.
+3. Mention the understanding docs in the PR description under **Review guide**.
+
+## Principles (non-negotiable)
+
+- Plain language; define jargon on first use.
+- Background → intuition → code (literate diff, not raw diff dump).
+- Interactive quiz at the end — reading alone is not enough.
+
+## Paths
+
+| Artifact | Location |
+|----------|----------|
+| Commit explainer | `docs/understanding/commits/<date>-<sha>-<slug>/` |
+| PR explainer | `docs/understanding/prs/<branch-slug>/` |
+| Templates | `docs/understanding/_templates/` |
+| Reusable micro-world patterns | `docs/understanding/_patterns/` |
+
+Commit explainers **are** versioned with the repo so reviewers can follow the story commit-by-commit.

@@ -11,6 +11,7 @@ When the user asks for commits or you finish a logical unit of work in this repo
 2. **One concern per commit** — Keep commits small and reviewable: e.g. schema/migrations separate from UI, API routes separate from unrelated styling.
 3. **Message quality** — Use clear imperative subjects (what/why in 1–2 sentences in the body when helpful). Do not commit secrets (`.env`, `.env.local`, `.insforge/`, credentials).
 4. **Verify** — Run relevant tests or typecheck when the change warrants it; run `git status` after committing to confirm a clean tree for that slice.
-5. **Push** — Only push when the user explicitly requests it.
+5. **Explain** — Run the `explain-diff` skill for that commit (`node scripts/understanding-diff.mjs --commit HEAD`). See `understanding-layer` rule.
+6. **Push** — Only push when the user explicitly requests it.
 
 Prefer **multiple small commits** over **one large commit**, unless the user asks for a single squashed commit.
