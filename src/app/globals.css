@@ -157,6 +157,7 @@ body {
 
   .going-strip {
     @apply mx-4 mb-4 rounded-xl border border-border bg-background-subtle px-3.5 py-3;
+    container-type: inline-size;
   }
 
   .status-badge {

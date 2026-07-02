@@ -120,14 +120,14 @@ export function AttendeeStack({
 
       if (remaining <= 0) {
         return (
-          <span className="text-sm font-semibold text-foreground">
+          <span className="line-clamp-2 min-w-0 break-words text-sm font-semibold text-foreground">
             {namesLabel}
           </span>
         );
       }
 
       return (
-        <p className="text-sm text-foreground-secondary">
+        <p className="line-clamp-2 min-w-0 text-sm text-foreground-secondary">
           <span className="font-semibold text-foreground">{namesLabel}</span>
           {` and ${remaining} other${remaining === 1 ? "" : "s"}`}
         </p>
@@ -145,9 +145,13 @@ export function AttendeeStack({
     return null;
   }
 
+  const caption = renderCaption();
+  const stackLayoutClass =
+    "flex w-full min-w-0 flex-col gap-2 @min-[280px]:flex-row @min-[280px]:items-center @min-[280px]:gap-2.5";
+
   const content = (
-    <>
-      <div className="flex -space-x-2">
+    <div className={stackLayoutClass}>
+      <div className="flex shrink-0 -space-x-2">
         {visible.map((attendee, index) => (
           <span
             key={attendee.id}
@@ -174,8 +178,10 @@ export function AttendeeStack({
           </span>
         )}
       </div>
-      {renderCaption()}
-    </>
+      {caption ? (
+        <div className="min-w-0 flex-1 overflow-hidden">{caption}</div>
+      ) : null}
+    </div>
   );
 
   const stackTestId =
@@ -189,14 +195,14 @@ export function AttendeeStack({
         <button
           type="button"
           onClick={() => setListOpen(true)}
-          className="flex w-full items-center gap-2.5 rounded-lg text-left transition hover:opacity-90"
+          className="block w-full min-w-0 rounded-lg text-left transition hover:opacity-90"
           aria-label={listAriaLabel(variant, eventTitle)}
           data-testid={stackButtonTestId}
         >
           {content}
         </button>
       ) : (
-        <div className="flex items-center gap-2.5" data-testid={stackTestId}>
+        <div className="min-w-0" data-testid={stackTestId}>
           {content}
         </div>
       )}

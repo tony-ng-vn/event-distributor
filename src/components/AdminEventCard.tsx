@@ -73,7 +73,12 @@ export function AdminEventCard({
             </div>
           </div>
 
-          <EventAttendeeSections event={event} showSocialCopy showCount={false} />
+          <EventAttendeeSections
+            event={event}
+            showSocialCopy
+            showCount={false}
+            className="[&_.going-strip]:mx-0"
+          />
         </div>
 
         <button
