@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Understanding layer — literate diffs, quizzes, micro-worlds</title>
+  <style>
+    :root {
+      --bg: #faf9f7; --surface: #fff; --text: #1a1a1a; --muted: #5c5c5c;
+      --accent: #2563eb; --accent-soft: #eff6ff; --border: #e5e2dc;
+      --ok: #15803d; --ok-bg: #f0fdf4; --bad: #b91c1c; --bad-bg: #fef2f2;
+      --callout: #fffbeb; --callout-border: #fcd34d; --radius: 10px;
+      --font: Georgia, "Iowan Old Style", Palatino, serif;
+      --mono: ui-monospace, Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); font-size: 1.0625rem; line-height: 1.65; color: var(--text); background: var(--bg); }
+    .layout { display: grid; max-width: 44rem; margin: 0 auto; padding: 1.25rem 1.25rem 4rem; }
+    @media (min-width: 900px) {
+      .layout { grid-template-columns: 11rem 1fr; gap: 2.5rem; max-width: 56rem; padding-top: 2rem; }
+      nav.toc { position: sticky; top: 1.5rem; align-self: start; }
+    }
+    nav.toc { font-size: 0.8125rem; margin-bottom: 1.5rem; }
+    nav.toc strong { display: block; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.5rem; }
+    nav.toc a { display: block; color: var(--muted); text-decoration: none; padding: 0.2rem 0; }
+    nav.toc a:hover { color: var(--accent); }
+    header.hero { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    header.hero h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 0.75rem; }
+    .meta { font-size: 0.875rem; color: var(--muted); }
+    section { margin-bottom: 2.5rem; }
+    h2 { font-size: 1.35rem; font-weight: 600; margin: 0 0 1rem; }
+    h3 { font-size: 1.05rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+    p { margin: 0 0 1rem; }
+    details.deep-bg { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: 1rem; }
+    details.deep-bg summary { cursor: pointer; font-weight: 600; color: var(--muted); }
+    .callout { background: var(--callout); border-left: 4px solid var(--callout-border); padding: 0.875rem 1rem; margin: 1rem 0; border-radius: 0 var(--radius) var(--radius) 0; font-size: 0.9375rem; }
+    .figure { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin: 1.25rem 0; }
+    .figure-caption { font-size: 0.8125rem; color: var(--muted); margin-top: 0.75rem; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
+    .flow .box { background: var(--accent-soft); border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.4rem 0.65rem; font-family: var(--mono); font-size: 0.75rem; }
+    .flow .arrow { color: var(--muted); }
+    pre { font-family: var(--mono); background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: var(--radius); font-size: 0.8125rem; white-space: pre-wrap; margin: 1rem 0; }
+    .code-step { margin: 1.5rem 0; }
+    .code-step .step-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); font-weight: 600; margin-bottom: 0.35rem; }
+    .quiz-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.125rem; margin-bottom: 1rem; }
+    .quiz-item p.question { font-weight: 600; margin-bottom: 0.75rem; }
+    .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+    .quiz-options button { text-align: left; font-family: inherit; font-size: 0.9375rem; padding: 0.6rem 0.85rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); cursor: pointer; }
+    .quiz-options button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+    .quiz-options button:disabled { cursor: default; }
+    .quiz-options button.correct { border-color: var(--ok); background: var(--ok-bg); }
+    .quiz-options button.incorrect { border-color: var(--bad); background: var(--bad-bg); }
+    .quiz-feedback { margin-top: 0.75rem; font-size: 0.9375rem; display: none; }
+    .quiz-feedback.visible { display: block; }
+    .quiz-score { margin-top: 1.5rem; padding: 1rem; background: var(--accent-soft); border-radius: var(--radius); font-weight: 600; display: none; }
+    .quiz-score.visible { display: block; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc" aria-label="Table of contents">
+      <strong>Contents</strong>
+      <a href="#glance">At a glance</a>
+      <a href="#background">Background</a>
+      <a href="#intuition">Intuition</a>
+      <a href="#code">Code</a>
+      <a href="#quiz">Quiz</a>
+    </nav>
+    <main>
+      <header class="hero">
+        <h1>Understanding layer for agent-written code</h1>
+        <p class="meta">Branch cursor/explain-diff-understanding-layer-d250 · 13 files · risk: low<br>Generated 2026-07-02. Start with <a href="#intuition">Intuition</a>.</p>
+      </header>
+
+      <section id="glance">
+        <h2>At a glance</h2>
+        <p>This change adds an <strong>understanding layer</strong>: literate explainers, embedded quizzes, and optional micro-worlds — one folder per commit and a roll-up per PR — so you can stay in the loop while agents ship code.</p>
+      </section>
+
+      <section id="background">
+        <h2>Background</h2>
+        <details class="deep-bg">
+          <summary>Deep background (skip if familiar)</summary>
+          <p>Long agent runs produce large diffs. A raw <em>git diff</em> (the list of line-by-line changes git shows) is hard to retain. Andy Matuschak notes that reading alone often fools us into thinking we understood when we did not.</p>
+          <p>An <strong>understanding layer</strong> is teaching material written next to the code: background, intuition, narrative code tour, and a quiz to verify comprehension.</p>
+        </details>
+        <h3>What mattered before this change</h3>
+        <p>The repo already encouraged <strong>incremental commits</strong> and listed global InsForge skills in AGENTS.md. It lacked a repeatable per-commit teaching workflow and templates tied to git history.</p>
+      </section>
+
+      <section id="intuition">
+        <h2>Intuition</h2>
+        <p><strong>Goal:</strong> After every agent commit, you get a short lesson about that slice; at PR time you get the full story map.</p>
+        <div class="figure">
+          <div class="flow">
+            <span class="box">commit</span><span class="arrow">→</span>
+            <span class="box">understanding-diff.mjs</span><span class="arrow">→</span>
+            <span class="box">explainer.html + quiz</span><span class="arrow">→</span>
+            <span class="box">optional micro-world</span>
+          </div>
+          <p class="figure-caption">Each commit gets its own folder under docs/understanding/commits/; the PR gets a roll-up under docs/understanding/prs/.</p>
+        </div>
+        <p>Three pieces work together: <strong>explain-diff</strong> (the essay), <strong>quiz</strong> (verify you got it), <strong>explain-micro-world</strong> (learn by doing — only after you pick a proposal).</p>
+      </section>
+
+      <section id="code">
+        <h2>Code walkthrough</h2>
+        <div class="code-step">
+          <div class="step-label">Step 1 — Skills</div>
+          <p><code>.cursor/skills/explain-diff/</code> and <code>explain-micro-world/</code> define how agents teach: plain language, background before code, quiz rules, micro-world proposals.</p>
+        </div>
+        <div class="code-step">
+          <div class="step-label">Step 2 — Rules</div>
+          <p><code>understanding-layer.mdc</code> (always on) plus an extra step in <code>incremental-commits.mdc</code> require explainers after each commit.</p>
+        </div>
+        <div class="code-step">
+          <div class="step-label">Step 3 — Templates + script</div>
+          <pre>npm run understanding:diff -- --commit HEAD
+npm run understanding:diff -- --branch my-branch --base main</pre>
+          <div class="callout"><strong>diff-context.json</strong> — machine-readable diff summary the agent reads before writing prose. It does not auto-generate the lesson.</div>
+        </div>
+      </section>
+
+      <section id="quiz">
+        <h2>Quiz</h2>
+        <div id="quiz-root">
+          <div class="quiz-item" data-correct="1">
+            <p class="question">1. When should an agent generate a commit-level explainer?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Only when the human asks at the end</button>
+              <button type="button" data-index="1">After every focused commit</button>
+              <button type="button" data-index="2">Only for PRs with 10+ files</button>
+              <button type="button" data-index="3">Never — git diff is enough</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌ Incremental understanding during long runs is the point.</div>
+            <div class="quiz-feedback" data-feedback="1">✅ The understanding-layer rule ties explainers to each commit.</div>
+            <div class="quiz-feedback" data-feedback="2">❌ Small commits compound; no file-count gate.</div>
+            <div class="quiz-feedback" data-feedback="3">❌ Raw diffs are hard to retain and verify.</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">2. Correct section order in a literate diff?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Code → Quiz → Background</button>
+              <button type="button" data-index="1">Background → Intuition → Code → Quiz</button>
+              <button type="button" data-index="2">Quiz first</button>
+              <button type="button" data-index="3">Alphabetical by filename</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌ Code before intuition assumes missing context.</div>
+            <div class="quiz-feedback" data-feedback="1">✅ Catch up, build mental model, then details, then verify.</div>
+            <div class="quiz-feedback" data-feedback="2">❌ Teach before testing.</div>
+            <div class="quiz-feedback" data-feedback="3">❌ That is raw diff order.</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">3. What does understanding-diff.mjs produce?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Auto-writes explainer.html via LLM</button>
+              <button type="button" data-index="1">diff-context.json + suggested folder</button>
+              <button type="button" data-index="2">A micro-world game</button>
+              <button type="button" data-index="3">A Notion page</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌ The agent writes the prose.</div>
+            <div class="quiz-feedback" data-feedback="1">✅ Gathers git diff context for the agent.</div>
+            <div class="quiz-feedback" data-feedback="2">❌ Micro-worlds are separate.</div>
+            <div class="quiz-feedback" data-feedback="3">❌ Output is repo-local.</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">4. When should an agent build a micro-world?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Automatically every commit</button>
+              <button type="button" data-index="1">After human picks a proposal</button>
+              <button type="button" data-index="2">Never</button>
+              <button type="button" data-index="3">Only for CSS</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌ Propose first; human chooses.</div>
+            <div class="quiz-feedback" data-feedback="1">✅ Collaboration loop: propose → pick → build.</div>
+            <div class="quiz-feedback" data-feedback="2">❌ Optional but first-class.</div>
+            <div class="quiz-feedback" data-feedback="3">❌ Also helps APIs, migrations, parsers.</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">5. Where do commit explainers live?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">/tmp outside the repo</button>
+              <button type="button" data-index="1">docs/understanding/commits/…</button>
+              <button type="button" data-index="2">Only in PR comments</button>
+              <button type="button" data-index="3">Inside .cursor/skills/</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌ This repo versions explainers for reviewers.</div>
+            <div class="quiz-feedback" data-feedback="1">✅ Durable, commit-linked paths.</div>
+            <div class="quiz-feedback" data-feedback="2">❌ Too easy to lose.</div>
+            <div class="quiz-feedback" data-feedback="3">❌ Skills are instructions, not artifacts.</div>
+          </div>
+          <div class="quiz-score" id="quiz-score" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    (function () {
+      const items = document.querySelectorAll(".quiz-item");
+      const answered = new Set();
+      items.forEach(function (item, qIndex) {
+        const correct = Number(item.dataset.correct);
+        const buttons = item.querySelectorAll(".quiz-options button");
+        const feedbacks = item.querySelectorAll(".quiz-feedback");
+        buttons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            if (answered.has(qIndex)) return;
+            answered.add(qIndex);
+            const chosen = Number(btn.dataset.index);
+            buttons.forEach(function (b) {
+              b.disabled = true;
+              const idx = Number(b.dataset.index);
+              if (idx === correct) b.classList.add("correct");
+              else if (idx === chosen) b.classList.add("incorrect");
+            });
+            feedbacks.forEach(function (fb) {
+              if (Number(fb.dataset.feedback) === chosen) fb.classList.add("visible");
+            });
+            if (answered.size === items.length) {
+              let score = 0;
+              items.forEach(function (it) {
+                const corr = Number(it.dataset.correct);
+                const picked = it.querySelector(".quiz-options button.correct, .quiz-options button.incorrect");
+                if (picked && Number(picked.dataset.index) === corr) score++;
+              });
+              const el = document.getElementById("quiz-score");
+              el.textContent = "You got " + score + " / " + items.length + ".";
+              el.classList.add("visible");
+            }
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
