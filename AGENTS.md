@@ -1,5 +1,16 @@
 ## Agent skills
 
+### Understanding layer (human-in-the-loop)
+
+After each incremental commit — and again when a PR is ready — generate teaching docs so the human can review, quiz themselves, and optionally explore micro-worlds. See `docs/agents/understanding-layer.md`.
+
+| Skill | When |
+|-------|------|
+| `explain-diff` | After every focused commit; roll-up at PR time (`.cursor/skills/explain-diff/SKILL.md`) |
+| `explain-micro-world` | When hands-on exploration would help; propose first, build after human picks (`.cursor/skills/explain-micro-world/SKILL.md`) |
+
+Helper: `node scripts/understanding-diff.mjs --commit HEAD`
+
 ### Issue tracker
 
 Issues and PRDs live in GitHub Issues for `tony-ng-vn/event-distributor`. See `docs/agents/issue-tracker.md`.
