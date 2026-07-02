@@ -371,7 +371,7 @@ export function FeedApp() {
 
   function renderFeedCards(sectionEvents: FeedEvent[]) {
     return (
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid auto-rows-min gap-3 lg:grid-cols-2">
         {sectionEvents.map((event) => (
           <EventFeedCard
             key={event.id}

@@ -47,7 +47,7 @@ export function EventFeedCard({
 
   return (
     <article
-      className={`glass-card relative overflow-hidden rounded-2xl transition ${
+      className={`glass-card relative row-span-4 grid grid-rows-subgrid gap-3 overflow-hidden rounded-2xl transition ${
         passed && !accepted ? "opacity-75" : ""
       } ${isExiting ? "event-card-exiting" : ""}`}
       data-testid={`event-card-${event.id}`}
@@ -67,7 +67,7 @@ export function EventFeedCard({
         </button>
       )}
 
-      <div className={`flex gap-3.5 p-4 ${isAdmin && onDelete ? "pr-14" : ""}`}>
+      <div className={`flex gap-3.5 px-4 pt-4 ${isAdmin && onDelete ? "pr-14" : ""}`}>
         <button
           type="button"
           onClick={onOpen}
@@ -98,16 +98,21 @@ export function EventFeedCard({
           <p className="text-xs font-medium text-muted">
             {formatCardDateTime(event.startAt)}
           </p>
-          <h3 className="mt-0.5 text-base font-semibold tracking-tight text-foreground">
+          <h3 className="mt-0.5 line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-snug tracking-tight text-foreground">
             {event.title}
           </h3>
-          <p className="mt-0.5 line-clamp-2 text-sm text-muted">{subtitle}</p>
+          <p className="mt-0.5 line-clamp-1 text-sm text-muted">{subtitle}</p>
         </button>
       </div>
 
-      <EventAttendeeSections event={event} showSocialCopy showCount={false} />
+      <EventAttendeeSections
+        event={event}
+        showSocialCopy
+        showCount={false}
+        className="[&_.going-strip]:mb-0"
+      />
 
-      <div className="px-4 pb-4">
+      <div className="px-4">
         {accepted ? (
           <EventResponseStatus variant="accepted" />
         ) : passed && showPassedActions ? (
@@ -136,7 +141,7 @@ export function EventFeedCard({
         ) : passed ? (
           <EventResponseStatus variant="passed" />
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid min-h-[2.75rem] grid-cols-2 gap-2 content-start">
             <button
               type="button"
               onClick={onPass}
@@ -156,8 +161,10 @@ export function EventFeedCard({
             </button>
           </div>
         )}
+      </div>
 
-        <LumaEventLink lumaUrl={event.lumaUrl} className="mt-3" />
+      <div className="px-4 pb-4">
+        <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
       </div>
     </article>
   );
