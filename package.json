@@ -17,6 +17,7 @@
     "understanding:diff": "node scripts/understanding-diff.mjs",
     "understanding:index": "node scripts/understanding-index.mjs",
     "understanding:render": "node scripts/render-explainer-html.mjs",
+    "understanding:serve": "node scripts/understanding-serve.mjs",
     "test:e2e": "E2E_TEST=true playwright test",
     "db:migrate": "npx @insforge/cli db migrations up --all"
   },

@@ -33,6 +33,9 @@ After running the understanding task in **pause** mode, tell the human:
 
 Open full-tier docs in a browser for the interactive quiz.
 
+**Phone:** GitHub links won't run the quiz. Run `npm run understanding:serve` and open the
+LAN URL on your phone (same Wi‑Fi), e.g. `http://192.168.x.x:3456/branches/<slug>/hub.html`
+
 Reply **continue** when ready for me to proceed, or give feedback on any entry.
 ```
 

@@ -80,7 +80,7 @@ const html = `<!DOCTYPE html>
   <title>${esc(c.title)}</title>
   <style>
     :root { --bg:#faf9f7; --surface:#fff; --text:#1a1a1a; --muted:#5c5c5c; --accent:#2563eb; --accent-soft:#eff6ff; --border:#e5e2dc; --ok:#15803d; --ok-bg:#f0fdf4; --bad:#b91c1c; --bad-bg:#fef2f2; --callout:#fffbeb; --callout-border:#fcd34d; --radius:10px; --font:Georgia,serif; --mono:ui-monospace,Menlo,monospace; }
-    *{box-sizing:border-box} body{margin:0;font-family:var(--font);font-size:1.0625rem;line-height:1.65;color:var(--text);background:var(--bg)}
+    *{box-sizing:border-box} body{margin:0;font-family:var(--font);font-size:1.0625rem;line-height:1.65;color:var(--text);background:var(--bg);padding:max(1.25rem,env(safe-area-inset-top)) max(1.25rem,env(safe-area-inset-right)) max(4rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left))}
     .layout{display:grid;max-width:44rem;margin:0 auto;padding:1.25rem 1.25rem 4rem}
     @media(min-width:900px){.layout{grid-template-columns:11rem 1fr;gap:2.5rem;max-width:56rem;padding-top:2rem} nav.toc{position:sticky;top:1.5rem;align-self:start}}
     nav.toc{font-size:.8125rem;margin-bottom:1.5rem} nav.toc strong{display:block;font-size:.6875rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.5rem}
@@ -95,7 +95,7 @@ const html = `<!DOCTYPE html>
     .code-step{margin:1.5rem 0} .code-step .step-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);font-weight:600;margin-bottom:.35rem}
     .quiz-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.125rem;margin-bottom:1rem}
     .quiz-item p.question{font-weight:600;margin-bottom:.75rem} .quiz-options{display:flex;flex-direction:column;gap:.5rem}
-    .quiz-options button{text-align:left;font-family:inherit;font-size:.9375rem;padding:.6rem .85rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer}
+    .quiz-options button{text-align:left;font-family:inherit;font-size:.9375rem;padding:.75rem .85rem;min-height:44px;border:1px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
     .quiz-options button:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)} .quiz-options button:disabled{cursor:default}
     .quiz-options button.correct{border-color:var(--ok);background:var(--ok-bg)} .quiz-options button.incorrect{border-color:var(--bad);background:var(--bad-bg)}
     .quiz-feedback{margin-top:.75rem;font-size:.9375rem;display:none} .quiz-feedback.visible{display:block}
