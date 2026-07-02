@@ -16,6 +16,7 @@
     "check:full": "node scripts/check-in.mjs --full",
     "understanding:diff": "node scripts/understanding-diff.mjs",
     "understanding:index": "node scripts/understanding-index.mjs",
+    "understanding:render": "node scripts/render-explainer-html.mjs",
     "test:e2e": "E2E_TEST=true playwright test",
     "db:migrate": "npx @insforge/cli db migrations up --all"
   },

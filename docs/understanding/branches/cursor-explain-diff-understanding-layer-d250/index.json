@@ -1,15 +1,10 @@
 {
-  "generatedAt": "2026-07-02T17:19:37.626Z",
+  "generatedAt": "2026-07-02T17:23:10.042Z",
   "branch": "cursor/explain-diff-understanding-layer-d250",
   "branchSlug": "cursor-explain-diff-understanding-layer-d250",
   "base": "main",
-  "commitCount": 4,
-  "pendingExplainers": [
-    "64f3c9a",
-    "cc1f952",
-    "daabbfa",
-    "b744660"
-  ],
+  "commitCount": 6,
+  "pendingExplainers": [],
   "entries": [
     {
       "sequence": 1,
@@ -21,10 +16,10 @@
       "tierReason": "287 lines, 2 file(s)",
       "linesChanged": 287,
       "filesChanged": 2,
-      "explainerDir": null,
-      "explainerPath": null,
-      "explainerFormat": null,
-      "needsExplainer": true
+      "explainerDir": "2026-07-02-64f3c9a-add-explain-diff-and-explain-micro-world-agent-s",
+      "explainerPath": "../commits/2026-07-02-64f3c9a-add-explain-diff-and-explain-micro-world-agent-s/explainer.html",
+      "explainerFormat": "html",
+      "needsExplainer": false
     },
     {
       "sequence": 2,
@@ -36,10 +31,10 @@
       "tierReason": "172 lines, 5 file(s)",
       "linesChanged": 172,
       "filesChanged": 5,
-      "explainerDir": null,
-      "explainerPath": null,
-      "explainerFormat": null,
-      "needsExplainer": true
+      "explainerDir": "2026-07-02-cc1f952-add-understanding-layer-workflow-rule-and-docume",
+      "explainerPath": "../commits/2026-07-02-cc1f952-add-understanding-layer-workflow-rule-and-docume/explainer.html",
+      "explainerFormat": "html",
+      "needsExplainer": false
     },
     {
       "sequence": 3,
@@ -51,10 +46,10 @@
       "tierReason": "712 lines, 6 file(s)",
       "linesChanged": 712,
       "filesChanged": 6,
-      "explainerDir": null,
-      "explainerPath": null,
-      "explainerFormat": null,
-      "needsExplainer": true
+      "explainerDir": "2026-07-02-daabbfa-add-explainer-templates-and-understanding-diff-h",
+      "explainerPath": "../commits/2026-07-02-daabbfa-add-explainer-templates-and-understanding-diff-h/explainer.html",
+      "explainerFormat": "html",
+      "needsExplainer": false
     },
     {
       "sequence": 4,
@@ -66,10 +61,40 @@
       "tierReason": "455 lines, 4 file(s)",
       "linesChanged": 455,
       "filesChanged": 4,
-      "explainerDir": null,
-      "explainerPath": null,
-      "explainerFormat": null,
-      "needsExplainer": true
+      "explainerDir": "2026-07-02-b744660-add-sample-pr-explainer-demonstrating-the-unders",
+      "explainerPath": "../commits/2026-07-02-b744660-add-sample-pr-explainer-demonstrating-the-unders/explainer.html",
+      "explainerFormat": "html",
+      "needsExplainer": false
+    },
+    {
+      "sequence": 5,
+      "sha": "c8de06c",
+      "fullSha": "c8de06ce159a19421c0f0047c1d518b99e75d410",
+      "summary": "Replace per-commit rule with unified understanding skill bundle",
+      "tier": "full",
+      "tierSuggested": "full",
+      "tierReason": "834 lines, 8 file(s)",
+      "linesChanged": 834,
+      "filesChanged": 8,
+      "explainerDir": "2026-07-02-c8de06c-replace-per-commit-rule-with-unified-understandi",
+      "explainerPath": "../commits/2026-07-02-c8de06c-replace-per-commit-rule-with-unified-understandi/explainer.html",
+      "explainerFormat": "html",
+      "needsExplainer": false
+    },
+    {
+      "sequence": 6,
+      "sha": "16922f7",
+      "fullSha": "16922f77feee76d6e77b3f1000f6b91633e948e7",
+      "summary": "Add reading-order index script and remove mandatory per-commit rule",
+      "tier": "full",
+      "tierSuggested": "full",
+      "tierReason": "649 lines, 13 file(s)",
+      "linesChanged": 649,
+      "filesChanged": 13,
+      "explainerDir": "2026-07-02-16922f7-add-reading-order-index-script-and-remove-mandat",
+      "explainerPath": "../commits/2026-07-02-16922f7-add-reading-order-index-script-and-remove-mandat/explainer.html",
+      "explainerFormat": "html",
+      "needsExplainer": false
     }
   ]
 }

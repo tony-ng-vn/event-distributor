@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Understanding layer — full PR story</title>
+  <title>Dogfood: sample PR explainer</title>
   <style>
     :root { --bg:#faf9f7; --surface:#fff; --text:#1a1a1a; --muted:#5c5c5c; --accent:#2563eb; --accent-soft:#eff6ff; --border:#e5e2dc; --ok:#15803d; --ok-bg:#f0fdf4; --bad:#b91c1c; --bad-bg:#fef2f2; --callout:#fffbeb; --callout-border:#fcd34d; --radius:10px; --font:Georgia,serif; --mono:ui-monospace,Menlo,monospace; }
     *{box-sizing:border-box} body{margin:0;font-family:var(--font);font-size:1.0625rem;line-height:1.65;color:var(--text);background:var(--bg)}
@@ -36,114 +36,99 @@
     </nav>
     <main>
       <header class="hero">
-        <h1>Understanding layer — full PR story</h1>
-        <p class="meta">PR #2 · branch cursor/explain-diff-understanding-layer-d250 · 27 files vs main<br>Generated 2026-07-02. Read <a href="#intuition">Intuition</a> first. <a class="series-link" href="../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md">Reading order →</a></p>
+        <h1>Dogfood: sample PR explainer</h1>
+        <p class="meta">Commit b744660 · tier full · entry #4 of 6<br>Generated 2026-07-02. Read <a href="#intuition">Intuition</a> first. <a class="series-link" href="../../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md">Reading order →</a></p>
       </header>
-      <section id="glance"><h2>At a glance</h2><p>This PR adds a <strong>human-in-the-loop understanding layer</strong>: literate diffs, quizzes, optional micro-worlds, and a numbered <strong>reading order</strong> so you can review agent code incrementally.</p></section>
+      <section id="glance"><h2>At a glance</h2><p>Uses the system on itself — sample PR explainer with HTML quiz under docs/understanding/prs/.</p></section>
       <section id="background"><h2>Background</h2>
-        <details class="deep-bg"><summary>Deep background (skippable)</summary><p>Long agent runs produce many commits. Raw diffs are hard to retain. Andy Matuschak: reading alone often fools us into thinking we understood. This PR adds teaching docs <em>alongside</em> code — generated deliberately via the <code>understanding</code> skill bundle, not a git hook.</p></details>
-        <h3>What mattered before</h3><p>The repo had incremental commits and InsForge skills, but no process for humans to learn and verify agent work as it lands.</p>
+        <details class="deep-bg"><summary>Deep background (skippable)</summary><p>Commits #1–#3 built pieces but nothing demonstrated the finished reader experience.</p></details>
+        <h3>What mattered before</h3><p>First end-to-end sample for humans to open in a browser.</p>
       </section>
-      <section id="intuition"><h2>Intuition</h2><p><strong>Goal:</strong> Run one understanding task → classify commits → write explainers for substantive ones → maintain reading-order.md → PR roll-up.</p>
-        <div class="figure"><div class="flow"><span class="box">#1 skills</span><span class="arrow">→</span><span class="box">#2 rule</span><span class="arrow">→</span><span class="box">#3 templates</span><span class="arrow">→</span><span class="box">#4 sample</span><span class="arrow">→</span><span class="box">#5 bundle</span><span class="arrow">→</span><span class="box">#6 index</span></div></div>
-        <p><strong>Read per-commit explainers in order</strong> (entries #1–#6 in reading-order.md). This page is the roll-up if you want the whole arc in one sitting.</p>
+      <section id="intuition"><h2>Intuition</h2><p><strong>Goal:</strong> Prove the format: Background → Intuition → Code → interactive Quiz.</p>
+        <div class="figure"><div class="flow"><span class="box">explainer.html</span><span class="arrow">+</span><span class="box">explainer.md</span><span class="arrow">→</span><span class="box">PR review</span></div></div>
+        <p>This is a PR roll-up, not per-commit docs — those are what you're reading in this test pass.</p>
       </section>
-      <section id="code"><h2>Code walkthrough</h2><p>Six commits, six chapters:</p>
+      <section id="code"><h2>Code walkthrough</h2>
         <div class="code-step">
-          <div class="step-label">Step 1 — #1 — Agent skills</div>
-          <p>explain-diff + explain-micro-world playbooks.</p>
-          <pre>64f3c9a</pre>
+          <div class="step-label">Step 1 — explainer.html</div>
+          <p>Self-contained page with TOC and quiz JS.</p>
+          
         </div>
         <div class="code-step">
-          <div class="step-label">Step 2 — #2 — Workflow rule (v1)</div>
-          <p>Always-on per-commit rule + docs. Later removed in #6.</p>
-          <pre>cc1f952</pre>
+          <div class="step-label">Step 2 — explainer.md</div>
+          <p>Git-friendly twin.</p>
+          
         </div>
         <div class="code-step">
-          <div class="step-label">Step 3 — #3 — Templates + diff script</div>
-          <p>explainer.html template, understanding:diff npm command.</p>
-          <pre>daabbfa</pre>
-        </div>
-        <div class="code-step">
-          <div class="step-label">Step 4 — #4 — Dogfood sample</div>
-          <p>First PR explainer with interactive quiz.</p>
-          <pre>b744660</pre>
-        </div>
-        <div class="code-step">
-          <div class="step-label">Step 5 — #5 — Skill bundle</div>
-          <p>understanding/ modules, skip/light/full tiers, checkpoints.</p>
-          <pre>c8de06c</pre>
-        </div>
-        <div class="code-step">
-          <div class="step-label">Step 6 — #6 — Reading order</div>
-          <p>understanding:index, delete mandatory rule, light template.</p>
-          <pre>16922f7</pre>
+          <div class="step-label">Step 3 — index.md</div>
+          <p>PR entry point — later points to reading-order.md.</p>
+          
         </div>
       </section>
       <section id="quiz"><h2>Quiz</h2><p>Five questions — click an answer for feedback.</p>
         <div id="quiz-root">
           <div class="quiz-item" data-correct="1">
-            <p class="question">1. How do you read this PR incrementally?</p>
+            <p class="question">1. What type of explainer?</p>
             <div class="quiz-options">
-              <button type="button" data-index="0">Random commit folders</button>
-              <button type="button" data-index="1">reading-order.md entries #1→#6</button>
-              <button type="button" data-index="2">Only this roll-up</button>
-              <button type="button" data-index="3">git diff only</button>
-            </div>
-            <div class="quiz-feedback" data-feedback="0">❌ Order matters.</div>
-            <div class="quiz-feedback" data-feedback="1">✅ Chronological table.</div>
-            <div class="quiz-feedback" data-feedback="2">❌ Per-commit teaches each slice.</div>
-            <div class="quiz-feedback" data-feedback="3">❌ Literate diffs replace raw diff.</div>
-          </div>
-          <div class="quiz-item" data-correct="1">
-            <p class="question">2. What triggers the understanding task?</p>
-            <div class="quiz-options">
-              <button type="button" data-index="0">Git hook every commit</button>
-              <button type="button" data-index="1">Deliberate invoke at checkpoints</button>
-              <button type="button" data-index="2">CI only</button>
-              <button type="button" data-index="3">Never</button>
-            </div>
-            <div class="quiz-feedback" data-feedback="0">❌ No hook.</div>
-            <div class="quiz-feedback" data-feedback="1">✅ Skill bundle when you ask.</div>
-            <div class="quiz-feedback" data-feedback="2">❌</div>
-            <div class="quiz-feedback" data-feedback="3">❌</div>
-          </div>
-          <div class="quiz-item" data-correct="0">
-            <p class="question">3. Trivial commit tier?</p>
-            <div class="quiz-options">
-              <button type="button" data-index="0">skip — row in reading order only</button>
-              <button type="button" data-index="1">full — always HTML</button>
-              <button type="button" data-index="2">delete commit</button>
-              <button type="button" data-index="3">hide from git</button>
-            </div>
-            <div class="quiz-feedback" data-feedback="0">✅ skip tier.</div>
-            <div class="quiz-feedback" data-feedback="1">❌</div>
-            <div class="quiz-feedback" data-feedback="2">❌</div>
-            <div class="quiz-feedback" data-feedback="3">❌</div>
-          </div>
-          <div class="quiz-item" data-correct="1">
-            <p class="question">4. Primary navigation file?</p>
-            <div class="quiz-options">
-              <button type="button" data-index="0">AGENTS.md</button>
-              <button type="button" data-index="1">branches/.../reading-order.md</button>
-              <button type="button" data-index="2">package-lock.json</button>
-              <button type="button" data-index="3">src/app/page.tsx</button>
+              <button type="button" data-index="0">Per-commit only</button>
+              <button type="button" data-index="1">PR roll-up</button>
+              <button type="button" data-index="2">Unit test</button>
+              <button type="button" data-index="3">Git hook</button>
             </div>
             <div class="quiz-feedback" data-feedback="0">❌</div>
-            <div class="quiz-feedback" data-feedback="1">✅ Numbered table.</div>
+            <div class="quiz-feedback" data-feedback="1">✅ prs/ folder.</div>
             <div class="quiz-feedback" data-feedback="2">❌</div>
             <div class="quiz-feedback" data-feedback="3">❌</div>
           </div>
           <div class="quiz-item" data-correct="1">
-            <p class="question">5. Commands to know?</p>
+            <p class="question">2. Interactive quiz where?</p>
             <div class="quiz-options">
-              <button type="button" data-index="0">only npm test</button>
-              <button type="button" data-index="1">understanding:index + understanding:diff</button>
-              <button type="button" data-index="2">only git push</button>
-              <button type="button" data-index="3">docker compose</button>
+              <button type="button" data-index="0">MD only</button>
+              <button type="button" data-index="1">explainer.html</button>
+              <button type="button" data-index="2">package.json</button>
+              <button type="button" data-index="3">CI</button>
             </div>
             <div class="quiz-feedback" data-feedback="0">❌</div>
-            <div class="quiz-feedback" data-feedback="1">✅ Index + diff helpers.</div>
+            <div class="quiz-feedback" data-feedback="1">✅ Browser.</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">3. Why explainer.md too?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">HTML can't text</button>
+              <button type="button" data-index="1">Git-friendly twin</button>
+              <button type="button" data-index="2">Legal</button>
+              <button type="button" data-index="3">Replaces HTML</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌</div>
+            <div class="quiz-feedback" data-feedback="1">✅</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">4. diff-context.json in prs/?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Quiz answers</button>
+              <button type="button" data-index="1">Branch diff for agents</button>
+              <button type="button" data-index="2">Lockfile</button>
+              <button type="button" data-index="3">Clerk</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌</div>
+            <div class="quiz-feedback" data-feedback="1">✅</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">5. Per-commit explainers in this commit?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Yes all</button>
+              <button type="button" data-index="1">No — PR sample only</button>
+              <button type="button" data-index="2">In /tmp</button>
+              <button type="button" data-index="3">Skipped</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌</div>
+            <div class="quiz-feedback" data-feedback="1">✅ Filled now.</div>
             <div class="quiz-feedback" data-feedback="2">❌</div>
             <div class="quiz-feedback" data-feedback="3">❌</div>
           </div>

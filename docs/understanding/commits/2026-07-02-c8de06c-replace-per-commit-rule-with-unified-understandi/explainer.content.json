@@ -1,0 +1,23 @@
+{
+  "title": "Unified understanding skill bundle",
+  "meta": "Commit c8de06c · tier full · entry #5 of 6",
+  "seriesLink": "../../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md",
+  "glance": "Replaces two standalone skills with one <strong>understanding</strong> bundle — modules run as a single understanding task.",
+  "backgroundDeep": "Mandatory per-commit explainers don't scale; separate skills are hard to remember.",
+  "backgroundNarrow": "explain-diff + explain-micro-world were full skills; understanding-layer.mdc forced every commit.",
+  "goal": "One entry point: .cursor/skills/understanding/SKILL.md checklist.",
+  "figure": "<span class=\"box\">index</span><span class=\"arrow\">→</span><span class=\"box\">classify</span><span class=\"arrow\">→</span><span class=\"box\">explain</span><span class=\"arrow\">→</span><span class=\"box\">checkpoint</span>",
+  "intuition": "Tiers: skip / light / full. Modes: pause / continue / pr.",
+  "steps": [
+    {"label": "SKILL.md orchestrator", "body": "7-step understanding task checklist."},
+    {"label": "Modules", "body": "commit-policy, explain-diff, micro-world, reading-order, checkpoints.", "pre": ".cursor/skills/understanding/"},
+    {"label": "Deprecation stubs", "body": "Old skill paths redirect to bundle."}
+  ],
+  "quiz": [
+    {"q": "What replaced separate skills?", "correct": 1, "options": ["Git hook", "understanding bundle", "GitHub Actions", "Deletion"], "feedback": ["❌", "✅", "❌", "❌ Moved to modules."]},
+    {"q": "When run understanding task?", "correct": 1, "options": ["Every commit hook", "Checkpoints / human asks", "Yearly", "Never"], "feedback": ["❌", "✅ Deliberate.", "❌", "❌"]},
+    {"q": "Three tiers?", "correct": 1, "options": ["S/M/L", "skip / light / full", "none/some/all", "read/skim/ignore"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "Pause mode?", "correct": 1, "options": ["Delete commits", "Hand off reading order and stop", "Push main", "Skip all docs"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "Delete understanding-layer.mdc here?", "correct": 1, "options": ["Yes now", "No — commit #6", "Never existed", "package.json"], "feedback": ["❌", "✅ Next commit.", "❌", "❌"]}
+  ]
+}

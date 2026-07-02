@@ -1,0 +1,23 @@
+{
+  "title": "Reading-order index script",
+  "meta": "Commit 16922f7 · tier full · entry #6 of 6",
+  "seriesLink": "../../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md",
+  "glance": "Adds <code>understanding-index.mjs</code> for numbered reading-order.md; deletes mandatory per-commit rule; adds light template.",
+  "backgroundDeep": "Many commits → many docs. Without a numbered table, readers don't know where to start.",
+  "backgroundNarrow": "Skill bundle described reading order; this commit automates it.",
+  "goal": "npm run understanding:index → chronological table with skip/light/full tiers.",
+  "figure": "<span class=\"box\">git log</span><span class=\"arrow\">→</span><span class=\"box\">index.json</span><span class=\"arrow\">→</span><span class=\"box\">reading-order.md</span>",
+  "intuition": "Skipped commits still appear as rows with — so sequence gaps make sense.",
+  "steps": [
+    {"label": "understanding-index.mjs", "body": "Classify commits, link explainers, write branch reading-order.", "pre": "scripts/understanding-index.mjs"},
+    {"label": "Delete understanding-layer.mdc", "body": "No more always-on per-commit rule."},
+    {"label": "explainer-light.md", "body": "Template for light tier: 2 quiz questions."}
+  ],
+  "quiz": [
+    {"q": "Primary human navigation file?", "correct": 1, "options": ["git log", "branches/.../reading-order.md", "package.json", ".env"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "Regenerate reading order?", "correct": 1, "options": ["understanding:diff", "understanding:index", "npm test", "npm build"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "Skipped commits shown how?", "correct": 1, "options": ["Omitted", "Row tier skip, — link", "Deleted from git", "HTML only"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "Skip tag in message?", "correct": 1, "options": ["[WIP]", "[skip-understanding]", "[no quiz]", "FIXES"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "understanding-layer.mdc?", "correct": 1, "options": ["Created", "Deleted this commit", "Unchanged", "Moved to skills"], "feedback": ["❌", "✅", "❌", "❌"]}
+  ]
+}

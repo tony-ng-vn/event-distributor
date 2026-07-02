@@ -1,0 +1,27 @@
+{
+  "title": "Understanding layer — full PR story",
+  "meta": "PR #2 · branch cursor/explain-diff-understanding-layer-d250 · 27 files vs main",
+  "seriesLink": "../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md",
+  "glance": "This PR adds a <strong>human-in-the-loop understanding layer</strong>: literate diffs, quizzes, optional micro-worlds, and a numbered <strong>reading order</strong> so you can review agent code incrementally.",
+  "backgroundDeep": "Long agent runs produce many commits. Raw diffs are hard to retain. Andy Matuschak: reading alone often fools us into thinking we understood. This PR adds teaching docs <em>alongside</em> code — generated deliberately via the <code>understanding</code> skill bundle, not a git hook.",
+  "backgroundNarrow": "The repo had incremental commits and InsForge skills, but no process for humans to learn and verify agent work as it lands.",
+  "goal": "Run one understanding task → classify commits → write explainers for substantive ones → maintain reading-order.md → PR roll-up.",
+  "figure": "<span class=\"box\">#1 skills</span><span class=\"arrow\">→</span><span class=\"box\">#2 rule</span><span class=\"arrow\">→</span><span class=\"box\">#3 templates</span><span class=\"arrow\">→</span><span class=\"box\">#4 sample</span><span class=\"arrow\">→</span><span class=\"box\">#5 bundle</span><span class=\"arrow\">→</span><span class=\"box\">#6 index</span>",
+  "intuition": "<strong>Read per-commit explainers in order</strong> (entries #1–#6 in reading-order.md). This page is the roll-up if you want the whole arc in one sitting.",
+  "codeIntro": "Six commits, six chapters:",
+  "steps": [
+    {"label": "#1 — Agent skills", "body": "explain-diff + explain-micro-world playbooks.", "pre": "64f3c9a"},
+    {"label": "#2 — Workflow rule (v1)", "body": "Always-on per-commit rule + docs. Later removed in #6.", "pre": "cc1f952"},
+    {"label": "#3 — Templates + diff script", "body": "explainer.html template, understanding:diff npm command.", "pre": "daabbfa"},
+    {"label": "#4 — Dogfood sample", "body": "First PR explainer with interactive quiz.", "pre": "b744660"},
+    {"label": "#5 — Skill bundle", "body": "understanding/ modules, skip/light/full tiers, checkpoints.", "pre": "c8de06c"},
+    {"label": "#6 — Reading order", "body": "understanding:index, delete mandatory rule, light template.", "pre": "16922f7"}
+  ],
+  "quiz": [
+    {"q": "How do you read this PR incrementally?", "correct": 1, "options": ["Random commit folders", "reading-order.md entries #1→#6", "Only this roll-up", "git diff only"], "feedback": ["❌ Order matters.", "✅ Chronological table.", "❌ Per-commit teaches each slice.", "❌ Literate diffs replace raw diff."]},
+    {"q": "What triggers the understanding task?", "correct": 1, "options": ["Git hook every commit", "Deliberate invoke at checkpoints", "CI only", "Never"], "feedback": ["❌ No hook.", "✅ Skill bundle when you ask.", "❌", "❌"]},
+    {"q": "Trivial commit tier?", "correct": 0, "options": ["skip — row in reading order only", "full — always HTML", "delete commit", "hide from git"], "feedback": ["✅ skip tier.", "❌", "❌", "❌"]},
+    {"q": "Primary navigation file?", "correct": 1, "options": ["AGENTS.md", "branches/.../reading-order.md", "package-lock.json", "src/app/page.tsx"], "feedback": ["❌", "✅ Numbered table.", "❌", "❌"]},
+    {"q": "Commands to know?", "correct": 1, "options": ["only npm test", "understanding:index + understanding:diff", "only git push", "docker compose"], "feedback": ["❌", "✅ Index + diff helpers.", "❌", "❌"]}
+  ]
+}
