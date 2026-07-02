@@ -10,7 +10,8 @@
 | 4 | `b744660` | full | Add sample PR explainer demonstrating the understanding layer | [explainer](../commits/2026-07-02-b744660-add-sample-pr-explainer-demonstrating-the-unders/explainer.html) |
 | 5 | `c8de06c` | full | Replace per-commit rule with unified understanding skill bundle | [explainer](../commits/2026-07-02-c8de06c-replace-per-commit-rule-with-unified-understandi/explainer.html) |
 | 6 | `16922f7` | full | Add reading-order index script and remove mandatory per-commit rule | [explainer](../commits/2026-07-02-16922f7-add-reading-order-index-script-and-remove-mandat/explainer.html) |
+| 7 | `234513d` | full | Generate full understanding layer for PR #2 (dogfood test) | [explainer](../commits/2026-07-02-234513d-generate-full-understanding-layer-for-pr-2-dogfo/explainer.html) |
 
-**Summary:** 6 commits · 6 full · 0 light · 0 skipped · 0 explainer(s) pending
+**Summary:** 7 commits · 7 full · 0 light · 0 skipped · 0 explainer(s) pending
 
 Regenerate: `npm run understanding:index -- --branch "$(git branch --show-current)" --base main`

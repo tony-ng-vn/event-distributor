@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-07-02T17:23:10.042Z",
+  "generatedAt": "2026-07-02T17:23:47.102Z",
   "branch": "cursor/explain-diff-understanding-layer-d250",
   "branchSlug": "cursor-explain-diff-understanding-layer-d250",
   "base": "main",
-  "commitCount": 6,
+  "commitCount": 7,
   "pendingExplainers": [],
   "entries": [
     {
@@ -93,6 +93,21 @@
       "filesChanged": 13,
       "explainerDir": "2026-07-02-16922f7-add-reading-order-index-script-and-remove-mandat",
       "explainerPath": "../commits/2026-07-02-16922f7-add-reading-order-index-script-and-remove-mandat/explainer.html",
+      "explainerFormat": "html",
+      "needsExplainer": false
+    },
+    {
+      "sequence": 7,
+      "sha": "234513d",
+      "fullSha": "234513d967dd8507f7162b8449f6f56f939c3f98",
+      "summary": "Generate full understanding layer for PR #2 (dogfood test)",
+      "tier": "full",
+      "tierSuggested": "full",
+      "tierReason": "2775 lines, 40 file(s)",
+      "linesChanged": 2775,
+      "filesChanged": 40,
+      "explainerDir": "2026-07-02-234513d-generate-full-understanding-layer-for-pr-2-dogfo",
+      "explainerPath": "../commits/2026-07-02-234513d-generate-full-understanding-layer-for-pr-2-dogfo/explainer.html",
       "explainerFormat": "html",
       "needsExplainer": false
     }
