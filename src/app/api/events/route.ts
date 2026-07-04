@@ -1,5 +1,5 @@
 /**
- * GET /api/events — returns the shared feed as JSON (signed-in friends only).
+ * GET /api/events — returns all persisted shared feed events as JSON (signed-in friends only).
  */
 import { NextResponse } from "next/server";
 import {

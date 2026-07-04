@@ -3,6 +3,8 @@
  */
 import { describe, expect, it, beforeEach } from "vitest";
 import { isUserAdmin } from "@/lib/admin";
+import { getInsforgeAdmin } from "@/lib/db";
+import { newId } from "@/lib/ids";
 import {
   acceptEvent,
   createUser,
@@ -179,6 +181,43 @@ describe("events service", () => {
 
     const feed = await listAllFeedEvents();
     expect(feed[0]?.addedBy?.name).toBe("Creator User");
+  });
+
+  it("keeps events visible after their start date has passed", async () => {
+    const db = getInsforgeAdmin();
+    const pastStart = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const pastEnd = new Date(pastStart.getTime() + 2 * 60 * 60 * 1000);
+
+    const { data: inserted, error } = await db.database
+      .from("events")
+      .insert([
+        {
+          id: newId(),
+          luma_url: "https://lu.ma/past-event-test",
+          title: "Past Community Meetup",
+          description: "An event from a few days ago",
+          cover_image_url: null,
+          start_at: pastStart.toISOString(),
+          end_at: pastEnd.toISOString(),
+          location: "San Francisco, CA",
+          is_online: false,
+          meeting_url: null,
+          host_name: "Community Host",
+          host_avatar_url: null,
+          added_by_user_id: null,
+        },
+      ])
+      .select("id")
+      .single();
+
+    expect(error).toBeNull();
+    expect(inserted?.id).toBeTruthy();
+
+    const feed = await listFeedEvents();
+    expect(feed.some((event) => event.id === inserted?.id)).toBe(true);
+    expect(feed.some((event) => event.title === "Past Community Meetup")).toBe(
+      true,
+    );
   });
 
   it("listAllFeedEvents includes passed events with viewerPassed flag", async () => {
