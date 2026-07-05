@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-07-05T00:19:48.379Z",
+  "generatedAt": "2026-07-05T00:19:51.047Z",
   "branch": "cursor/fix-event-persistence-0847",
   "branchSlug": "cursor-fix-event-persistence-0847",
   "base": "main",
-  "commitCount": 2,
+  "commitCount": 3,
   "pendingExplainers": [],
   "entries": [
     {
@@ -31,6 +31,21 @@
       "tierReason": "commit message tag",
       "linesChanged": 536,
       "filesChanged": 12,
+      "explainerDir": null,
+      "explainerPath": null,
+      "explainerFormat": null,
+      "needsExplainer": false
+    },
+    {
+      "sequence": 3,
+      "sha": "5d08886",
+      "fullSha": "5d08886a8b9d0ee21447045e514ac2bf297b5fd4",
+      "summary": "Sync understanding index after skip commit [skip-understanding]",
+      "tier": "skip",
+      "tierSuggested": "skip",
+      "tierReason": "commit message tag",
+      "linesChanged": 8,
+      "filesChanged": 2,
       "explainerDir": null,
       "explainerPath": null,
       "explainerFormat": null,
