@@ -1,0 +1,18 @@
+{
+  "title": "Full understanding layer generated (dogfood test)",
+  "meta": "Commit 234513d · tier full · entry #7 of 7",
+  "seriesLink": "../../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md",
+  "glance": "Runs the understanding bundle on PR #2: six per-commit explainers, reading-order, PR roll-up, render helper.",
+  "backgroundNarrow": "You asked to test the system on this PR — this commit is that test.",
+  "goal": "Prove the pipeline: index → explain → reading-order → checkpoint.",
+  "intuition": "You are reading the output of this commit right now.",
+  "steps": [
+    {"label": "Per-commit docs", "body": "explainer.html + .md + quiz for commits #1–#6."},
+    {"label": "render-explainer-html.mjs", "body": "Builds HTML from explainer.content.json."},
+    {"label": "reading-order updated", "body": "0 pending explainers after generation."}
+  ],
+  "quiz": [
+    {"q": "How many per-commit explainers before this?", "correct": 1, "options": ["0", "6", "27", "1"], "feedback": ["❌", "✅ One per commit #1-6.", "❌ file count.", "❌"]},
+    {"q": "Where to start reading?", "correct": 1, "options": ["Newest first", "reading-order #1", "package.json", "git diff"], "feedback": ["❌", "✅ Oldest first.", "❌", "❌"]}
+  ]
+}

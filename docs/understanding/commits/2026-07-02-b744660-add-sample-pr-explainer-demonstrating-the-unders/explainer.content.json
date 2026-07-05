@@ -1,0 +1,23 @@
+{
+  "title": "Dogfood: sample PR explainer",
+  "meta": "Commit b744660 · tier full · entry #4 of 6",
+  "seriesLink": "../../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md",
+  "glance": "Uses the system on itself — sample PR explainer with HTML quiz under docs/understanding/prs/.",
+  "backgroundDeep": "Commits #1–#3 built pieces but nothing demonstrated the finished reader experience.",
+  "backgroundNarrow": "First end-to-end sample for humans to open in a browser.",
+  "goal": "Prove the format: Background → Intuition → Code → interactive Quiz.",
+  "figure": "<span class=\"box\">explainer.html</span><span class=\"arrow\">+</span><span class=\"box\">explainer.md</span><span class=\"arrow\">→</span><span class=\"box\">PR review</span>",
+  "intuition": "This is a PR roll-up, not per-commit docs — those are what you're reading in this test pass.",
+  "steps": [
+    {"label": "explainer.html", "body": "Self-contained page with TOC and quiz JS."},
+    {"label": "explainer.md", "body": "Git-friendly twin."},
+    {"label": "index.md", "body": "PR entry point — later points to reading-order.md."}
+  ],
+  "quiz": [
+    {"q": "What type of explainer?", "correct": 1, "options": ["Per-commit only", "PR roll-up", "Unit test", "Git hook"], "feedback": ["❌", "✅ prs/ folder.", "❌", "❌"]},
+    {"q": "Interactive quiz where?", "correct": 1, "options": ["MD only", "explainer.html", "package.json", "CI"], "feedback": ["❌", "✅ Browser.", "❌", "❌"]},
+    {"q": "Why explainer.md too?", "correct": 1, "options": ["HTML can't text", "Git-friendly twin", "Legal", "Replaces HTML"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "diff-context.json in prs/?", "correct": 1, "options": ["Quiz answers", "Branch diff for agents", "Lockfile", "Clerk"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "Per-commit explainers in this commit?", "correct": 1, "options": ["Yes all", "No — PR sample only", "In /tmp", "Skipped"], "feedback": ["❌", "✅ Filled now.", "❌", "❌"]}
+  ]
+}

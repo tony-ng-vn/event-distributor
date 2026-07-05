@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dogfood: sample PR explainer</title>
+  <style>
+    :root { --bg:#faf9f7; --surface:#fff; --text:#1a1a1a; --muted:#5c5c5c; --accent:#2563eb; --accent-soft:#eff6ff; --border:#e5e2dc; --ok:#15803d; --ok-bg:#f0fdf4; --bad:#b91c1c; --bad-bg:#fef2f2; --callout:#fffbeb; --callout-border:#fcd34d; --radius:10px; --font:Georgia,serif; --mono:ui-monospace,Menlo,monospace; }
+    *{box-sizing:border-box} body{margin:0;font-family:var(--font);font-size:1.0625rem;line-height:1.65;color:var(--text);background:var(--bg)}
+    .layout{display:grid;max-width:44rem;margin:0 auto;padding:1.25rem 1.25rem 4rem}
+    @media(min-width:900px){.layout{grid-template-columns:11rem 1fr;gap:2.5rem;max-width:56rem;padding-top:2rem} nav.toc{position:sticky;top:1.5rem;align-self:start}}
+    nav.toc{font-size:.8125rem;margin-bottom:1.5rem} nav.toc strong{display:block;font-size:.6875rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.5rem}
+    nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:.2rem 0} nav.toc a:hover{color:var(--accent)}
+    header.hero{margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+    header.hero h1{font-size:1.75rem;font-weight:600;letter-spacing:-.02em;margin:0 0 .75rem} .meta{font-size:.875rem;color:var(--muted)}
+    section{margin-bottom:2.5rem} h2{font-size:1.35rem;font-weight:600;margin:0 0 1rem} h3{font-size:1.05rem;font-weight:600;margin:1.5rem 0 .5rem}
+    p{margin:0 0 1rem} details.deep-bg{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:1rem}
+    details.deep-bg summary{cursor:pointer;font-weight:600;color:var(--muted)} .figure{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin:1.25rem 0}
+    .flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;font-size:.875rem} .flow .box{background:var(--accent-soft);border:1px solid #bfdbfe;border-radius:6px;padding:.4rem .65rem;font-family:var(--mono);font-size:.75rem}
+    .flow .arrow{color:var(--muted)} pre{font-family:var(--mono);background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:var(--radius);font-size:.8125rem;white-space:pre-wrap;margin:1rem 0}
+    .code-step{margin:1.5rem 0} .code-step .step-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);font-weight:600;margin-bottom:.35rem}
+    .quiz-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.125rem;margin-bottom:1rem}
+    .quiz-item p.question{font-weight:600;margin-bottom:.75rem} .quiz-options{display:flex;flex-direction:column;gap:.5rem}
+    .quiz-options button{text-align:left;font-family:inherit;font-size:.9375rem;padding:.6rem .85rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer}
+    .quiz-options button:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)} .quiz-options button:disabled{cursor:default}
+    .quiz-options button.correct{border-color:var(--ok);background:var(--ok-bg)} .quiz-options button.incorrect{border-color:var(--bad);background:var(--bad-bg)}
+    .quiz-feedback{margin-top:.75rem;font-size:.9375rem;display:none} .quiz-feedback.visible{display:block}
+    .quiz-score{margin-top:1.5rem;padding:1rem;background:var(--accent-soft);border-radius:var(--radius);font-weight:600;display:none} .quiz-score.visible{display:block}
+    .series-link{font-size:.875rem;color:var(--accent)}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc"><strong>Contents</strong>
+      <a href="#glance">At a glance</a><a href="#background">Background</a><a href="#intuition">Intuition</a><a href="#code">Code</a><a href="#quiz">Quiz</a>
+    </nav>
+    <main>
+      <header class="hero">
+        <h1>Dogfood: sample PR explainer</h1>
+        <p class="meta">Commit b744660 · tier full · entry #4 of 6<br>Generated 2026-07-02. Read <a href="#intuition">Intuition</a> first. <a class="series-link" href="../../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md">Reading order →</a></p>
+      </header>
+      <section id="glance"><h2>At a glance</h2><p>Uses the system on itself — sample PR explainer with HTML quiz under docs/understanding/prs/.</p></section>
+      <section id="background"><h2>Background</h2>
+        <details class="deep-bg"><summary>Deep background (skippable)</summary><p>Commits #1–#3 built pieces but nothing demonstrated the finished reader experience.</p></details>
+        <h3>What mattered before</h3><p>First end-to-end sample for humans to open in a browser.</p>
+      </section>
+      <section id="intuition"><h2>Intuition</h2><p><strong>Goal:</strong> Prove the format: Background → Intuition → Code → interactive Quiz.</p>
+        <div class="figure"><div class="flow"><span class="box">explainer.html</span><span class="arrow">+</span><span class="box">explainer.md</span><span class="arrow">→</span><span class="box">PR review</span></div></div>
+        <p>This is a PR roll-up, not per-commit docs — those are what you're reading in this test pass.</p>
+      </section>
+      <section id="code"><h2>Code walkthrough</h2>
+        <div class="code-step">
+          <div class="step-label">Step 1 — explainer.html</div>
+          <p>Self-contained page with TOC and quiz JS.</p>
+          
+        </div>
+        <div class="code-step">
+          <div class="step-label">Step 2 — explainer.md</div>
+          <p>Git-friendly twin.</p>
+          
+        </div>
+        <div class="code-step">
+          <div class="step-label">Step 3 — index.md</div>
+          <p>PR entry point — later points to reading-order.md.</p>
+          
+        </div>
+      </section>
+      <section id="quiz"><h2>Quiz</h2><p>Five questions — click an answer for feedback.</p>
+        <div id="quiz-root">
+          <div class="quiz-item" data-correct="1">
+            <p class="question">1. What type of explainer?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Per-commit only</button>
+              <button type="button" data-index="1">PR roll-up</button>
+              <button type="button" data-index="2">Unit test</button>
+              <button type="button" data-index="3">Git hook</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌</div>
+            <div class="quiz-feedback" data-feedback="1">✅ prs/ folder.</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">2. Interactive quiz where?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">MD only</button>
+              <button type="button" data-index="1">explainer.html</button>
+              <button type="button" data-index="2">package.json</button>
+              <button type="button" data-index="3">CI</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌</div>
+            <div class="quiz-feedback" data-feedback="1">✅ Browser.</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">3. Why explainer.md too?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">HTML can't text</button>
+              <button type="button" data-index="1">Git-friendly twin</button>
+              <button type="button" data-index="2">Legal</button>
+              <button type="button" data-index="3">Replaces HTML</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌</div>
+            <div class="quiz-feedback" data-feedback="1">✅</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">4. diff-context.json in prs/?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Quiz answers</button>
+              <button type="button" data-index="1">Branch diff for agents</button>
+              <button type="button" data-index="2">Lockfile</button>
+              <button type="button" data-index="3">Clerk</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌</div>
+            <div class="quiz-feedback" data-feedback="1">✅</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">5. Per-commit explainers in this commit?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Yes all</button>
+              <button type="button" data-index="1">No — PR sample only</button>
+              <button type="button" data-index="2">In /tmp</button>
+              <button type="button" data-index="3">Skipped</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌</div>
+            <div class="quiz-feedback" data-feedback="1">✅ Filled now.</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌</div>
+          </div>
+          <div class="quiz-score" id="quiz-score" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    (function(){const items=document.querySelectorAll(".quiz-item");const answered=new Set();
+    items.forEach(function(item,qIndex){const correct=Number(item.dataset.correct);const buttons=item.querySelectorAll(".quiz-options button");const feedbacks=item.querySelectorAll(".quiz-feedback");
+    buttons.forEach(function(btn){btn.addEventListener("click",function(){if(answered.has(qIndex))return;answered.add(qIndex);const chosen=Number(btn.dataset.index);
+    buttons.forEach(function(b){b.disabled=true;const idx=Number(b.dataset.index);if(idx===correct)b.classList.add("correct");else if(idx===chosen)b.classList.add("incorrect");});
+    feedbacks.forEach(function(fb){if(Number(fb.dataset.feedback)===chosen)fb.classList.add("visible");});
+    if(answered.size===items.length){let score=0;items.forEach(function(it){const corr=Number(it.dataset.correct);
+    it.querySelectorAll(".quiz-options button").forEach(function(b){if(b.classList.contains("correct")&&Number(b.dataset.index)===corr)score++;});});
+    const el=document.getElementById("quiz-score");el.textContent="You got "+score+" / "+items.length+".";el.classList.add("visible");}});});});})();
+  </script>
+</body>
+</html>

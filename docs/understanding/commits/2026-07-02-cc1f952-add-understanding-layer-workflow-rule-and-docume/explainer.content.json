@@ -1,0 +1,23 @@
+{
+  "title": "Workflow rule: explain after every commit (v1)",
+  "meta": "Commit cc1f952 · tier full · entry #2 of 6",
+  "seriesLink": "../../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md",
+  "glance": "Wires the understanding layer into agent behavior with an <strong>always-on rule</strong> and docs. (Commit #6 later removes the mandatory rule — read this for v1.)",
+  "backgroundDeep": "<strong>Skills</strong> teach how to write explainers. <strong>Rules</strong> with <code>alwaysApply: true</code> tell agents when — loaded every Cursor session.",
+  "backgroundNarrow": "Commit #1 added skills but no enforcement or human-facing layout docs.",
+  "goal": "Make teaching docs as automatic as committing — code → commit → explainer.",
+  "figure": "<span class=\"box\">commit</span><span class=\"arrow\">→</span><span class=\"box\">understanding-layer.mdc</span><span class=\"arrow\">→</span><span class=\"box\">explainer</span>",
+  "intuition": "Also documents where files live under docs/understanding/.",
+  "steps": [
+    {"label": "understanding-layer.mdc", "body": "Always applied: after each commit, run diff script, write explainer + quiz.", "pre": ".cursor/rules/understanding-layer.mdc"},
+    {"label": "incremental-commits hook", "body": "Step 5 added: Explain before push.", "pre": ".cursor/rules/incremental-commits.mdc"},
+    {"label": "Documentation", "body": "docs/agents/understanding-layer.md, docs/understanding/README.md, _patterns/ placeholder."}
+  ],
+  "quiz": [
+    {"q": "Rules vs skills?", "correct": 1, "options": ["Same thing", "Rules alwaysApply for timing; skills teach method", "Rules for humans only", "Skills are hooks"], "feedback": ["❌", "✅ Different roles.", "❌", "❌"]},
+    {"q": "Per-commit explainer path?", "correct": 1, "options": ["/tmp", "docs/understanding/commits/...", ".cursor/rules/", "src/"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "incremental-commits change?", "correct": 1, "options": ["Remove commits", "Add explain step", "Git hook", "PR only"], "feedback": ["❌", "✅ Step 5.", "❌", "❌"]},
+    {"q": "_patterns/ purpose?", "correct": 1, "options": ["Commit templates", "Reusable micro-world forms", "ADRs", "Tests"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "Is always-on rule still active at PR end?", "correct": 1, "options": ["Yes", "No — deleted in commit #6", "Never existed", "In package.json"], "feedback": ["❌", "✅ Replaced by skill bundle.", "❌", "❌"]}
+  ]
+}

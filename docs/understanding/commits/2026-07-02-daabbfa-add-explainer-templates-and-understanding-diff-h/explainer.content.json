@@ -1,0 +1,23 @@
+{
+  "title": "Templates and diff helper",
+  "meta": "Commit daabbfa · tier full · entry #3 of 6",
+  "seriesLink": "../../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md",
+  "glance": "Adds HTML/Markdown templates with interactive quiz JS, plus <code>understanding-diff.mjs</code> to gather git context for agents.",
+  "backgroundDeep": "Templates give consistent structure; the script outputs <code>diff-context.json</code> so agents write facts before prose.",
+  "backgroundNarrow": "Commits #1–#2 had instructions but no scaffolds or npm command.",
+  "goal": "One command → diff context → agent fills template.",
+  "figure": "<span class=\"box\">npm run understanding:diff</span><span class=\"arrow\">→</span><span class=\"box\">diff-context.json</span><span class=\"arrow\">→</span><span class=\"box\">explainer.html</span>",
+  "intuition": "HTML template includes working quiz JavaScript. Code blocks use pre-wrap so newlines don't collapse.",
+  "steps": [
+    {"label": "understanding-diff.mjs", "body": "--commit or --branch; writes diff-context.json and suggests folder.", "pre": "scripts/understanding-diff.mjs"},
+    {"label": "Templates", "body": "explainer.html (quiz JS), explainer.md, pr-index.md under _templates/.", "pre": "docs/understanding/_templates/"},
+    {"label": "Registration", "body": "package.json script + AGENTS.md entry."}
+  ],
+  "quiz": [
+    {"q": "What does the diff script NOT do?", "correct": 0, "options": ["Auto-write explainer prose", "Run git diff", "Suggest output folder", "Write diff-context.json"], "feedback": ["✅ Agent writes prose.", "❌ It does diff.", "❌ It suggests paths.", "❌ It writes JSON."]},
+    {"q": "Why both HTML and MD?", "correct": 1, "options": ["HTML for agents", "HTML for quiz; MD for git/search", "Mistake", "MD only in prod"], "feedback": ["❌", "✅ Twins for different uses.", "❌", "❌"]},
+    {"q": "npm command?", "correct": 1, "options": ["understanding:index", "understanding:diff", "npm explain", "npm docs"], "feedback": ["❌ That's #6.", "✅", "❌", "❌"]},
+    {"q": "Why pre-wrap on code blocks?", "correct": 1, "options": ["Speed", "Browsers collapse newlines", "SEO", "A11y only"], "feedback": ["❌", "✅", "❌", "❌"]},
+    {"q": "diff-context.json contains?", "correct": 1, "options": ["Only message", "Files, stat, patch, paths", "Finished quiz", "Secrets"], "feedback": ["❌", "✅", "❌", "❌"]}
+  ]
+}

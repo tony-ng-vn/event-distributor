@@ -1,5 +1,21 @@
 ## Agent skills
 
+### Understanding layer (human-in-the-loop)
+
+Run the **`understanding` skill bundle** at checkpoints or after substantive work — not automatically after every commit. See `docs/agents/understanding-layer.md`.
+
+| What | Where |
+|------|-------|
+| **Skill bundle (start here)** | `.cursor/skills/understanding/SKILL.md` |
+| Reading order (humans) | `docs/understanding/branches/<branch>/reading-order.md` |
+| Commit tiers | `.cursor/skills/understanding/commit-policy.md` |
+| Checkpoints | `.cursor/skills/understanding/checkpoints.md` |
+
+```bash
+npm run understanding:index -- --branch "$(git branch --show-current)" --base main
+npm run understanding:diff -- --commit <sha>
+```
+
 ### Issue tracker
 
 Issues and PRDs live in GitHub Issues for `tony-ng-vn/event-distributor`. See `docs/agents/issue-tracker.md`.

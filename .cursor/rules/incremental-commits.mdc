@@ -14,3 +14,5 @@ When the user asks for commits or you finish a logical unit of work in this repo
 5. **Push** — Only push when the user explicitly requests it.
 
 Prefer **multiple small commits** over **one large commit**, unless the user asks for a single squashed commit.
+
+For teaching docs (explainers, reading order), run the **`understanding` skill bundle** at checkpoints or when substantive work lands — not automatically after every commit. See `.cursor/skills/understanding/SKILL.md`.

@@ -1,0 +1,56 @@
+{
+  "title": "Two agent skills: teach code changes instead of dumping diffs",
+  "meta": "Commit 64f3c9a · tier full · entry #1 of 6",
+  "seriesLink": "../../branches/cursor-explain-diff-understanding-layer-d250/reading-order.md",
+  "glance": "Adds the first building blocks: <strong>explain-diff</strong> and <strong>explain-micro-world</strong> agent skills — playbooks that tell Cursor agents how to write teaching documents about code.",
+  "backgroundDeep": "A <em>git diff</em> shows line changes but rarely explains why or how pieces connect. An <strong>agent skill</strong> is a markdown file in <code>.cursor/skills/</code> that agents read when relevant — like a playbook.",
+  "backgroundNarrow": "The repo had incremental commit rules but no process for teaching humans what agent code does.",
+  "goal": "Give the agent recipes for literate diffs (essays + quiz) and micro-worlds (playgrounds you choose before the agent builds).",
+  "figure": "<span class=\"box\">explain-diff</span><span class=\"arrow\">+</span><span class=\"box\">explain-micro-world</span><span class=\"arrow\">→</span><span class=\"box\">teaching layer</span>",
+  "intuition": "This commit is instructions only — templates and scripts land in commit #3.",
+  "codeIntro": "Two new files under <code>.cursor/skills/</code>:",
+  "steps": [
+    {
+      "label": "explain-diff skill",
+      "body": "Defines plain-language teaching, Background → Intuition → Code → Quiz, and output paths under <code>docs/understanding/</code>.",
+      "pre": ".cursor/skills/explain-diff/SKILL.md"
+    },
+    {
+      "label": "explain-micro-world skill",
+      "body": "Propose 2–3 playground options → human picks → build smallest useful toy. Inspired by Papert's Mathland.",
+      "pre": ".cursor/skills/explain-micro-world/SKILL.md"
+    }
+  ],
+  "quiz": [
+    {
+      "q": "What is an agent skill?",
+      "correct": 1,
+      "options": ["An npm package", "A markdown instruction file agents read", "A git hook", "A unit test"],
+      "feedback": ["❌ Skills live in .cursor/skills/", "✅ A playbook for agent behavior.", "❌ Not automatic.", "❌ Different purpose."]
+    },
+    {
+      "q": "What is a literate diff?",
+      "correct": 1,
+      "options": ["Raw git diff", "Prose explaining changes in narrative order", "A linter rule", "PR template only"],
+      "feedback": ["❌ That's the problem we solve.", "✅ Background, intuition, code walkthrough.", "❌ It's teaching docs.", "❌ Per-change docs."]
+    },
+    {
+      "q": "Required section order?",
+      "correct": 1,
+      "options": ["Code → Quiz → Background", "Background → Intuition → Code → Quiz", "Quiz first", "Alphabetical files"],
+      "feedback": ["❌ Intuition before code.", "✅ Correct order.", "❌ Teach first.", "❌ Narrative not git order."]
+    },
+    {
+      "q": "When build a micro-world?",
+      "correct": 1,
+      "options": ["Every commit auto", "After human picks a proposal", "Never", "CSS only"],
+      "feedback": ["❌ Propose first.", "✅ Human chooses.", "❌ Optional feature.", "❌ Many use cases."]
+    },
+    {
+      "q": "Does this commit add templates?",
+      "correct": 1,
+      "options": ["Yes full pipeline", "No — skills only", "Yes git hooks", "Yes reading order"],
+      "feedback": ["❌ Commit #3 adds templates.", "✅ Instructions only here.", "❌ No hooks.", "❌ Commit #6."]
+    }
+  ]
+}
