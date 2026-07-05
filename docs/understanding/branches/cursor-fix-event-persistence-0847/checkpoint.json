@@ -1,0 +1,7 @@
+{
+  "branch": "cursor/fix-event-persistence-0847",
+  "pr": 3,
+  "startAtEntry": 1,
+  "mode": "pr",
+  "note": "Understanding layer applied manually after merging main. Start at reading-order entry #1."
+}

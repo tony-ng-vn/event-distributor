@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-07-05T00:19:42.783Z",
+  "branch": "cursor/fix-event-persistence-0847",
+  "branchSlug": "cursor-fix-event-persistence-0847",
+  "base": "main",
+  "commitCount": 2,
+  "pendingExplainers": [],
+  "entries": [
+    {
+      "sequence": 1,
+      "sha": "87f4c9d",
+      "fullSha": "87f4c9d955ac84c686ca826536acd0e9eb05c0c8",
+      "summary": "Fix event feed dropping events after 24 hours",
+      "tier": "light",
+      "tierSuggested": "light",
+      "tierReason": "69 lines, 3 file(s)",
+      "linesChanged": 69,
+      "filesChanged": 3,
+      "explainerDir": "2026-07-05-87f4c9d-fix-event-feed-dropping-events-after-24-hours",
+      "explainerPath": "../commits/2026-07-05-87f4c9d-fix-event-feed-dropping-events-after-24-hours/explainer.md",
+      "explainerFormat": "md",
+      "needsExplainer": false
+    },
+    {
+      "sequence": 2,
+      "sha": "8c3b6fe",
+      "fullSha": "8c3b6fe42f125829ae054d993d30ce729a0d0ddf",
+      "summary": "Add understanding layer docs for event persistence fix [skip-understanding]",
+      "tier": "skip",
+      "tierSuggested": "skip",
+      "tierReason": "commit message tag",
+      "linesChanged": 536,
+      "filesChanged": 12,
+      "explainerDir": null,
+      "explainerPath": null,
+      "explainerFormat": null,
+      "needsExplainer": false
+    }
+  ]
+}
