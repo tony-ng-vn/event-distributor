@@ -5,7 +5,7 @@
 | # | Commit | Tier | Summary | Read |
 |---|--------|------|---------|------|
 | 1 | `87f4c9d` | light | Fix event feed dropping events after 24 hours | [explainer](../commits/2026-07-05-87f4c9d-fix-event-feed-dropping-events-after-24-hours/explainer.md) |
-| 2 | `8c3b6fe` | skip | Add understanding layer docs for event persistence fix [skip-understanding] | — |
+| 2 | `9374218` | skip | Add understanding layer docs for event persistence fix [skip-understanding] | — |
 
 **Summary:** 2 commits · 0 full · 1 light · 1 skipped · 0 explainer(s) pending
 

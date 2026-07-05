@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-05T00:19:42.783Z",
+  "generatedAt": "2026-07-05T00:19:48.379Z",
   "branch": "cursor/fix-event-persistence-0847",
   "branchSlug": "cursor-fix-event-persistence-0847",
   "base": "main",
@@ -23,8 +23,8 @@
     },
     {
       "sequence": 2,
-      "sha": "8c3b6fe",
-      "fullSha": "8c3b6fe42f125829ae054d993d30ce729a0d0ddf",
+      "sha": "9374218",
+      "fullSha": "9374218b3cff2d25760ec654f078afdd9d181cda",
       "summary": "Add understanding layer docs for event persistence fix [skip-understanding]",
       "tier": "skip",
       "tierSuggested": "skip",
