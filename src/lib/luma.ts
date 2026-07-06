@@ -327,6 +327,65 @@ export function parseLumaHtml(html: string, lumaUrl: string): LumaMetadata {
   return parseEventHtml(html, lumaUrl);
 }
 
+export const INVALID_EVENT_PAGE_MESSAGE =
+  "This URL does not appear to be a valid event page";
+
+const PLACEHOLDER_TITLES = new Set([
+  "untitled luma event",
+  "untitled event",
+  "luma",
+  "discover events on luma",
+]);
+
+function cleanEventTitle(title: string, sourceUrl: string): string {
+  let cleaned = title.trim();
+  if (isLumaUrl(sourceUrl)) {
+    cleaned = cleaned.replace(/\s*[|\-–—·]\s*Luma\s*$/i, "").trim();
+  }
+  return cleaned;
+}
+
+function isPlaceholderTitle(title: string): boolean {
+  const normalized = title.trim().toLowerCase();
+  if (!normalized) return true;
+  if (PLACEHOLDER_TITLES.has(normalized)) return true;
+  if (/^(page\s+)?not\s+found$/i.test(normalized)) return true;
+  if (/^404\b/.test(normalized)) return true;
+  return false;
+}
+
+function hasJsonLdEventSignals(html: string): boolean {
+  const jsonLd = parseJsonLdEvent(html);
+  if (!jsonLd?.title?.trim()) return false;
+  if (!jsonLd.startAt || Number.isNaN(jsonLd.startAt.getTime())) return false;
+  return true;
+}
+
+function hasStrongOpenGraphSignals(html: string, sourceUrl: string): boolean {
+  const ogTitle =
+    getMetaContent(html, "og:title") ?? getMetaContent(html, "twitter:title");
+  const cleanedTitle = ogTitle ? cleanEventTitle(ogTitle, sourceUrl) : "";
+  if (isPlaceholderTitle(cleanedTitle)) return false;
+
+  const ogType = getMetaContent(html, "og:type");
+  if (ogType && /event/i.test(ogType)) return true;
+
+  return cleanedTitle.length > 0;
+}
+
+/** True when fetched HTML looks like a real event page, not a generic fallback. */
+export function isValidEventPage(html: string, sourceUrl: string): boolean {
+  if (hasJsonLdEventSignals(html)) return true;
+  return hasStrongOpenGraphSignals(html, sourceUrl);
+}
+
+/** Throws when the page does not look like a real event (see INVALID_EVENT_PAGE_MESSAGE). */
+export function assertRealEventPage(html: string, sourceUrl: string): void {
+  if (!isValidEventPage(html, sourceUrl)) {
+    throw new Error(INVALID_EVENT_PAGE_MESSAGE);
+  }
+}
+
 /** Fetches event page HTML (live) or returns MOCK_METADATA (mock mode). */
 export async function fetchEventMetadata(sourceUrl: string): Promise<LumaMetadata> {
   if (process.env.LUMA_FETCH_MODE === "mock") {
@@ -346,6 +405,7 @@ export async function fetchEventMetadata(sourceUrl: string): Promise<LumaMetadat
   }
 
   const html = await response.text();
+  assertRealEventPage(html, sourceUrl);
   return parseEventHtml(html, sourceUrl);
 }
 
