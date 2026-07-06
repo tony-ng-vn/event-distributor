@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-07-05T00:19:51.047Z",
+  "generatedAt": "2026-07-06T22:10:00.000Z",
   "branch": "cursor/fix-event-persistence-0847",
   "branchSlug": "cursor-fix-event-persistence-0847",
   "base": "main",
-  "commitCount": 3,
+  "commitCount": 4,
   "pendingExplainers": [],
   "entries": [
     {
@@ -11,14 +11,14 @@
       "sha": "87f4c9d",
       "fullSha": "87f4c9d955ac84c686ca826536acd0e9eb05c0c8",
       "summary": "Fix event feed dropping events after 24 hours",
-      "tier": "light",
+      "tier": "full",
       "tierSuggested": "light",
-      "tierReason": "69 lines, 3 file(s)",
+      "tierReason": "Substantive bugfix changing core feed read path — upgraded from light",
       "linesChanged": 69,
       "filesChanged": 3,
       "explainerDir": "2026-07-05-87f4c9d-fix-event-feed-dropping-events-after-24-hours",
-      "explainerPath": "../commits/2026-07-05-87f4c9d-fix-event-feed-dropping-events-after-24-hours/explainer.md",
-      "explainerFormat": "md",
+      "explainerPath": "../commits/2026-07-05-87f4c9d-fix-event-feed-dropping-events-after-24-hours/explainer.html",
+      "explainerFormat": "html",
       "needsExplainer": false
     },
     {
@@ -46,6 +46,21 @@
       "tierReason": "commit message tag",
       "linesChanged": 8,
       "filesChanged": 2,
+      "explainerDir": null,
+      "explainerPath": null,
+      "explainerFormat": null,
+      "needsExplainer": false
+    },
+    {
+      "sequence": 4,
+      "sha": "c4326c6",
+      "fullSha": "c4326c6686bd2432c382ee34ba6f634a60073991",
+      "summary": "Update understanding reading order for branch commits [skip-understanding]",
+      "tier": "skip",
+      "tierSuggested": "skip",
+      "tierReason": "commit message tag",
+      "linesChanged": 4,
+      "filesChanged": 1,
       "explainerDir": null,
       "explainerPath": null,
       "explainerFormat": null,

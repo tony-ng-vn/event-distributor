@@ -41,19 +41,35 @@
       ]
     },
     {
-      "q": "What triggers the understanding layer on a PR?",
+      "q": "When should the understanding layer run?",
       "correct": 1,
       "options": [
-        "GitHub Actions on every push",
-        "Agent runs understanding skill deliberately",
-        "Merge to main only",
-        "Pre-commit hook"
+        "After every git commit during implementation",
+        "Once per PR, after the feature is production-ready and the PR is open",
+        "Only on merge to main",
+        "Never — docs are optional"
       ],
       "feedback": [
-        "❌ No CI job for understanding.",
-        "✅ npm run understanding:index after substantive work.",
+        "❌ Per-PR workflow — not per commit.",
+        "✅ Goal method: implement → review loop → PR → understanding.",
+        "❌ Generated on the feature branch before merge.",
+        "❌ Required for human review."
+      ]
+    },
+    {
+      "q": "What comes before creating the understanding layer?",
+      "correct": 1,
+      "options": [
+        "Push directly to main",
+        "Implement → sub-agent review loop until green → create PR",
+        "Write explainers first, then code",
+        "Skip tests if typecheck passes"
+      ],
+      "feedback": [
         "❌",
-        "❌"
+        "✅ Understanding is the final step after the PR exists.",
+        "❌ Code first, docs last.",
+        "❌ Run relevant tests in the review loop."
       ]
     },
     {

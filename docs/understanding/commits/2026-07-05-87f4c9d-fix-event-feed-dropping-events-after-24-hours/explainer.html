@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fix event feed persistence</title>
+  <title>Fix event feed dropping events after 24 hours</title>
   <style>
     :root { --bg:#faf9f7; --surface:#fff; --text:#1a1a1a; --muted:#5c5c5c; --accent:#2563eb; --accent-soft:#eff6ff; --border:#e5e2dc; --ok:#15803d; --ok-bg:#f0fdf4; --bad:#b91c1c; --bad-bg:#fef2f2; --callout:#fffbeb; --callout-border:#fcd34d; --radius:10px; --font:Georgia,serif; --mono:ui-monospace,Menlo,monospace; }
     *{box-sizing:border-box} body{margin:0;font-family:var(--font);font-size:1.0625rem;line-height:1.65;color:var(--text);background:var(--bg);padding:max(1.25rem,env(safe-area-inset-top)) max(1.25rem,env(safe-area-inset-right)) max(4rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left))}
@@ -36,117 +36,107 @@
     </nav>
     <main>
       <header class="hero">
-        <h1>Fix event feed persistence</h1>
-        <p class="meta">PR #3 · branch cursor/fix-event-persistence-0847 · 1 commit<br>Generated 2026-07-06. Read <a href="#intuition">Intuition</a> first. <a class="series-link" href="../branches/cursor-fix-event-persistence-0847/reading-order.md">Reading order →</a></p>
+        <h1>Fix event feed dropping events after 24 hours</h1>
+        <p class="meta">Commit 87f4c9d · tier full · entry #1 of 1<br>Generated 2026-07-06. Read <a href="#intuition">Intuition</a> first. <a class="series-link" href="../../branches/cursor-fix-event-persistence-0847/reading-order.md">Reading order →</a></p>
       </header>
-      <section id="glance"><h2>At a glance</h2><p>Events stayed in Postgres but vanished from the UI after ~24 hours because the feed API filtered on start_at. This PR loads all events and sorts upcoming first.</p></section>
+      <section id="glance"><h2>At a glance</h2><p>Events were saved in Postgres but disappeared from the app about a day after their start time. The feed API filtered out anything older than 24 hours. This commit removes that filter and sorts upcoming events first, then recent past events.</p></section>
       <section id="background"><h2>Background</h2>
-        <details class="deep-bg"><summary>Deep background (skippable)</summary><p>The app stores shared events in InsForge Postgres. Ingest writes rows; the feed reads them via GET /api/events.</p></details>
-        <h3>What mattered before</h3><p>fetchUpcomingEventRows() used .gte('start_at', now - 24h), hiding older rows from every client reload.</p>
+        <details class="deep-bg"><summary>Deep background (skippable)</summary><p>The app stores shared events in InsForge Postgres. Ingest writes rows via POST; the feed reads them via GET /api/events → listFeedEvents().</p></details>
+        <h3>What mattered before</h3><p>fetchUpcomingEventRows() used .gte('start_at', now - 24h). Once an event's start time was more than a day ago, every feed reload hid it — even though the row still existed.</p>
       </section>
-      <section id="intuition"><h2>Intuition</h2><p><strong>Goal:</strong> Keep added events visible until an admin deletes them, while still surfacing upcoming events first.</p>
+      <section id="intuition"><h2>Intuition</h2><p><strong>Goal:</strong> If someone adds an event to the shared feed, it should stay visible until an admin deletes it — not vanish because a server-side date window expired.</p>
         <div class="figure"><div class="flow"><span class="box">Postgres row</span><span class="arrow">→</span><span class="box">API query</span><span class="arrow">→</span><span class="box">Feed UI</span></div></div>
-        <p>Persistence was fine; the read filter made it look like data loss. Remove the cutoff and sort sensibly.</p>
+        <p>Persistence was fine; the read filter made it look like data loss. Remove the cutoff, then sort so upcoming events appear first (nearest first) and past events follow (most recent first).</p>
       </section>
       <section id="code"><h2>Code walkthrough</h2>
         <div class="code-step">
-          <div class="step-label">Step 1 — Remove 24h cutoff</div>
-          <p>fetchAllEventRows() selects all events without .gte('start_at', cutoff).</p>
+          <div class="step-label">Step 1 — Remove the 24-hour cutoff</div>
+          <p>fetchAllEventRows() selects all events without .gte('start_at', cutoff), then applies sortFeedEventRows.</p>
           <pre>const { data } = await db.database
   .from('events')
   .select(eventSelect)
-  .order('start_at', { ascending: true });</pre>
+  .order('start_at', { ascending: true });
+const events = sortFeedEventRows((data ?? []) as InsforgeEventRow[]);</pre>
         </div>
         <div class="code-step">
           <div class="step-label">Step 2 — Sort upcoming first</div>
-          <p>sortFeedEventRows puts future events at the top (nearest first), then past events (most recent first).</p>
+          <p>sortFeedEventRows splits on start_at >= now: upcoming events nearest-first, then past events most-recent-first.</p>
           
         </div>
         <div class="code-step">
           <div class="step-label">Step 3 — Regression test</div>
-          <p>Integration test inserts an event from 3 days ago and asserts listFeedEvents still returns it.</p>
-          
+          <p>Integration test inserts an event from 3 days ago and asserts listFeedEvents() still returns it.</p>
+          <pre>const pastStart = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+// ... insert row ...
+expect(feed.some((e) =&gt; e.id === inserted?.id)).toBe(true);</pre>
         </div>
       </section>
       <section id="quiz"><h2>Quiz</h2><p>Five questions — click an answer for feedback.</p>
         <div id="quiz-root">
           <div class="quiz-item" data-correct="1">
-            <p class="question">1. Why did events seem to disappear?</p>
+            <p class="question">1. Why did events seem to disappear even though they were in the database?</p>
             <div class="quiz-options">
-              <button type="button" data-index="0">Rows deleted from Postgres</button>
-              <button type="button" data-index="1">API filtered start_at to last 24 hours</button>
-              <button type="button" data-index="2">Browser cache</button>
-              <button type="button" data-index="3">RLS denied reads</button>
+              <button type="button" data-index="0">RLS policies hid old rows</button>
+              <button type="button" data-index="1">The API excluded rows with start_at older than 24 hours</button>
+              <button type="button" data-index="2">Events were stored only in sessionStorage</button>
+              <button type="button" data-index="3">A nightly cleanup job deleted them</button>
             </div>
-            <div class="quiz-feedback" data-feedback="0">❌ Rows remained.</div>
-            <div class="quiz-feedback" data-feedback="1">✅ Application query excluded older start_at values.</div>
-            <div class="quiz-feedback" data-feedback="2">❌</div>
-            <div class="quiz-feedback" data-feedback="3">❌ RLS allows public read.</div>
+            <div class="quiz-feedback" data-feedback="0">❌ RLS allows public read; the filter was in application code.</div>
+            <div class="quiz-feedback" data-feedback="1">✅ The query used .gte('start_at', cutoff) with a rolling 24h window.</div>
+            <div class="quiz-feedback" data-feedback="2">❌ Event data is server-persisted.</div>
+            <div class="quiz-feedback" data-feedback="3">❌ No TTL or cron cleanup exists.</div>
           </div>
           <div class="quiz-item" data-correct="1">
-            <p class="question">2. When should the understanding layer run?</p>
+            <p class="question">2. How are feed results ordered after this fix?</p>
             <div class="quiz-options">
-              <button type="button" data-index="0">After every git commit during implementation</button>
-              <button type="button" data-index="1">Once per PR, after the feature is production-ready and the PR is open</button>
-              <button type="button" data-index="2">Only on merge to main</button>
+              <button type="button" data-index="0">Oldest events first, all rows</button>
+              <button type="button" data-index="1">Upcoming first (nearest first), then past events (most recent first)</button>
+              <button type="button" data-index="2">Random order</button>
+              <button type="button" data-index="3">Only future events, unsorted</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌ Upcoming events come first.</div>
+            <div class="quiz-feedback" data-feedback="1">✅ sortFeedEventRows splits on start_at &gt;= now.</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌ Past events are included again.</div>
+          </div>
+          <div class="quiz-item" data-correct="2">
+            <p class="question">3. Which function name changed to reflect the new behavior?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">listFeedEvents → listAllFeedEvents only</button>
+              <button type="button" data-index="1">ingestLumaEvent → ingestAnyEvent</button>
+              <button type="button" data-index="2">fetchUpcomingEventRows → fetchAllEventRows</button>
+              <button type="button" data-index="3">deleteEvent → softDeleteEvent</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌ listFeedEvents still exists; it now delegates to listAllFeedEvents.</div>
+            <div class="quiz-feedback" data-feedback="1">❌ Ingest unchanged.</div>
+            <div class="quiz-feedback" data-feedback="2">✅ The internal fetch helper was renamed.</div>
+            <div class="quiz-feedback" data-feedback="3">❌ Admin delete unchanged.</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">4. Does this commit change how admin delete works?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Yes — anyone can delete</button>
+              <button type="button" data-index="1">No — only the feed query and sort changed</button>
+              <button type="button" data-index="2">Yes — soft delete added</button>
+              <button type="button" data-index="3">Yes — events auto-delete after 24h</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">❌ Admin-only delete unchanged.</div>
+            <div class="quiz-feedback" data-feedback="1">✅</div>
+            <div class="quiz-feedback" data-feedback="2">❌</div>
+            <div class="quiz-feedback" data-feedback="3">❌ That was the bug we fixed.</div>
+          </div>
+          <div class="quiz-item" data-correct="1">
+            <p class="question">5. When is the understanding layer generated for this PR?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Automatically after every git commit</button>
+              <button type="button" data-index="1">Once, after the PR is created and the feature is production-ready</button>
+              <button type="button" data-index="2">Only when merged to main</button>
               <button type="button" data-index="3">Never — docs are optional</button>
             </div>
             <div class="quiz-feedback" data-feedback="0">❌ Per-PR workflow — not per commit.</div>
             <div class="quiz-feedback" data-feedback="1">✅ Goal method: implement → review loop → PR → understanding.</div>
             <div class="quiz-feedback" data-feedback="2">❌ Generated on the feature branch before merge.</div>
             <div class="quiz-feedback" data-feedback="3">❌ Required for human review.</div>
-          </div>
-          <div class="quiz-item" data-correct="1">
-            <p class="question">3. What comes before creating the understanding layer?</p>
-            <div class="quiz-options">
-              <button type="button" data-index="0">Push directly to main</button>
-              <button type="button" data-index="1">Implement → sub-agent review loop until green → create PR</button>
-              <button type="button" data-index="2">Write explainers first, then code</button>
-              <button type="button" data-index="3">Skip tests if typecheck passes</button>
-            </div>
-            <div class="quiz-feedback" data-feedback="0">❌</div>
-            <div class="quiz-feedback" data-feedback="1">✅ Understanding is the final step after the PR exists.</div>
-            <div class="quiz-feedback" data-feedback="2">❌ Code first, docs last.</div>
-            <div class="quiz-feedback" data-feedback="3">❌ Run relevant tests in the review loop.</div>
-          </div>
-          <div class="quiz-item" data-correct="1">
-            <p class="question">4. Admin delete after this PR?</p>
-            <div class="quiz-options">
-              <button type="button" data-index="0">Removed</button>
-              <button type="button" data-index="1">Unchanged — still admin-only hard delete</button>
-              <button type="button" data-index="2">Now soft delete</button>
-              <button type="button" data-index="3">Automatic after 24h</button>
-            </div>
-            <div class="quiz-feedback" data-feedback="0">❌</div>
-            <div class="quiz-feedback" data-feedback="1">✅ Only feed read path changed.</div>
-            <div class="quiz-feedback" data-feedback="2">❌</div>
-            <div class="quiz-feedback" data-feedback="3">❌ That was the bug we fixed.</div>
-          </div>
-          <div class="quiz-item" data-correct="0">
-            <p class="question">5. Where to start reading this branch?</p>
-            <div class="quiz-options">
-              <button type="button" data-index="0">reading-order.md entry #1</button>
-              <button type="button" data-index="1">Raw git diff only</button>
-              <button type="button" data-index="2">package.json</button>
-              <button type="button" data-index="3">Only this roll-up</button>
-            </div>
-            <div class="quiz-feedback" data-feedback="0">✅ Chronological per-commit explainers first.</div>
-            <div class="quiz-feedback" data-feedback="1">❌</div>
-            <div class="quiz-feedback" data-feedback="2">❌</div>
-            <div class="quiz-feedback" data-feedback="3">❌ Roll-up is optional summary.</div>
-          </div>
-          <div class="quiz-item" data-correct="2">
-            <p class="question">6. Anonymous pass behavior?</p>
-            <div class="quiz-options">
-              <button type="button" data-index="0">Now persisted server-side</button>
-              <button type="button" data-index="1">Removed entirely</button>
-              <button type="button" data-index="2">Still sessionStorage-only</button>
-              <button type="button" data-index="3">Deletes the event row</button>
-            </div>
-            <div class="quiz-feedback" data-feedback="0">❌</div>
-            <div class="quiz-feedback" data-feedback="1">❌</div>
-            <div class="quiz-feedback" data-feedback="2">✅ Unchanged by this PR.</div>
-            <div class="quiz-feedback" data-feedback="3">❌</div>
           </div>
           <div class="quiz-score" id="quiz-score" aria-live="polite"></div>
         </div>
