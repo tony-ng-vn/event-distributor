@@ -1,10 +1,14 @@
 /** Unit tests for Luma URL validation and HTML metadata parsing (cover images, titles). */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  assertRealEventPage,
+  fetchEventMetadata,
+  INVALID_EVENT_PAGE_MESSAGE,
   isEventSourceUrl,
   isLumaUrl,
+  isValidEventPage,
   normalizeLumaUrl,
   normalizeSourceUrl,
   parseEventHtml,
@@ -158,5 +162,144 @@ describe("luma cover image extraction", () => {
     expect(metadata.coverImageUrl).toBe(
       "https://images.lumacdn.com/cdn-cgi/image/format=auto/event-covers/ub/fallback-id",
     );
+  });
+});
+
+describe("event page validation", () => {
+  it("accepts real Luma event HTML with JSON-LD", () => {
+    const html = readFileSync(fixturePath, "utf8");
+    expect(isValidEventPage(html, "https://lu.ma/demo")).toBe(true);
+    expect(() =>
+      assertRealEventPage(html, "https://lu.ma/demo"),
+    ).not.toThrow();
+  });
+
+  it("accepts Luma HTML with JSON-LD Event schema", () => {
+    const html = `
+      <script type="application/ld+json">
+        {"@type":"Event","name":"Demo Night","startDate":"2026-08-01T19:00:00.000Z"}
+      </script>
+    `;
+    expect(isValidEventPage(html, "https://lu.ma/demo-night")).toBe(true);
+  });
+
+  it("accepts non-Luma pages with strong Open Graph title", () => {
+    const html = `
+      <meta property="og:title" content="Voice and Intelligence Webinar | Anthropic" />
+    `;
+    expect(
+      isValidEventPage(
+        html,
+        "https://www.anthropic.com/webinars/voice-and-intelligence",
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts Luma pages with strong og:title when JSON-LD is missing", () => {
+    const html = `
+      <meta property="og:title" content="Demo Night | Luma" />
+      <meta property="og:description" content="A great event" />
+    `;
+    expect(isValidEventPage(html, "https://lu.ma/demo-night")).toBe(true);
+  });
+
+  it("rejects empty or generic Luma pages", () => {
+    const homepage = `
+      <meta property="og:title" content="Luma" />
+      <meta property="og:description" content="Discover events" />
+    `;
+    expect(isValidEventPage(homepage, "https://lu.ma/")).toBe(false);
+    expect(() => assertRealEventPage(homepage, "https://lu.ma/")).toThrow(
+      INVALID_EVENT_PAGE_MESSAGE,
+    );
+  });
+
+  it("rejects pages that would only produce fallback metadata", () => {
+    const bareHtml = "<html><head></head><body></body></html>";
+    expect(isValidEventPage(bareHtml, "https://lu.ma/bogus-slug")).toBe(false);
+    expect(() =>
+      assertRealEventPage(bareHtml, "https://lu.ma/bogus-slug"),
+    ).toThrow(INVALID_EVENT_PAGE_MESSAGE);
+  });
+
+  it("rejects random pages with empty og tags", () => {
+    const html = `
+      <meta property="og:title" content="" />
+      <meta property="og:description" content="" />
+    `;
+    expect(isValidEventPage(html, "https://lu.ma/not-real")).toBe(false);
+  });
+
+  it("rejects 404-like pages", () => {
+    const html = `
+      <title>Page Not Found | Luma</title>
+      <meta property="og:title" content="Page Not Found | Luma" />
+    `;
+    expect(isValidEventPage(html, "https://lu.ma/missing-event")).toBe(false);
+  });
+
+  it("rejects JSON-LD Event missing title or start date", () => {
+    const missingTitle = `
+      <script type="application/ld+json">
+        {"@type":"Event","startDate":"2026-08-01T19:00:00.000Z"}
+      </script>
+    `;
+    const missingDate = `
+      <script type="application/ld+json">
+        {"@type":"Event","name":"No Date Event"}
+      </script>
+    `;
+    expect(isValidEventPage(missingTitle, "https://lu.ma/no-title")).toBe(
+      false,
+    );
+    expect(isValidEventPage(missingDate, "https://lu.ma/no-date")).toBe(false);
+  });
+});
+
+describe("fetchEventMetadata", () => {
+  const originalMode = process.env.LUMA_FETCH_MODE;
+
+  afterEach(() => {
+    process.env.LUMA_FETCH_MODE = originalMode;
+    vi.restoreAllMocks();
+  });
+
+  it("returns mock metadata without network in mock mode", async () => {
+    process.env.LUMA_FETCH_MODE = "mock";
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    const metadata = await fetchEventMetadata("https://lu.ma/demo-ai-meetup");
+    expect(metadata.title).toBe("AI Builders Meetup");
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid pages in live mode before parsing", async () => {
+    process.env.LUMA_FETCH_MODE = "live";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: async () => "<html><head></head><body></body></html>",
+      }),
+    );
+
+    await expect(fetchEventMetadata("https://lu.ma/bogus-slug")).rejects.toThrow(
+      INVALID_EVENT_PAGE_MESSAGE,
+    );
+  });
+
+  it("accepts valid pages in live mode", async () => {
+    process.env.LUMA_FETCH_MODE = "live";
+    const html = readFileSync(fixturePath, "utf8");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: async () => html,
+      }),
+    );
+
+    const metadata = await fetchEventMetadata("https://lu.ma/demo");
+    expect(metadata.title).toBe("s4 -- demo day.");
   });
 });
