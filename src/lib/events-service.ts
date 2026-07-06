@@ -5,7 +5,8 @@
  *   1. ingestLumaEvent — paste lu.ma URL → fetch metadata → save Event row
  *   2. listFeedEvents — load events + who accepted (Accept → User)
  *   3. acceptEvent — signed-in user joins guest list (creates Accept row)
- *   4. passEvent — signed-in user marks event as passed (creates Pass row)
+ *   4. unacceptEvent — signed-in user removes interest (deletes Accept row)
+ *   5. passEvent — signed-in user marks event as passed (creates Pass row)
  */
 import { isUserAdmin } from "@/lib/admin";
 import { getInsforgeAdmin } from "@/lib/db";
@@ -331,6 +332,29 @@ export async function acceptEvent(eventId: string, userId: string) {
   }
 
   await unpassEvent(eventId, userId);
+
+  const { data: updated, error: updatedError } = await db.database
+    .from("events")
+    .select(eventSelect)
+    .eq("id", eventId)
+    .single();
+
+  if (updatedError) throw new Error(updatedError.message);
+
+  return serializeEvent(updated as InsforgeEventRow, userId);
+}
+
+/** DELETE accept — remove user interest from in-app guest list. No-op if not accepted. */
+export async function unacceptEvent(eventId: string, userId: string) {
+  const db = getInsforgeAdmin();
+
+  const { error: deleteError } = await db.database
+    .from("accepts")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("user_id", userId);
+
+  if (deleteError) throw new Error(deleteError.message);
 
   const { data: updated, error: updatedError } = await db.database
     .from("events")
