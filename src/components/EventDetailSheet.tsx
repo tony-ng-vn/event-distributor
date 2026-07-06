@@ -16,22 +16,26 @@ export function EventDetailSheet({
   onAccept,
   onPass,
   onUnpass,
+  onUnaccept,
   onDelete,
   accepted,
   passed,
   isAdmin,
   showPassedActions = false,
+  showAcceptedActions = false,
 }: {
   event: FeedEvent | null;
   onClose: () => void;
   onAccept: () => void;
   onPass: () => void;
   onUnpass?: () => void;
+  onUnaccept?: () => void;
   onDelete?: () => void;
   accepted: boolean;
   passed?: boolean;
   isAdmin?: boolean;
   showPassedActions?: boolean;
+  showAcceptedActions?: boolean;
 }) {
   if (!event) return null;
 
@@ -85,7 +89,19 @@ export function EventDetailSheet({
 
           <EventAttendeeSections event={event} interactive showCount />
 
-          {accepted ? (
+          {accepted && showAcceptedActions ? (
+            <div className="space-y-2">
+              <EventResponseStatus variant="accepted" />
+              <button
+                type="button"
+                onClick={onUnaccept}
+                className="btn-pass w-full py-3"
+                data-testid="unaccept-button"
+              >
+                Remove interest
+              </button>
+            </div>
+          ) : accepted ? (
             <EventResponseStatus variant="accepted" />
           ) : passed && showPassedActions ? (
             <div className="space-y-2">

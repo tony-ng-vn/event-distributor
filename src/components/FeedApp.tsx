@@ -307,6 +307,38 @@ export function FeedApp() {
     }
   }
 
+  /** Remove interest so the event returns to the viewer feed. */
+  async function handleUnaccept(eventId: string) {
+    try {
+      const response = await fetch(
+        `/api/events/${encodeURIComponent(eventId)}/accept`,
+        { method: "DELETE", cache: "no-store" },
+      );
+
+      if (response.status === 401) {
+        setConnectOpen(true);
+        return;
+      }
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error ?? "Remove interest failed");
+      }
+
+      setCardState((prev) => {
+        const next = { ...prev };
+        delete next[eventId];
+        return next;
+      });
+      setToast("Interest removed · Back in your feed");
+      await syncEventsFromServer(
+        detailEvent?.id === eventId ? eventId : null,
+      );
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Remove interest failed");
+    }
+  }
+
   /** DELETE event — admin only; removes from shared feed for everyone. */
   async function handleDelete(eventId: string) {
     if (pendingDeleteIds[eventId]) return;
@@ -369,7 +401,10 @@ export function FeedApp() {
     }
   }
 
-  function renderFeedCards(sectionEvents: FeedEvent[]) {
+  function renderFeedCards(
+    sectionEvents: FeedEvent[],
+    options?: { showPastActions?: boolean },
+  ) {
     return (
       <div className="grid auto-rows-min gap-3 lg:grid-cols-2">
         {sectionEvents.map((event) => (
@@ -381,6 +416,10 @@ export function FeedApp() {
             isExiting={Boolean(exitingEventIds[event.id])}
             onAccept={() => performAccept(event.id)}
             onPass={() => handlePass(event.id)}
+            onUnpass={() => handleUnpass(event.id)}
+            onUnaccept={() => handleUnaccept(event.id)}
+            showPassedActions={options?.showPastActions}
+            showAcceptedActions={options?.showPastActions}
             onDelete={() => handleDelete(event.id)}
             onOpen={() => setDetailEvent(event)}
           />
@@ -471,7 +510,7 @@ export function FeedApp() {
               <h2 className="mb-3 text-[0.6875rem] font-medium uppercase tracking-wider text-muted">
                 Past events
               </h2>
-              {renderFeedCards(pastEvents)}
+              {renderFeedCards(pastEvents, { showPastActions: true })}
             </section>
           )}
         </div>
@@ -705,9 +744,16 @@ export function FeedApp() {
         onAccept={() => detailEvent && performAccept(detailEvent.id)}
         onPass={() => detailEvent && handlePass(detailEvent.id)}
         onUnpass={() => detailEvent && handleUnpass(detailEvent.id)}
+        onUnaccept={() => detailEvent && handleUnaccept(detailEvent.id)}
         onDelete={() => detailEvent && handleDelete(detailEvent.id)}
         isAdmin={viewerIsAdmin}
         showPassedActions={activeTab === "admin"}
+        showAcceptedActions={
+          detailEvent
+            ? detailEvent.viewerAccepted ||
+              cardState[detailEvent.id] === "accepted"
+            : false
+        }
         accepted={
           detailEvent
             ? detailEvent.viewerAccepted || cardState[detailEvent.id] === "accepted"
