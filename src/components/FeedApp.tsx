@@ -22,6 +22,7 @@ import { EventFeedCard } from "@/components/EventFeedCard";
 import { FeedSkeleton } from "@/components/FeedSkeleton";
 import { FeedSummary } from "@/components/FeedSummary";
 import { IngestModal } from "@/components/IngestModal";
+import { FeedbackModal } from "@/components/FeedbackModal";
 import type { FeedEvent, FeedFilter, MobileTab } from "@/types/feed";
 
 type CardState = Record<string, "pending" | "accepted" | "passed" | "accepting">;
@@ -45,6 +46,7 @@ export function FeedApp() {
   const [passedIds, setPassedIds] = useState<string[]>([]);
   const [cardState, setCardState] = useState<CardState>({});
   const [ingestOpen, setIngestOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [detailEvent, setDetailEvent] = useState<FeedEvent | null>(null);
   const [calendarDate, setCalendarDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -562,6 +564,22 @@ export function FeedApp() {
             >
               Add link
             </button>
+            <button
+              type="button"
+              onClick={() => setFeedbackOpen(true)}
+              className="rounded-lg px-2 py-1 text-sm text-muted transition hover:text-foreground sm:hidden"
+              data-testid="feedback-button-mobile"
+            >
+              Feedback
+            </button>
+            <button
+              type="button"
+              onClick={() => setFeedbackOpen(true)}
+              className="btn-secondary hidden sm:inline-flex"
+              data-testid="feedback-button"
+            >
+              Feedback
+            </button>
             <AuthButton />
           </div>
         </div>
@@ -697,6 +715,12 @@ export function FeedApp() {
           setToast("Event added to the shared feed");
           await syncEventsFromServer();
         }}
+      />
+
+      <FeedbackModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        onSubmitted={() => setToast("Thanks for your feedback")}
       />
 
       <EventDetailSheet
