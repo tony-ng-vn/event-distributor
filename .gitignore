@@ -19,6 +19,11 @@
 /.next/
 /out/
 
+# worktree dev-server port metadata (local per checkout)
+.worktree-dev-port
+.worktree-dev-port.json
+.worktrees/dev-servers.json
+
 # production
 /build
 

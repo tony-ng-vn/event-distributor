@@ -1,0 +1,53 @@
+---
+description: Use unique dev-server ports for git worktrees; never bind worktrees to 3000
+alwaysApply: true
+---
+
+# Worktree dev servers
+
+When starting a local Next.js dev server:
+
+## Port rules
+
+| Checkout | Port | Command |
+|----------|------|---------|
+| **Main repo** (`/workspace` or repo root) | `3000` | `npm run dev` |
+| **Git worktree** (path contains `/.worktrees/`) | **unique** `3100–3899` | `npm run dev:worktree` |
+
+**Never** run `npm run dev` (port 3000) from inside a worktree. Port 3000 is reserved for the main checkout. Worktrees that share 3000 can also pick up the wrong Turbopack root and serve the main branch by mistake.
+
+## Before starting a worktree server
+
+1. `cd` into the worktree root (not the main repo).
+2. Resolve the port:
+   ```bash
+   node scripts/resolve-dev-port.mjs --ensure
+   ```
+3. Start the server:
+   ```bash
+   npm run dev:worktree
+   ```
+
+## How agents discover the right port
+
+Each worktree writes local metadata on first `dev:worktree` run:
+
+| File | Purpose |
+|------|---------|
+| `.worktree-dev-port` | Plain port number (quick read) |
+| `.worktree-dev-port.json` | `port`, `path`, `branch`, `url` |
+| `.worktrees/dev-servers.json` | Registry of all worktree servers (main repo) |
+
+To list every known worktree URL:
+
+```bash
+node scripts/worktree-dev-registry.mjs list
+# or JSON:
+node scripts/worktree-dev-registry.mjs json
+```
+
+Always tell the human the **exact URL** from `.worktree-dev-port.json` (e.g. `http://localhost:3847`), not `http://localhost:3000`.
+
+## Stopping servers
+
+Before starting, check whether a port is already in use. Kill stale servers on the worktree's assigned port, not blindly on 3000.
