@@ -1,5 +1,5 @@
 {
-  "title": "Fix event feed persistence",
+  "title": "Fix event feed dropping events after 24 hours",
   "meta": "PR #3 · branch cursor/fix-event-persistence-0847 · 1 commit",
   "seriesLink": "../branches/cursor-fix-event-persistence-0847/reading-order.md",
   "glance": "Events stayed in Postgres but vanished from the UI after ~24 hours because the feed API filtered on start_at. This PR loads all events and sorts upcoming first.",

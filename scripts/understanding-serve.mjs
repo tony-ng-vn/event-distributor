@@ -256,6 +256,83 @@ function readJsonFromSource(source, relPath) {
   }
 }
 
+function stripHtml(text) {
+  return String(text)
+    .replace(/<[^>]+>/g, "")
+    .replace(/&mdash;/g, "—")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function listPrSlugs(source) {
+  if (source.type === "fs") {
+    const dir = join(source.root, "prs");
+    if (!existsSync(dir)) return [];
+    return readdirSync(dir).filter(
+      (slug) =>
+        existsSync(join(dir, slug, "explainer.html")) ||
+        existsSync(join(dir, slug, "explainer.content.json")),
+    );
+  }
+  try {
+    return git(`git ls-tree --name-only "${source.branch}:docs/understanding/prs"`)
+      .split("\n")
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function prExplainerHref(source, slug) {
+  return source.isPrimary
+    ? `/prs/${slug}/explainer.html`
+    : `/all/${source.id}/prs/${slug}/explainer.html`;
+}
+
+function loadPrThread(source, slug) {
+  const content = readJsonFromSource(source, `prs/${slug}/explainer.content.json`);
+  if (!content) return null;
+
+  const prMatch = content.meta?.match(/PR\s*#(\d+)/i);
+  return {
+    slug,
+    prNumber: prMatch ? Number(prMatch[1]) : null,
+    title: content.title || slug.replace(/-/g, " "),
+    brief: stripHtml(content.glance || content.goal || ""),
+    href: prExplainerHref(source, slug),
+    source,
+  };
+}
+
+function collectExplainerThreads() {
+  const byKey = new Map();
+
+  for (const source of SOURCES) {
+    for (const slug of listPrSlugs(source)) {
+      const thread = loadPrThread(source, slug);
+      if (!thread) continue;
+
+      const key = thread.prNumber ?? `${slug}:${source.id}`;
+      const existing = byKey.get(key);
+      const score = (s) =>
+        (s.isPrimary ? 4 : 0) + (s.type === "fs" ? 2 : 0) + (s.branch?.startsWith("origin/") ? 0 : 1);
+      if (!existing || score(source) > score(existing.source)) {
+        byKey.set(key, thread);
+      }
+    }
+  }
+
+  return [...byKey.values()].sort((a, b) => (b.prNumber ?? 0) - (a.prNumber ?? 0));
+}
+
+function redirect(res, location) {
+  res.writeHead(302, { Location: location });
+  res.end();
+}
+
 function lanAddresses() {
   const nets = networkInterfaces();
   const addrs = [];
@@ -271,146 +348,50 @@ function primarySource() {
   return SOURCES.find((s) => s.isPrimary) ?? SOURCES[0] ?? null;
 }
 
-function rewriteExplainerHref(source, explainerPath) {
-  if (!explainerPath) return null;
-  const rel = explainerPath.replace(/^\.\.\//, "");
-  if (source.isPrimary) return `/${rel}`;
-  return `/all/${source.id}/${rel}`;
-}
-
 function renderUnifiedHub() {
-  const current = branchSlug(currentBranch());
-  const sections = SOURCES.map((source) => {
-    const cards = source.slugs
-      .map((slug) => {
-        const active =
-          source.isPrimary && slug === current
-            ? ' <span class="pill">checked out here</span>'
-            : "";
-        const hub = source.isPrimary
-          ? `/branches/${slug}/hub.html`
-          : `/all/${source.id}/branches/${slug}/hub.html`;
-        return `<li><a class="card" href="${hub}">
-          <strong>${slug.replace(/-/g, "/")}</strong>${active}
-          <span class="sub">Reading order + explainers</span>
-        </a></li>`;
-      })
-      .join("\n");
+  const threads = collectExplainerThreads();
 
-    const loc =
-      source.type === "fs"
-        ? `<span class="meta">${source.worktreePath}</span>`
-        : `<span class="meta">${source.branch.startsWith("origin/") ? "remote branch (git fetch)" : "git branch (not checked out)"}</span>`;
-
-    return `<section class="source">
-      <h2>${source.label}</h2>
-      ${loc}
-      <ul>${cards || "<li class=\"empty\">No reading-order yet.</li>"}</ul>
-    </section>`;
-  }).join("\n");
-
-  const sourceCount = SOURCES.length;
-  const branchCount = SOURCES.reduce((n, s) => n + s.slugs.length, 0);
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Understanding layer — all branches</title>
-  <style>
-    :root { --bg:#faf9f7; --surface:#fff; --text:#1a1a1a; --muted:#5c5c5c; --accent:#2563eb; --border:#e5e2dc; --radius:12px; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text);
-      padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); max-width: 40rem; }
-    h1 { font-size: 1.5rem; margin: 0 0 .5rem; }
-    h2 { font-size: 1rem; margin: 0 0 .35rem; color: var(--text); }
-    .lead { color: var(--muted); line-height: 1.5; margin-bottom: 1rem; font-size: .95rem; }
-    .stats { font-size: .8125rem; color: var(--muted); margin-bottom: 1.25rem; }
-    .callout { background: #fffbeb; border: 1px solid #fcd34d; border-radius: var(--radius); padding: .875rem 1rem; margin-bottom: 1.25rem; font-size: .875rem; line-height: 1.5; }
-    .source { margin-bottom: 1.75rem; }
-    .meta { display: block; font-size: .75rem; color: var(--muted); margin-bottom: .65rem; word-break: break-all; }
-    ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .65rem; }
-    a.card { display: block; text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: .875rem 1rem; min-height: 44px; }
-    a.card strong { display: block; font-size: .95rem; margin-bottom: .2rem; }
-    .sub { color: var(--muted); font-size: .8125rem; }
-    .pill { display: inline-block; font-size: .6875rem; background: #eff6ff; color: var(--accent); padding: .15rem .45rem; border-radius: 999px; margin-left: .35rem; }
-    .empty { color: var(--muted); font-size: .875rem; }
-  </style>
-</head>
-<body>
-  <h1>Understanding layer</h1>
-  <p class="lead">One place for every branch and worktree. Pick a reading order — no git checkout needed.</p>
-  <p class="stats">${sourceCount} source(s) · ${branchCount} reading order(s)</p>
-  <div class="callout"><strong>Phone?</strong> Use the LAN URL from your terminal (same Wi‑Fi). GitHub shows HTML source — this server runs the quiz.</div>
-  ${sections || "<p>No understanding docs found. Run <code>npm run understanding:index</code> on a branch.</p>"}
-</body>
-</html>`;
-}
-
-function renderBranchHub(source, slug) {
-  const index = readJsonFromSource(source, `branches/${slug}/index.json`);
-  const entries = index?.entries ?? [];
-
-  const items = entries
-    .map((e) => {
-      const href = rewriteExplainerHref(source, e.explainerPath);
-      const read = href
-        ? `<a class="go" href="${href}">Read explainer →</a>`
-        : e.tier === "skip"
-          ? `<span class="skip">Skipped</span>`
-          : `<span class="pending">Pending</span>`;
-      return `<li class="entry">
-        <div class="num">#${e.sequence}</div>
-        <div class="body">
-          <div class="title"><code>${e.sha}</code> · ${e.tier}</div>
-          <div class="summary">${e.summary}</div>
-          ${read}
-        </div>
+  const cards = threads
+    .map((t) => {
+      const prLabel = t.prNumber ? `PR #${t.prNumber}` : "PR";
+      return `<li>
+        <a class="card" href="${t.href}">
+          <span class="pr">${prLabel}</span>
+          <strong class="title">${t.title}</strong>
+          <p class="brief">${t.brief}</p>
+        </a>
       </li>`;
     })
     .join("\n");
 
-  const rollup = source.isPrimary
-    ? `/prs/${slug}/explainer.html`
-    : `/all/${source.id}/prs/${slug}/explainer.html`;
-  const back = source.isPrimary ? "/" : "/";
-
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Reading order — ${slug}</title>
+  <title>Understanding workbook</title>
   <style>
     :root { --bg:#faf9f7; --surface:#fff; --text:#1a1a1a; --muted:#5c5c5c; --accent:#2563eb; --border:#e5e2dc; --radius:12px; }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text);
-      padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); }
-    a { color: var(--accent); }
-    h1 { font-size: 1.35rem; margin: 0 0 .35rem; }
-    .back { display: inline-block; margin-bottom: 1rem; font-size: .875rem; text-decoration: none; min-height: 44px; line-height: 44px; }
-    .lead { color: var(--muted); font-size: .9rem; margin-bottom: 1rem; line-height: 1.5; }
-    .rollup { display: block; text-align: center; text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: .875rem; margin-bottom: 1.25rem; font-weight: 600; min-height: 44px; }
+      padding: max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) max(2.5rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left)); max-width: 36rem; }
+    h1 { font-size: 1.5rem; margin: 0 0 .5rem; font-weight: 600; }
+    .lead { color: var(--muted); line-height: 1.5; margin-bottom: 1.5rem; font-size: .9375rem; }
     ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .75rem; }
-    .entry { display: flex; gap: .75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .875rem 1rem; }
-    .num { font-weight: 700; color: var(--accent); min-width: 2rem; font-size: 1.1rem; }
-    .title { font-size: .8125rem; margin-bottom: .25rem; }
-    .summary { font-size: .9rem; line-height: 1.45; margin-bottom: .5rem; }
-    a.go { display: inline-block; font-size: .9375rem; font-weight: 600; text-decoration: none; padding: .5rem 0; min-height: 44px; line-height: 1.2; }
-    .skip, .pending { font-size: .8125rem; color: var(--muted); }
-    .src { font-size: .75rem; color: var(--muted); margin-bottom: .5rem; }
+    a.card { display: block; text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem 1.125rem; }
+    a.card:hover { border-color: #bfdbfe; background: #f8fafc; }
+    .pr { display: inline-block; font-size: .75rem; font-weight: 600; color: var(--accent); background: #eff6ff;
+      padding: .2rem .5rem; border-radius: 6px; margin-bottom: .5rem; }
+    .title { display: block; font-size: 1.05rem; font-weight: 600; margin: 0 0 .5rem; line-height: 1.35; }
+    .brief { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--muted); }
+    .empty { color: var(--muted); font-size: .9rem; line-height: 1.5; }
   </style>
 </head>
 <body>
-  <a class="back" href="${back}">← All branches</a>
-  <p class="src">${source.label}</p>
-  <h1>${slug}</h1>
-  <p class="lead">Read <strong>#1 → #${entries.length || "?"}</strong> in order (oldest first).</p>
-  <a class="rollup" href="${rollup}">PR roll-up (whole branch)</a>
-  <ul>${items}</ul>
+  <h1>Understanding workbook</h1>
+  <p class="lead">One explainer thread per PR. Tap to read.</p>
+  <ul>${cards || '<li class="empty">No explainer threads yet. Run the understanding skill bundle after a PR is created.</li>'}</ul>
 </body>
 </html>`;
 }
@@ -457,8 +438,7 @@ const server = createServer((req, res) => {
       res.end("Unknown source");
       return;
     }
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(renderBranchHub(source, allHubMatch[2]));
+    redirect(res, prExplainerHref(source, allHubMatch[2]));
     return;
   }
 
@@ -482,15 +462,14 @@ const server = createServer((req, res) => {
       res.end("No primary source");
       return;
     }
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(renderBranchHub(primary, hubMatch[1]));
+    redirect(res, prExplainerHref(primary, hubMatch[1]));
     return;
   }
 
   const filePath = safePrimaryPath(url);
   if (!filePath || !existsSync(filePath) || statSync(filePath).isDirectory()) {
     res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Not found — try http://127.0.0.1:" + port + "/ for all branches");
+    res.end("Not found — try http://127.0.0.1:" + port + "/ for the workbook");
     return;
   }
 
@@ -502,36 +481,26 @@ const server = createServer((req, res) => {
 
 server.listen(port, host, () => {
   const lan = lanAddresses();
-  console.log("\nUnderstanding docs server (all branches)\n");
-  console.log(`  Catalog (start here):  http://127.0.0.1:${port}/`);
+  const threads = collectExplainerThreads();
+
+  console.log("\nUnderstanding workbook\n");
+  console.log(`  Start here:  http://127.0.0.1:${port}/`);
   for (const ip of lan) {
-    console.log(`  On your phone:           http://${ip}:${port}/`);
+    console.log(`  On phone:    http://${ip}:${port}/`);
   }
 
-  if (SOURCES.length > 0) {
-    console.log("\n  Sources:");
-    for (const s of SOURCES) {
-      const tag = s.isPrimary
-        ? " ← you are here"
-        : s.type === "git"
-          ? s.branch.startsWith("origin/")
-            ? " (remote)"
-            : " (git only)"
-          : "";
-      console.log(`    · ${s.label}${tag}`);
-      for (const slug of s.slugs) {
-        const hub = s.isPrimary
-          ? `http://127.0.0.1:${port}/branches/${slug}/hub.html`
-          : `http://127.0.0.1:${port}/all/${s.id}/branches/${slug}/hub.html`;
-        console.log(`        ${slug}`);
-        console.log(`        ${hub}`);
-      }
+  if (threads.length > 0) {
+    console.log("\n  Explainer threads:");
+    for (const t of threads) {
+      const pr = t.prNumber ? `PR #${t.prNumber}` : "PR";
+      console.log(`    · ${pr} — ${t.title}`);
+      console.log(`      http://127.0.0.1:${port}${t.href}`);
     }
   }
 
-  console.log("\nGitHub PR links show HTML source — use this server for quizzes.");
+  console.log("\nGitHub shows HTML source — use this server for interactive explainers.");
   if (!localOnly) {
-    console.log("Serving all worktrees + local branches with understanding docs.");
+    console.log("Includes docs from all worktrees and fetched remote branches.");
   }
   console.log("");
 });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fix event feed persistence</title>
+  <title>Fix event feed dropping events after 24 hours</title>
   <style>
     :root { --bg:#faf9f7; --surface:#fff; --text:#1a1a1a; --muted:#5c5c5c; --accent:#2563eb; --accent-soft:#eff6ff; --border:#e5e2dc; --ok:#15803d; --ok-bg:#f0fdf4; --bad:#b91c1c; --bad-bg:#fef2f2; --callout:#fffbeb; --callout-border:#fcd34d; --radius:10px; --font:Georgia,serif; --mono:ui-monospace,Menlo,monospace; }
     *{box-sizing:border-box} body{margin:0;font-family:var(--font);font-size:1.0625rem;line-height:1.65;color:var(--text);background:var(--bg);padding:max(1.25rem,env(safe-area-inset-top)) max(1.25rem,env(safe-area-inset-right)) max(4rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left))}
@@ -36,7 +36,7 @@
     </nav>
     <main>
       <header class="hero">
-        <h1>Fix event feed persistence</h1>
+        <h1>Fix event feed dropping events after 24 hours</h1>
         <p class="meta">PR #3 · branch cursor/fix-event-persistence-0847 · 1 commit<br>Generated 2026-07-06. Read <a href="#intuition">Intuition</a> first. <a class="series-link" href="../branches/cursor-fix-event-persistence-0847/reading-order.md">Reading order →</a></p>
       </header>
       <section id="glance"><h2>At a glance</h2><p>Events stayed in Postgres but vanished from the UI after ~24 hours because the feed API filtered on start_at. This PR loads all events and sorts upcoming first.</p></section>
