@@ -1,0 +1,94 @@
+---
+description: Goal-method workflow for every feature — implement, review loop, PR, then understanding
+alwaysApply: true
+---
+
+# Feature goal workflow
+
+Use the **goal method** for every feature, fix, or sub-agent task. The agent keeps working until the goal is met — not just until the first draft compiles.
+
+## Goal
+
+Ship **production-ready** work: correct behavior, passing checks, reviewed, documented for humans.
+
+## Pipeline (in order)
+
+```
+1. Implement     → code + tests for the feature
+2. Review loop   → sub-agent review → fix → re-run checks → repeat until green
+3. Create PR     → open/update pull request with verification notes
+4. Understanding → run understanding skill bundle once per PR (not per commit)
+```
+
+Do **not** skip steps. Do **not** open a PR before the review loop passes.
+
+---
+
+## Step 1 — Implement
+
+- Read relevant skills and domain docs first.
+- Make focused commits (see `incremental-commits` rule).
+- Run `npm run typecheck` and relevant tests as you go.
+- **Do not** generate understanding-layer docs during implementation commits.
+
+---
+
+## Step 2 — Review loop (mandatory)
+
+Before creating or updating a PR, launch a **sub-agent review**:
+
+1. Use the `review-and-ship` skill or a `generalPurpose` sub-agent.
+2. Ask for: bugs, intent fit, test gaps, production risks.
+3. Fix every **blocking** issue.
+4. Re-run `npm run typecheck`, `npm run test:unit`, and any affected integration/e2e tests.
+5. **Repeat** until the reviewer approves or only non-blocking suggestions remain.
+
+Treat "needs changes" as **not done**. Keep iterating.
+
+---
+
+## Step 3 — Create PR
+
+Only after the review loop is green:
+
+- Push the branch.
+- Open or update the PR with a clear problem/solution summary.
+- Include verification commands and results.
+
+---
+
+## Step 4 — Understanding layer (once per PR)
+
+After the PR exists, run the **`understanding` skill bundle** (`.cursor/skills/understanding/SKILL.md`):
+
+```bash
+npm run understanding:index -- --branch "$(git branch --show-current)" --base main
+npm run understanding:diff -- --branch "$(git branch --show-current)" --base main
+```
+
+Write per-commit explainers (classify tiers), `reading-order.md`, and PR roll-up. Add a **Review guide** section to the PR description linking:
+
+- `docs/understanding/branches/<branch>/reading-order.md`
+- `docs/understanding/prs/<branch>/explainer.html`
+
+**One understanding pass per PR** — not after every commit.
+
+---
+
+## Sub-agents
+
+When delegating to a sub-agent for implementation, include the same goal:
+
+> Implement the feature, then self-review and fix until typecheck/tests pass and the change is production-ready. Do not stop at first draft.
+
+The parent agent still runs the formal sub-agent review before PR.
+
+---
+
+## Quick checklist
+
+- [ ] Feature implemented with tests
+- [ ] Sub-agent review loop → green
+- [ ] PR created/updated
+- [ ] Understanding layer generated (per-PR)
+- [ ] PR description includes Review guide links

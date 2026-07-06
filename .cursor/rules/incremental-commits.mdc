@@ -15,4 +15,4 @@ When the user asks for commits or you finish a logical unit of work in this repo
 
 Prefer **multiple small commits** over **one large commit**, unless the user asks for a single squashed commit.
 
-For teaching docs (explainers, reading order), run the **`understanding` skill bundle** at checkpoints or when substantive work lands — not automatically after every commit. See `.cursor/skills/understanding/SKILL.md`.
+For teaching docs (explainers, reading order), run the **`understanding` skill bundle** **once per PR** after the feature is production-ready — not during implementation commits. See `.cursor/rules/feature-goal-workflow.mdc` and `.cursor/skills/understanding/SKILL.md`.
