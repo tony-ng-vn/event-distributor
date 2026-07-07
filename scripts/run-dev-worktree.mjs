@@ -6,6 +6,10 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  findMissingEnvKeys,
+  printMissingEnvHelp,
+} from "./validate-env-local.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const resolveScript = resolve(scriptDir, "resolve-dev-port.mjs");
@@ -29,8 +33,25 @@ function printEnvHelp() {
   console.error("  3. In worktree: npm run worktree:setup");
 }
 
-if (!existsSync(resolve(cwd, ".env.local"))) {
+const envPath = resolve(cwd, ".env.local");
+
+if (!existsSync(envPath)) {
   printEnvHelp();
+  process.exit(1);
+}
+
+const envCheck = findMissingEnvKeys(envPath);
+if (envCheck.missingRequired.length > 0) {
+  printMissingEnvHelp({
+    mainRoot: cwd.includes("/.worktrees/")
+      ? cwd.slice(0, cwd.indexOf("/.worktrees/"))
+      : cwd,
+    envPath: cwd.includes("/.worktrees/")
+      ? resolve(cwd.slice(0, cwd.indexOf("/.worktrees/")), ".env.local")
+      : envPath,
+    missingRequired: envCheck.missingRequired,
+    missingRecommended: envCheck.missingRecommended,
+  });
   process.exit(1);
 }
 

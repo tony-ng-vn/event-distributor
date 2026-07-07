@@ -8,6 +8,10 @@
 import { execSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import {
+  findMissingEnvKeys,
+  printMissingEnvHelp,
+} from "./validate-env-local.mjs";
 
 const COPY_PATHS = [".env.local", ".env"];
 const OPTIONAL_PATHS = [".insforge"];
@@ -98,13 +102,19 @@ function setupWorktree() {
   }
 
   const ready = hasEnvLocal(worktreeRoot);
+  const envCheck = ready
+    ? findMissingEnvKeys(resolve(worktreeRoot, REQUIRED_PATH))
+    : { missingRequired: [], missingRecommended: [] };
+  const configured = ready && envCheck.missingRequired.length === 0;
 
   return {
-    ok: ready,
+    ok: configured,
     ready,
+    configured,
     worktreeRoot,
     mainRoot,
     results,
+    envCheck,
   };
 }
 
@@ -152,6 +162,16 @@ for (const item of result.results) {
       break;
     }
   }
+}
+
+if (result.ready && !result.configured) {
+  printMissingEnvHelp({
+    mainRoot: result.mainRoot,
+    envPath: resolve(result.mainRoot, REQUIRED_PATH),
+    missingRequired: result.envCheck.missingRequired,
+    missingRecommended: result.envCheck.missingRecommended,
+  });
+  process.exit(1);
 }
 
 if (result.ready) {
