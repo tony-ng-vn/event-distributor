@@ -1,24 +1,16 @@
 #!/usr/bin/env node
 /**
- * Link shared local config from the main repo into a git worktree.
+ * Copy shared local config from the main repo into a git worktree.
  *
- * Prefer symlinks over copies — credentials stay in one place and update
- * automatically when the main checkout changes.
+ * Always copies .env.local and .env from main → worktree so each worktree
+ * can run immediately without manual env setup.
  */
 import { execSync } from "node:child_process";
-import {
-  cpSync,
-  existsSync,
-  lstatSync,
-  mkdirSync,
-  readlinkSync,
-  rmSync,
-  symlinkSync,
-  unlinkSync,
-} from "node:fs";
-import { dirname, relative, resolve } from "node:path";
+import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 
-const SHARED_PATHS = [".env.local", ".env", ".insforge"];
+const COPY_PATHS = [".env.local", ".env"];
+const OPTIONAL_PATHS = [".insforge"];
 const REQUIRED_PATH = ".env.local";
 
 function runGit(args, cwd) {
@@ -44,32 +36,7 @@ function mainRepoRoot(root) {
   return root.slice(0, index);
 }
 
-function isSymlink(path) {
-  try {
-    return lstatSync(path).isSymbolicLink();
-  } catch {
-    return false;
-  }
-}
-
-function isRealPath(path) {
-  return existsSync(path) && !isSymlink(path);
-}
-
-function bootstrapToMain(name, mainRoot, worktreeRoot) {
-  const source = resolve(worktreeRoot, name);
-  const target = resolve(mainRoot, name);
-
-  if (!isRealPath(source) || existsSync(target)) {
-    return { name, status: "bootstrap-skipped", source, target };
-  }
-
-  mkdirSync(dirname(target), { recursive: true });
-  cpSync(source, target, { recursive: true });
-  return { name, status: "bootstrapped", source, target };
-}
-
-function linkSharedPath(name, mainRoot, worktreeRoot, { force = false } = {}) {
+function copySharedPath(name, mainRoot, worktreeRoot) {
   const source = resolve(mainRoot, name);
   const target = resolve(worktreeRoot, name);
 
@@ -78,62 +45,41 @@ function linkSharedPath(name, mainRoot, worktreeRoot, { force = false } = {}) {
   }
 
   if (existsSync(target)) {
-    if (isSymlink(target)) {
-      const current = readlinkSync(target);
-      const expected = relative(dirname(target), source);
-      if (current === expected || resolve(dirname(target), current) === source) {
-        return { name, status: "already-linked", target, source };
-      }
-    }
-
-    if (!force) {
-      return { name, status: "exists", target, source };
-    }
+    rmSync(target, { recursive: true, force: true });
   }
 
-  if (existsSync(target) && force) {
-    if (isSymlink(target)) unlinkSync(target);
-    else rmSync(target, { recursive: true, force: true });
-  }
+  mkdirSync(dirname(target), { recursive: true });
+  cpSync(source, target, { recursive: true });
 
-  const parent = dirname(target);
-  mkdirSync(parent, { recursive: true });
-
-  const linkTarget = relative(parent, source);
-  symlinkSync(
-    linkTarget,
-    target,
-    lstatSync(source).isDirectory() ? "dir" : "file",
-  );
-
-  return { name, status: "linked", target, source, linkTarget };
+  return { name, status: "copied", source, target };
 }
 
 function hasEnvLocal(worktreeRoot) {
   return existsSync(resolve(worktreeRoot, REQUIRED_PATH));
 }
 
-function printFixSteps({ mainRoot, worktreeRoot, bootstrap = false }) {
+function hasEnvExample(mainRoot) {
+  return existsSync(resolve(mainRoot, ".env.example"));
+}
+
+function printFixSteps({ mainRoot, worktreeRoot }) {
   console.log("");
   console.error("Setup incomplete — .env.local is still missing in the worktree.");
   console.error("");
-  console.error("Fix (recommended):");
-  console.error(`  1. cd ${mainRoot}`);
-  console.error("  2. cp .env.example .env.local   # add Clerk + InsForge keys");
-  console.error(`  3. cd ${worktreeRoot}`);
-  console.error("  4. npm run worktree:setup");
-  console.error("");
-  if (!bootstrap) {
-    console.error("Already copied .env.local into the worktree?");
-    console.error("  npm run worktree:setup -- --bootstrap");
+  console.error("Create credentials in the main repo first:");
+  console.error(`  cd ${mainRoot}`);
+  if (hasEnvExample(mainRoot)) {
+    console.error("  cp .env.example .env.local   # add Clerk + InsForge keys");
+  } else {
+    console.error("  Create .env.local with Clerk + InsForge keys");
   }
+  console.error(`  cd ${worktreeRoot}`);
+  console.error("  npm run worktree:setup");
 }
 
-function setupWorktree(options = {}) {
+function setupWorktree() {
   const worktreeRoot = gitRoot();
   const mainRoot = mainRepoRoot(worktreeRoot);
-  const force = options.force === true;
-  const bootstrap = options.bootstrap === true;
 
   if (!isWorktreeCheckout(worktreeRoot)) {
     return {
@@ -147,15 +93,8 @@ function setupWorktree(options = {}) {
   }
 
   const results = [];
-
-  if (bootstrap) {
-    for (const name of SHARED_PATHS) {
-      results.push(bootstrapToMain(name, mainRoot, worktreeRoot));
-    }
-  }
-
-  for (const name of SHARED_PATHS) {
-    results.push(linkSharedPath(name, mainRoot, worktreeRoot, { force }));
+  for (const name of [...COPY_PATHS, ...OPTIONAL_PATHS]) {
+    results.push(copySharedPath(name, mainRoot, worktreeRoot));
   }
 
   const ready = hasEnvLocal(worktreeRoot);
@@ -166,23 +105,19 @@ function setupWorktree(options = {}) {
     worktreeRoot,
     mainRoot,
     results,
-    bootstrap,
   };
 }
 
 function printHelp() {
   console.log(`Usage: node scripts/setup-worktree.mjs [options]
 
-Link shared local config from the main repo into this worktree:
-  .env.local, .env, .insforge
+Copy shared local config from the main repo into this worktree:
+  .env.local, .env (required)
+  .insforge (optional, if present in main)
 
 Options:
-  --bootstrap  Copy existing worktree files to main, then link back
-  --json       Print result as JSON
-  --force      Replace existing worktree files with symlinks
-  --help       Show this help
-
-Prefer symlinks over copies so credentials stay in one place.`);
+  --json    Print result as JSON
+  --help    Show this help`);
 }
 
 const args = process.argv.slice(2);
@@ -192,10 +127,7 @@ if (args.includes("--help") || args.includes("-h")) {
   process.exit(0);
 }
 
-const result = setupWorktree({
-  force: args.includes("--force"),
-  bootstrap: args.includes("--bootstrap"),
-});
+const result = setupWorktree();
 
 if (args.includes("--json")) {
   console.log(JSON.stringify(result, null, 2));
@@ -208,19 +140,8 @@ console.log("");
 
 for (const item of result.results) {
   switch (item.status) {
-    case "linked":
-      console.log(`✓ linked ${item.name} → ${item.linkTarget}`);
-      break;
-    case "already-linked":
-      console.log(`✓ ${item.name} already linked`);
-      break;
-    case "exists":
-      console.log(`• ${item.name} already exists in worktree (left unchanged)`);
-      break;
-    case "bootstrapped":
-      console.log(`✓ bootstrapped ${item.name} to main repo`);
-      break;
-    case "bootstrap-skipped":
+    case "copied":
+      console.log(`✓ copied ${item.name} from main repo`);
       break;
     case "missing-source":
       console.log(`✗ ${item.name} not found in main repo (${item.source})`);

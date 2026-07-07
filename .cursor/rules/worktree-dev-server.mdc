@@ -7,9 +7,9 @@ alwaysApply: true
 
 When creating or using a git worktree:
 
-## Shared local config (env, InsForge)
+## Shared local config (env)
 
-**Prefer symlinks over copies.** Credentials live in the main repo checkout; worktrees link to them.
+**Always copy** `.env.local` and `.env` from the main repo into each worktree.
 
 After `git worktree add`:
 
@@ -18,32 +18,21 @@ cd .worktrees/<name>
 npm run worktree:setup
 ```
 
-This symlinks from the main repo into the worktree:
+This copies from main → worktree (overwriting any existing copies):
 
-| Path | Why |
-|------|-----|
-| `.env.local` | Clerk + InsForge keys |
-| `.env` | Optional shared env |
-| `.insforge/` | InsForge CLI project link |
+| Path | Required |
+|------|----------|
+| `.env.local` | Yes — Clerk + InsForge keys |
+| `.env` | If present in main |
+| `.insforge/` | If present in main |
 
-**Do not copy** unless the branch needs different credentials (rare). Copies go stale when main changes.
+Credentials live in the **main repo checkout**. Re-run `npm run worktree:setup` after updating main `.env.local` to refresh a worktree.
 
-If `.env.local` is missing in the worktree, run `npm run worktree:setup` before starting the dev server.
-
-If setup says main repo is missing `.env.local`:
+First-time main repo setup:
 
 ```bash
-# in main repo
+cd <main-repo-root>
 cp .env.example .env.local   # add Clerk + InsForge keys
-
-# back in worktree
-npm run worktree:setup
-```
-
-If you already copied `.env.local` into the worktree first:
-
-```bash
-npm run worktree:setup -- --bootstrap
 ```
 
 ## Port rules
@@ -53,18 +42,14 @@ npm run worktree:setup -- --bootstrap
 | **Main repo** (`/workspace` or repo root) | `3000` | `npm run dev` |
 | **Git worktree** (path contains `/.worktrees/`) | **unique** `3100–3899` | `npm run dev:worktree` |
 
-**Never** run `npm run dev` (port 3000) from inside a worktree. Port 3000 is reserved for the main checkout. Worktrees that share 3000 can also pick up the wrong Turbopack root and serve the main branch by mistake.
+**Never** run `npm run dev` (port 3000) from inside a worktree. Port 3000 is reserved for the main checkout.
 
 ## Before starting a worktree server
 
 1. `cd` into the worktree root (not the main repo).
-2. Ensure shared config is linked:
+2. Copy shared config from main:
    ```bash
    npm run worktree:setup
-   ```
-3. Resolve the port:
-   ```bash
-   node scripts/resolve-dev-port.mjs --ensure
    ```
 3. Start the server:
    ```bash
@@ -84,9 +69,7 @@ Each worktree writes local metadata on first `dev:worktree` run:
 To list every known worktree URL:
 
 ```bash
-node scripts/worktree-dev-registry.mjs list
-# or JSON:
-node scripts/worktree-dev-registry.mjs json
+npm run dev:registry
 ```
 
 Always tell the human the **exact URL** from `.worktree-dev-port.json` (e.g. `http://localhost:3847`), not `http://localhost:3000`.

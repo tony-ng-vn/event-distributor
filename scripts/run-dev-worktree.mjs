@@ -23,13 +23,7 @@ function printEnvHelp() {
 
   console.error("Missing .env.local in this worktree.");
   console.error("");
-  console.error("If main repo has credentials:");
-  console.error("  npm run worktree:setup");
-  console.error("");
-  console.error("If you copied .env.local into the worktree already:");
-  console.error("  npm run worktree:setup -- --bootstrap");
-  console.error("");
-  console.error("First time setup:");
+  console.error("Create it in main, then copy into the worktree:");
   console.error("  1. In main repo: cp .env.example .env.local");
   console.error("  2. Add Clerk + InsForge keys");
   console.error("  3. In worktree: npm run worktree:setup");
