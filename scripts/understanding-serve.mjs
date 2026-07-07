@@ -356,8 +356,10 @@ function renderUnifiedHub() {
       const prLabel = t.prNumber ? `PR #${t.prNumber}` : "PR";
       return `<li>
         <a class="card" href="${t.href}">
-          <span class="pr">${prLabel}</span>
-          <strong class="title">${t.title}</strong>
+          <div class="headline">
+            <span class="pr">${prLabel}</span>
+            <strong class="title">${t.title}</strong>
+          </div>
           <p class="brief">${t.brief}</p>
         </a>
       </li>`;
@@ -381,9 +383,10 @@ function renderUnifiedHub() {
     a.card { display: block; text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 1rem 1.125rem; }
     a.card:hover { border-color: #bfdbfe; background: #f8fafc; }
-    .pr { display: inline-block; font-size: .75rem; font-weight: 600; color: var(--accent); background: #eff6ff;
-      padding: .2rem .5rem; border-radius: 6px; margin-bottom: .5rem; }
-    .title { display: block; font-size: 1.05rem; font-weight: 600; margin: 0 0 .5rem; line-height: 1.35; }
+    .headline { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+    .pr { flex-shrink: 0; font-size: .75rem; font-weight: 600; color: var(--accent); background: #eff6ff;
+      padding: .2rem .5rem; border-radius: 6px; line-height: 1.2; }
+    .title { font-size: 1.05rem; font-weight: 600; margin: 0; line-height: 1.35; }
     .brief { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--muted); }
     .empty { color: var(--muted); font-size: .9rem; line-height: 1.5; }
   </style>
