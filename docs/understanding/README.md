@@ -23,6 +23,8 @@ Each card shows:
 
 Tap a card → read the full interactive explainer (quiz included).
 
+Use **Mark as finished** on the workbook or inside the explainer — progress is saved in your browser (localStorage).
+
 The server finds explainers across **all worktrees and branches** — no checkout needed.
 
 ## View on your phone

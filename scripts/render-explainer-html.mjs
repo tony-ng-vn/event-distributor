@@ -71,6 +71,8 @@ if (!existsSync(configPath)) {
 
 const c = JSON.parse(readFileSync(configPath, "utf8"));
 const today = new Date().toISOString().slice(0, 10);
+const dirSlug = dir.replace(/\\/g, "/").split("/").pop() ?? "";
+const threadId = dir.includes("/prs/") || dir.includes("\\prs\\") ? dirSlug : c.threadId || "";
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -143,6 +145,7 @@ ${renderQuiz(c.quiz)}
     it.querySelectorAll(".quiz-options button").forEach(function(b){if(b.classList.contains("correct")&&Number(b.dataset.index)===corr)score++;});});
     const el=document.getElementById("quiz-score");el.textContent="You got "+score+" / "+items.length+".";el.classList.add("visible");}});});});})();
   </script>
+  <script src="/_assets/understanding-reader.js" data-mode="explainer" data-thread-id="${esc(c.threadId || "")}"></script>
 </body>
 </html>
 `;

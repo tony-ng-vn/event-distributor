@@ -299,6 +299,7 @@ function loadPrThread(source, slug) {
   const prMatch = content.meta?.match(/PR\s*#(\d+)/i);
   return {
     slug,
+    threadId: slug,
     prNumber: prMatch ? Number(prMatch[1]) : null,
     title: content.title || slug.replace(/-/g, " "),
     brief: stripHtml(content.glance || content.goal || ""),
@@ -354,14 +355,16 @@ function renderUnifiedHub() {
   const cards = threads
     .map((t) => {
       const prLabel = t.prNumber ? `PR #${t.prNumber}` : "PR";
-      return `<li>
+      return `<li class="thread" data-thread-id="${t.threadId}">
         <a class="card" href="${t.href}">
           <div class="headline">
             <span class="pr">${prLabel}</span>
             <strong class="title">${t.title}</strong>
+            <span class="read-badge">Finished</span>
           </div>
           <p class="brief">${t.brief}</p>
         </a>
+        <button type="button" class="mark-read">Mark as finished</button>
       </li>`;
     })
     .join("\n");
@@ -383,18 +386,19 @@ function renderUnifiedHub() {
     a.card { display: block; text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 1rem 1.125rem; }
     a.card:hover { border-color: #bfdbfe; background: #f8fafc; }
-    .headline { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+    .headline { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; flex-wrap: wrap; }
     .pr { flex-shrink: 0; font-size: .75rem; font-weight: 600; color: var(--accent); background: #eff6ff;
       padding: .2rem .5rem; border-radius: 6px; line-height: 1.2; }
-    .title { font-size: 1.05rem; font-weight: 600; margin: 0; line-height: 1.35; }
+    .title { font-size: 1.05rem; font-weight: 600; margin: 0; line-height: 1.35; flex: 1; min-width: 0; }
     .brief { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--muted); }
     .empty { color: var(--muted); font-size: .9rem; line-height: 1.5; }
   </style>
 </head>
-<body>
+<body data-understanding-page="workbook">
   <h1>Understanding workbook</h1>
-  <p class="lead">One explainer thread per PR. Tap to read.</p>
+  <p class="lead">One explainer thread per PR. Tap to read. Mark finished when done — saved in this browser.</p>
   <ul>${cards || '<li class="empty">No explainer threads yet. Run the understanding skill bundle after a PR is created.</li>'}</ul>
+  <script src="/_assets/understanding-reader.js" data-mode="workbook"></script>
 </body>
 </html>`;
 }
@@ -414,10 +418,32 @@ function serveStaticFromSource(source, relPath, res) {
     res.end("Not found");
     return true;
   }
+  return sendBuffer(res, relPath, buf);
+}
+
+function prThreadIdFromPath(relPath) {
+  const match = relPath.match(/prs\/([^/]+)\/explainer\.html$/);
+  return match ? match[1] : null;
+}
+
+function injectExplainerReader(html, relPath) {
+  if (!relPath.endsWith(".html")) return html;
+  const threadId = prThreadIdFromPath(relPath);
+  if (!threadId || html.includes("understanding-reader.js")) return html;
+  const tag = `<script src="/_assets/understanding-reader.js" data-mode="explainer" data-thread-id="${threadId}"></script>`;
+  return html.replace("</body>", `${tag}\n</body>`);
+}
+
+function sendBuffer(res, relPath, buf) {
   const ext = extname(relPath);
+  let body = buf;
+  if (ext === ".html") {
+    const html = buf.toString("utf8");
+    body = Buffer.from(injectExplainerReader(html, relPath), "utf8");
+  }
   const type = MIME[ext] ?? "application/octet-stream";
   res.writeHead(200, { "Content-Type": type });
-  res.end(buf);
+  res.end(body);
   return true;
 }
 
@@ -476,10 +502,8 @@ const server = createServer((req, res) => {
     return;
   }
 
-  const ext = extname(filePath);
-  const type = MIME[ext] ?? "application/octet-stream";
-  res.writeHead(200, { "Content-Type": type });
-  res.end(readFileSync(filePath));
+  const relFromRoot = relative(PRIMARY_ROOT, filePath).replace(/\\/g, "/");
+  sendBuffer(res, relFromRoot, readFileSync(filePath));
 });
 
 server.listen(port, host, () => {
