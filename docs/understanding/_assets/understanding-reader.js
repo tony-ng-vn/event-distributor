@@ -42,12 +42,12 @@
       .thread.is-finished .read-badge { display: inline-flex; }
       .read-badge { display: none; align-items: center; flex-shrink: 0; font-size: .6875rem; font-weight: 600;
         color: #15803d; background: #dcfce7; padding: .2rem .45rem; border-radius: 6px; }
-      .mark-read { display: block; width: 100%; margin-top: .5rem; font: inherit; font-size: .8125rem; font-weight: 600;
-        color: var(--accent, #2563eb); background: transparent; border: 1px solid var(--border, #e5e2dc);
-        border-radius: 8px; padding: .5rem .75rem; min-height: 40px; cursor: pointer; }
-      .mark-read:hover { background: #eff6ff; border-color: #bfdbfe; }
-      .thread.is-finished .mark-read { color: #15803d; border-color: #86efac; }
-      .thread.is-finished .mark-read:hover { background: #f0fdf4; }
+      .thread .mark-read { display: block; width: 100%; margin: 0; font: inherit; font-size: .8125rem; font-weight: 600;
+        color: var(--accent, #2563eb); background: transparent; border: none; border-top: 1px solid var(--border, #e5e2dc);
+        border-radius: 0; padding: .65rem 1.125rem; min-height: 40px; cursor: pointer; text-align: left; }
+      .thread .mark-read:hover { background: #eff6ff; }
+      .thread.is-finished .mark-read { color: #15803d; border-top-color: #86efac; }
+      .thread.is-finished .mark-read:hover { background: #ecfdf5; }
       .understanding-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .75rem;
         flex-wrap: wrap; max-width: 56rem; margin: 0 auto 1rem; padding: .75rem 1.25rem;
         background: #fff; border: 1px solid #e5e2dc; border-radius: 10px; font-family: system-ui, sans-serif; font-size: .875rem; }

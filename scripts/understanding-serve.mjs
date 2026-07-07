@@ -356,15 +356,17 @@ function renderUnifiedHub() {
     .map((t) => {
       const prLabel = t.prNumber ? `PR #${t.prNumber}` : "PR";
       return `<li class="thread" data-thread-id="${t.threadId}">
-        <a class="card" href="${t.href}">
-          <div class="headline">
-            <span class="pr">${prLabel}</span>
-            <strong class="title">${t.title}</strong>
-            <span class="read-badge">Finished</span>
-          </div>
-          <p class="brief">${t.brief}</p>
-        </a>
-        <button type="button" class="mark-read">Mark as finished</button>
+        <div class="card">
+          <a class="card-link" href="${t.href}">
+            <div class="headline">
+              <span class="pr">${prLabel}</span>
+              <strong class="title">${t.title}</strong>
+              <span class="read-badge">Finished</span>
+            </div>
+            <p class="brief">${t.brief}</p>
+          </a>
+          <button type="button" class="mark-read">Mark as finished</button>
+        </div>
       </li>`;
     })
     .join("\n");
@@ -383,14 +385,14 @@ function renderUnifiedHub() {
     h1 { font-size: 1.5rem; margin: 0 0 .5rem; font-weight: 600; }
     .lead { color: var(--muted); line-height: 1.5; margin-bottom: 1.5rem; font-size: .9375rem; }
     ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .75rem; }
-    a.card { display: block; text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1rem 1.125rem; }
-    a.card:hover { border-color: #bfdbfe; background: #f8fafc; }
+    .thread .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .thread .card:hover { border-color: #bfdbfe; background: #f8fafc; }
+    a.card-link { display: block; text-decoration: none; color: inherit; padding: 1rem 1.125rem 0; }
     .headline { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; flex-wrap: wrap; }
     .pr { flex-shrink: 0; font-size: .75rem; font-weight: 600; color: var(--accent); background: #eff6ff;
       padding: .2rem .5rem; border-radius: 6px; line-height: 1.2; }
     .title { font-size: 1.05rem; font-weight: 600; margin: 0; line-height: 1.35; flex: 1; min-width: 0; }
-    .brief { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--muted); }
+    .brief { margin: 0 0 1rem; font-size: .9rem; line-height: 1.5; color: var(--muted); }
     .empty { color: var(--muted); font-size: .9rem; line-height: 1.5; }
   </style>
 </head>
