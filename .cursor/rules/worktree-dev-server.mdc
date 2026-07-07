@@ -30,6 +30,22 @@ This symlinks from the main repo into the worktree:
 
 If `.env.local` is missing in the worktree, run `npm run worktree:setup` before starting the dev server.
 
+If setup says main repo is missing `.env.local`:
+
+```bash
+# in main repo
+cp .env.example .env.local   # add Clerk + InsForge keys
+
+# back in worktree
+npm run worktree:setup
+```
+
+If you already copied `.env.local` into the worktree first:
+
+```bash
+npm run worktree:setup -- --bootstrap
+```
+
 ## Port rules
 
 | Checkout | Port | Command |

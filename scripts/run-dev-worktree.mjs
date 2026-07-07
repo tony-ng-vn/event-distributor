@@ -11,10 +11,32 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const resolveScript = resolve(scriptDir, "resolve-dev-port.mjs");
 const cwd = process.cwd();
 
+function isWorktreeCheckout() {
+  return cwd.includes("/.worktrees/");
+}
+
+function printEnvHelp() {
+  if (!isWorktreeCheckout()) {
+    console.error("Missing .env.local. Copy .env.example to .env.local and add your keys.");
+    return;
+  }
+
+  console.error("Missing .env.local in this worktree.");
+  console.error("");
+  console.error("If main repo has credentials:");
+  console.error("  npm run worktree:setup");
+  console.error("");
+  console.error("If you copied .env.local into the worktree already:");
+  console.error("  npm run worktree:setup -- --bootstrap");
+  console.error("");
+  console.error("First time setup:");
+  console.error("  1. In main repo: cp .env.example .env.local");
+  console.error("  2. Add Clerk + InsForge keys");
+  console.error("  3. In worktree: npm run worktree:setup");
+}
+
 if (!existsSync(resolve(cwd, ".env.local"))) {
-  console.error(
-    "Missing .env.local in this worktree. Run: npm run worktree:setup",
-  );
+  printEnvHelp();
   process.exit(1);
 }
 
