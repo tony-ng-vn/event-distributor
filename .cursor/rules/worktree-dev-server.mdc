@@ -5,7 +5,30 @@ alwaysApply: true
 
 # Worktree dev servers
 
-When starting a local Next.js dev server:
+When creating or using a git worktree:
+
+## Shared local config (env, InsForge)
+
+**Prefer symlinks over copies.** Credentials live in the main repo checkout; worktrees link to them.
+
+After `git worktree add`:
+
+```bash
+cd .worktrees/<name>
+npm run worktree:setup
+```
+
+This symlinks from the main repo into the worktree:
+
+| Path | Why |
+|------|-----|
+| `.env.local` | Clerk + InsForge keys |
+| `.env` | Optional shared env |
+| `.insforge/` | InsForge CLI project link |
+
+**Do not copy** unless the branch needs different credentials (rare). Copies go stale when main changes.
+
+If `.env.local` is missing in the worktree, run `npm run worktree:setup` before starting the dev server.
 
 ## Port rules
 
@@ -19,7 +42,11 @@ When starting a local Next.js dev server:
 ## Before starting a worktree server
 
 1. `cd` into the worktree root (not the main repo).
-2. Resolve the port:
+2. Ensure shared config is linked:
+   ```bash
+   npm run worktree:setup
+   ```
+3. Resolve the port:
    ```bash
    node scripts/resolve-dev-port.mjs --ensure
    ```

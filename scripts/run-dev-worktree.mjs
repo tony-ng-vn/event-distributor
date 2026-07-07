@@ -3,14 +3,23 @@
  * Start Next.js dev server on the port assigned to this checkout.
  */
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const resolveScript = resolve(scriptDir, "resolve-dev-port.mjs");
+const cwd = process.cwd();
+
+if (!existsSync(resolve(cwd, ".env.local"))) {
+  console.error(
+    "Missing .env.local in this worktree. Run: npm run worktree:setup",
+  );
+  process.exit(1);
+}
 
 const resolveProc = spawn("node", [resolveScript, "--ensure"], {
-  cwd: process.cwd(),
+  cwd,
   stdio: ["ignore", "pipe", "inherit"],
 });
 
@@ -33,9 +42,9 @@ resolveProc.on("close", (code) => {
 
   console.log(`Starting dev server at http://localhost:${port}`);
 
-  const nextBin = resolve(process.cwd(), "node_modules/.bin/next");
+  const nextBin = resolve(cwd, "node_modules/.bin/next");
   const child = spawn(nextBin, ["dev", "--port", port], {
-    cwd: process.cwd(),
+    cwd,
     stdio: "inherit",
     env: process.env,
   });
