@@ -417,7 +417,7 @@ export function FeedApp() {
     options?: { showPastActions?: boolean },
   ) {
     return (
-      <div className="grid auto-rows-min gap-3 lg:grid-cols-2">
+      <div className="grid auto-rows-min gap-3 lg:grid-cols-2 2xl:grid-cols-3">
         {sectionEvents.map((event) => (
           <EventFeedCard
             key={event.id}
@@ -553,7 +553,7 @@ export function FeedApp() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
           {adminEvents.map((event) => (
             <AdminEventCard
               key={event.id}
@@ -599,7 +599,7 @@ export function FeedApp() {
 
   if (!isLoaded) {
     return (
-      <div className="app-shell mx-auto max-w-6xl px-4 py-6">
+      <div className="app-shell mx-auto max-w-[100rem] px-4 py-6 sm:px-6 lg:px-8">
         <FeedSkeleton />
       </div>
     );
@@ -612,7 +612,7 @@ export function FeedApp() {
   return (
     <div className="app-shell">
       <header className="glass-header sticky top-0 z-30">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+        <div className="mx-auto flex max-w-[100rem] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-foreground">
               Events
@@ -647,7 +647,7 @@ export function FeedApp() {
             <AuthButton />
           </div>
         </div>
-        <nav className="mx-auto hidden max-w-6xl gap-1 px-4 pb-0 lg:flex">
+        <nav className="mx-auto hidden max-w-[100rem] gap-1 px-4 pb-0 sm:px-6 lg:flex lg:px-8">
           {mainTabs.map(([tab, label]) => (
             <button
               key={tab}
@@ -666,7 +666,7 @@ export function FeedApp() {
         </nav>
       </header>
 
-      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 pb-32 lg:grid-cols-[minmax(0,1fr)_300px] lg:pb-6">
+      <main className="mx-auto grid max-w-[100rem] gap-6 px-4 py-6 pb-32 sm:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-8 lg:pb-6">
         <section className={activeTab === "feed" ? "block" : "hidden lg:hidden"}>
           {feedContent}
         </section>
