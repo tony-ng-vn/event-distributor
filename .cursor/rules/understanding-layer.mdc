@@ -1,0 +1,45 @@
+---
+description: Run the understanding skill bundle once per PR, not per commit
+alwaysApply: true
+---
+
+# Understanding layer (per-PR)
+
+Teaching docs help humans review agent-written code. Generate them **once per pull request**, not during every implementation commit.
+
+## When to run
+
+Run the **`understanding` skill bundle** (`.cursor/skills/understanding/SKILL.md`) **after**:
+
+1. The feature passes the goal-method review loop (see `feature-goal-workflow.mdc`).
+2. The pull request is created or updated.
+
+Also run when a human explicitly asks to understand or review a branch.
+
+## When NOT to run
+
+- **Not** after every `git commit` during implementation.
+- **Not** at arbitrary mid-feature checkpoints (unless the human asks).
+- **Not** via background hooks or CI (unless added later).
+
+Use `[skip-understanding]` on commits that only touch generated understanding docs or index files.
+
+## What to produce
+
+Per PR (one pass):
+
+1. Classify branch commits (`skip` / `light` / `full`) per commit-policy.
+2. Write explainers for substantive commits.
+3. Update `docs/understanding/branches/<branch>/reading-order.md`.
+4. Write PR roll-up under `docs/understanding/prs/<branch>/`.
+5. Add **Review guide** links to the PR description.
+
+## Commands
+
+```bash
+npm run understanding:index -- --branch "$(git branch --show-current)" --base main
+npm run understanding:diff -- --commit <sha>   # per substantive commit
+npm run understanding:diff -- --branch <branch> --base main   # PR roll-up
+```
+
+See `docs/agents/understanding-layer.md` for layout and human reading order.

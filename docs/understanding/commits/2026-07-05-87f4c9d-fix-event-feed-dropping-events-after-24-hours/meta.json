@@ -1,0 +1,4 @@
+{
+  "tier": "full",
+  "tierReason": "Substantive bugfix changing core feed read path and sort behavior — upgraded from light"
+}

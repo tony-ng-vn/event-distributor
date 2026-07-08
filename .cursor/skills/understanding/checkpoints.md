@@ -7,11 +7,23 @@ keeps running after an understanding task.
 
 | Mode | When | Agent behavior |
 |------|------|----------------|
-| **pause** | Human said "checkpoint", "review", "wait for me", or default at end of a session slice | Run understanding task → hand off reading order → **stop** |
-| **continue** | Long autonomous run; human said "keep going" | Run understanding task → update reading order → **resume coding** |
-| **pr** | Branch ready to merge | Full understanding task including PR roll-up |
+| **pause** | Default after a PR understanding pass; human said "review" or "wait for me" | Run understanding task → hand off reading order → **stop** |
+| **continue** | Human said "keep going" after reading | **Resume** next task — do not re-run understanding mid-feature |
+| **pr** | **Primary trigger** — PR created/updated and feature is green | Full understanding task including PR roll-up → **pause** |
 
-Infer mode from the human's message. When unsure, **pause** — understanding is the goal.
+Infer mode from the human's message. After a PR understanding pass, default to **pause**.
+
+---
+
+## Per-PR rhythm (default)
+
+Understanding runs **once per pull request**, not per commit:
+
+```
+implement → review loop (sub-agent) → PR → understanding task → pause for human
+```
+
+During implementation, **skip** understanding docs. Commit code and tests only.
 
 ---
 
@@ -23,18 +35,16 @@ After running the understanding task in **pause** mode, tell the human:
 ## Checkpoint — ready for your review
 
 **Read next:** docs/understanding/branches/<branch>/reading-order.md
-**Start at entry #<N>** (new since last checkpoint) — or #1 if first time.
+**Start at entry #1** (or the first new entry since last PR).
 
 | # | Tier | Summary |
 |---|------|---------|
-| 4 | full | … |
-| 5 | skip | typo fix — no doc |
-| 6 | light | … |
+| 1 | full | … |
+| 2 | skip | index sync — no doc |
 
 Open full-tier docs in a browser for the interactive quiz.
 
-**Phone:** GitHub links won't run the quiz. Run `npm run understanding:serve` and open the
-LAN URL on your phone (same Wi‑Fi), e.g. `http://192.168.x.x:3456/branches/<slug>/hub.html`
+**Phone:** Run `npm run understanding:serve` and open the LAN URL on your phone.
 
 Reply **continue** when ready for me to proceed, or give feedback on any entry.
 ```
@@ -43,26 +53,18 @@ Reply **continue** when ready for me to proceed, or give feedback on any entry.
 
 ## Continue mode
 
-- Still run classify + explain + index — do not skip documentation entirely.
-- Do **not** wait for human reply.
-- At the end of a long run, suggest: *"12 entries in reading-order.md — want a checkpoint?"*
+- Use when the human finished reading and wants more work.
+- Do **not** re-run understanding until the **next PR** is ready.
 
 ---
 
-## Linking checkpoints to commits
-
-**Not** every commit triggers a checkpoint.
-
-Typical rhythms:
+## Linking checkpoints to PRs
 
 | Work style | Pattern |
 |------------|---------|
-| Human-in-the-loop | `substantive commit` → understanding task → **pause** |
-| Autonomous burst | several commits → understanding task → **continue** |
-| PR | understanding task with roll-up → **pause** |
-
-A substantive commit is one classified **light** or **full** per commit-policy.
-After such a commit in pause mode, run the understanding task before more code.
+| **Default (goal method)** | feature → review loop → PR → understanding → **pause** |
+| Human asks mid-branch | Run understanding on current branch → **pause** |
+| Long multi-PR project | One understanding pass **per PR**, not per commit |
 
 ---
 
@@ -72,9 +74,10 @@ You may write `docs/understanding/branches/<branch>/checkpoint.json`:
 
 ```json
 {
-  "lastCheckpointAt": "2026-07-02T12:00:00Z",
-  "lastReadEntry": 3,
-  "mode": "pause"
+  "lastCheckpointAt": "2026-07-06T22:00:00Z",
+  "lastReadEntry": 1,
+  "mode": "pause",
+  "prNumber": 3
 }
 ```
 

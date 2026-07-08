@@ -2,10 +2,11 @@
 
 ### Understanding layer (human-in-the-loop)
 
-Run the **`understanding` skill bundle** at checkpoints or after substantive work — not automatically after every commit. See `docs/agents/understanding-layer.md`.
+Run the **`understanding` skill bundle** **once per PR** after the goal-method review loop passes — not during every commit. See `docs/agents/understanding-layer.md` and `.cursor/rules/feature-goal-workflow.mdc`.
 
 | What | Where |
 |------|-------|
+| **Feature workflow (goal method)** | `.cursor/rules/feature-goal-workflow.mdc` |
 | **Skill bundle (start here)** | `.cursor/skills/understanding/SKILL.md` |
 | Reading order (humans) | `docs/understanding/branches/<branch>/reading-order.md` |
 | Commit tiers | `.cursor/skills/understanding/commit-policy.md` |

@@ -164,19 +164,33 @@ function serializeEvent(
 const eventSelect =
   "*, added_by_user:users!added_by_user_id(id, name, image, email), accepts(id, accepted_at, users(id, name, image)), passes(id, passed_at, users(id, name, image))";
 
-async function fetchUpcomingEventRows() {
+function sortFeedEventRows(events: InsforgeEventRow[]) {
+  const now = Date.now();
+
+  return [...events].sort((a, b) => {
+    const aStart = new Date(a.start_at).getTime();
+    const bStart = new Date(b.start_at).getTime();
+    const aUpcoming = aStart >= now;
+    const bUpcoming = bStart >= now;
+
+    if (aUpcoming && !bUpcoming) return -1;
+    if (!aUpcoming && bUpcoming) return 1;
+    if (aUpcoming && bUpcoming) return aStart - bStart;
+    return bStart - aStart;
+  });
+}
+
+async function fetchAllEventRows() {
   const db = getInsforgeAdmin();
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await db.database
     .from("events")
     .select(eventSelect)
-    .gte("start_at", cutoff)
     .order("start_at", { ascending: true });
 
   if (error) throw new Error(error.message);
 
-  const events = (data ?? []) as InsforgeEventRow[];
+  const events = sortFeedEventRows((data ?? []) as InsforgeEventRow[]);
 
   events.forEach((event) => {
     if (event.accepts) {
@@ -210,9 +224,9 @@ async function getViewerPassedEventIds(
   return new Set((passedRows ?? []).map((row) => row.event_id as string));
 }
 
-/** GET /api/events?scope=all — all upcoming events including passed ones. */
+/** GET /api/events?scope=all — all persisted events including passed ones. */
 export async function listAllFeedEvents(viewerUserId?: string | null) {
-  const events = await fetchUpcomingEventRows();
+  const events = await fetchAllEventRows();
   const passedEventIds = viewerUserId
     ? await getViewerPassedEventIds(viewerUserId)
     : new Set<string>();
@@ -226,7 +240,7 @@ export async function listAllFeedEvents(viewerUserId?: string | null) {
   );
 }
 
-/** GET /api/events — upcoming events including passed (partitioned in Feed UI). */
+/** GET /api/events — all persisted events (partitioned in Feed UI). */
 export async function listFeedEvents(viewerUserId?: string | null) {
   return listAllFeedEvents(viewerUserId);
 }

@@ -1,0 +1,124 @@
+{
+  "title": "Fix event feed dropping events after 24 hours",
+  "meta": "PR #3 · branch cursor/fix-event-persistence-0847 · 1 commit",
+  "seriesLink": "../branches/cursor-fix-event-persistence-0847/reading-order.md",
+  "glance": "Events stayed in Postgres but vanished from the UI after ~24 hours because the feed API filtered on start_at. This PR loads all events and sorts upcoming first.",
+  "backgroundDeep": "The app stores shared events in InsForge Postgres. Ingest writes rows; the feed reads them via GET /api/events.",
+  "backgroundNarrow": "fetchUpcomingEventRows() used .gte('start_at', now - 24h), hiding older rows from every client reload.",
+  "goal": "Keep added events visible until an admin deletes them, while still surfacing upcoming events first.",
+  "figure": "<span class=\"box\">Postgres row</span><span class=\"arrow\">→</span><span class=\"box\">API query</span><span class=\"arrow\">→</span><span class=\"box\">Feed UI</span>",
+  "intuition": "Persistence was fine; the read filter made it look like data loss. Remove the cutoff and sort sensibly.",
+  "steps": [
+    {
+      "label": "Remove 24h cutoff",
+      "body": "fetchAllEventRows() selects all events without .gte('start_at', cutoff).",
+      "pre": "const { data } = await db.database\n  .from('events')\n  .select(eventSelect)\n  .order('start_at', { ascending: true });"
+    },
+    {
+      "label": "Sort upcoming first",
+      "body": "sortFeedEventRows puts future events at the top (nearest first), then past events (most recent first)."
+    },
+    {
+      "label": "Regression test",
+      "body": "Integration test inserts an event from 3 days ago and asserts listFeedEvents still returns it."
+    }
+  ],
+  "quiz": [
+    {
+      "q": "Why did events seem to disappear?",
+      "correct": 1,
+      "options": [
+        "Rows deleted from Postgres",
+        "API filtered start_at to last 24 hours",
+        "Browser cache",
+        "RLS denied reads"
+      ],
+      "feedback": [
+        "❌ Rows remained.",
+        "✅ Application query excluded older start_at values.",
+        "❌",
+        "❌ RLS allows public read."
+      ]
+    },
+    {
+      "q": "When should the understanding layer run?",
+      "correct": 1,
+      "options": [
+        "After every git commit during implementation",
+        "Once per PR, after the feature is production-ready and the PR is open",
+        "Only on merge to main",
+        "Never — docs are optional"
+      ],
+      "feedback": [
+        "❌ Per-PR workflow — not per commit.",
+        "✅ Goal method: implement → review loop → PR → understanding.",
+        "❌ Generated on the feature branch before merge.",
+        "❌ Required for human review."
+      ]
+    },
+    {
+      "q": "What comes before creating the understanding layer?",
+      "correct": 1,
+      "options": [
+        "Push directly to main",
+        "Implement → sub-agent review loop until green → create PR",
+        "Write explainers first, then code",
+        "Skip tests if typecheck passes"
+      ],
+      "feedback": [
+        "❌",
+        "✅ Understanding is the final step after the PR exists.",
+        "❌ Code first, docs last.",
+        "❌ Run relevant tests in the review loop."
+      ]
+    },
+    {
+      "q": "Admin delete after this PR?",
+      "correct": 1,
+      "options": [
+        "Removed",
+        "Unchanged — still admin-only hard delete",
+        "Now soft delete",
+        "Automatic after 24h"
+      ],
+      "feedback": [
+        "❌",
+        "✅ Only feed read path changed.",
+        "❌",
+        "❌ That was the bug we fixed."
+      ]
+    },
+    {
+      "q": "Where to start reading this branch?",
+      "correct": 0,
+      "options": [
+        "reading-order.md entry #1",
+        "Raw git diff only",
+        "package.json",
+        "Only this roll-up"
+      ],
+      "feedback": [
+        "✅ Chronological per-commit explainers first.",
+        "❌",
+        "❌",
+        "❌ Roll-up is optional summary."
+      ]
+    },
+    {
+      "q": "Anonymous pass behavior?",
+      "correct": 2,
+      "options": [
+        "Now persisted server-side",
+        "Removed entirely",
+        "Still sessionStorage-only",
+        "Deletes the event row"
+      ],
+      "feedback": [
+        "❌",
+        "❌",
+        "✅ Unchanged by this PR.",
+        "❌"
+      ]
+    }
+  ]
+}

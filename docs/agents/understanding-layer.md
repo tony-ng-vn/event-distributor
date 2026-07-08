@@ -4,20 +4,28 @@ How humans stay in the loop while agents ship code — explainers, quizzes, micr
 
 ## Problem
 
-Long agent runs produce many commits. Raw `git diff` is hard to review. You need incremental teaching docs — but not an essay for every typo.
+Long agent runs produce many commits. Raw `git diff` is hard to review. You need teaching docs — but not an essay for every typo, and not docs scattered across every WIP commit.
 
 ## Solution
 
-One **`understanding` skill bundle** (not a background rule) runs the full pipeline when you checkpoint or finish substantive work:
+One **`understanding` skill bundle** runs the full pipeline **once per pull request** (after the feature is production-ready):
 
 | Step | What |
 |------|------|
-| Classify commits | `skip` · `light` · `full` per [commit policy](.cursor/skills/understanding/commit-policy.md) |
+| Classify commits | `skip` · `light` · `full` per [commit policy](../../.cursor/skills/understanding/commit-policy.md) |
 | Write explainers | Literate diff + quiz for light/full only |
 | Reading order | Chronological table so many docs stay navigable |
 | Micro-worlds | Optional; propose → human picks → build |
 | PR roll-up | Branch story + links to per-commit docs |
-| Checkpoint | Pause or continue per human preference |
+| Checkpoint | Pause for human review |
+
+## Feature workflow (goal method)
+
+Understanding is the **last** step. See [feature-workflow.md](./feature-workflow.md) and `.cursor/rules/feature-goal-workflow.mdc`:
+
+```
+implement → sub-agent review loop until green → create PR → understanding layer
+```
 
 ## Start here (humans)
 
@@ -29,7 +37,7 @@ Read **top → bottom** (oldest commit first). Skipped commits appear as `—` s
 
 ## Start here (agents)
 
-Read `.cursor/skills/understanding/SKILL.md` and run the **understanding task** checklist.
+Read `.cursor/skills/understanding/SKILL.md` and run the **understanding task** checklist **after the PR exists**.
 
 ```bash
 npm run understanding:index -- --branch "$(git branch --show-current)" --base main
@@ -71,8 +79,8 @@ Trivial commits: ≤15 lines, mechanical, or `[skip-understanding]` in message.
 | Mode | Behavior |
 |------|----------|
 | **pause** | Run understanding task → point human to reading-order → stop |
-| **continue** | Run understanding task → keep coding |
-| **pr** | Include PR roll-up |
+| **continue** | Human finished reading → resume next work |
+| **pr** | **Default trigger** — full understanding pass when PR is ready |
 
 See `.cursor/skills/understanding/checkpoints.md`.
 

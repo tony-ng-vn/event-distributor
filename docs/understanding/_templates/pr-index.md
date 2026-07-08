@@ -1,14 +1,20 @@
 # PR understanding index
 
 **Branch:** <!-- branch name -->  
-**Base:** <!-- main -->
+**PR:** #<!-- number -->
 
-## Read in order
+## Workbook card
 
-**[reading-order.md](../branches/<branch-slug>/reading-order.md)** — chronological list of every commit on this branch (including skipped). Start at #1.
+The understanding server reads `explainer.content.json` for the workbook:
 
-## PR roll-up
+| Field | Workbook shows |
+|-------|----------------|
+| `title` | Thread name |
+| `meta` | PR number (`PR #N · …`) |
+| `glance` | Brief summary |
 
-**[explainer.html](./explainer.html)** — whole-branch story (read after per-commit entries, or alone for a quick pass).
+## Read
 
-<!-- Embed or link the reading-order table here after running understanding:index -->
+**[explainer.html](./explainer.html)** — the explainer thread (start here).
+
+Per-commit details live inside the explainer or under `commits/` if needed.

@@ -1,10 +1,10 @@
 ---
 name: understanding
 description: >-
-  Run the full understanding task for a branch or checkpoint: classify commits,
-  write per-commit explainers (full or light; skip trivial), maintain reading
-  order, optional micro-worlds, PR roll-up, and human checkpoint. Invoke after
-  substantive work or when the human asks to review.
+  Run the full understanding task once per PR: classify commits, write per-commit
+  explainers (full or light; skip trivial), maintain reading order, optional
+  micro-worlds, PR roll-up, and human checkpoint. Invoke after PR creation —
+  not during every implementation commit.
 ---
 
 # Understanding (skill bundle)
@@ -22,13 +22,11 @@ you have to remember. This bundle orchestrates:
 
 **Invoke when:**
 
-- The human asks to understand / review / checkpoint.
-- You finish a **substantive** slice of work (see commit policy — not every tiny commit).
-- The branch is ready for PR.
-- You are about to pause for human input.
+- A **pull request is created or updated** and the feature is production-ready (see `feature-goal-workflow.mdc`).
+- The human asks to understand / review a branch.
+- You are about to pause for human input after finishing a PR's understanding pass.
 
-**Do not** rely on a background rule firing after every `git commit`. Run this
-bundle deliberately as an understanding task.
+**Do not** run during implementation commits. **Do not** rely on a background rule firing after every `git commit`. Run this bundle deliberately as a **per-PR** understanding task.
 
 ---
 

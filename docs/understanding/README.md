@@ -2,58 +2,36 @@
 
 Teaching documents for agent-written code.
 
-## View on your phone (important)
+## Understanding workbook
 
-**GitHub will not work** for the interactive explainers. On GitHub (desktop or mobile), `.html` files open as **source code** — the quiz JavaScript does not run.
-
-**Use the local server** (same Wi‑Fi as your computer):
+Run one server — open one page — pick a PR:
 
 ```bash
+git fetch origin
 npm run understanding:serve
 ```
 
-Then on your phone, open the **LAN URL** printed in the terminal, e.g.:
-
 ```text
-http://192.168.1.42:3456/
+http://127.0.0.1:3456/
 ```
 
-Tap your branch → read entries **#1, #2, …** in order → open each explainer.
+Each card shows:
 
-| URL | What |
-|-----|------|
-| `/` | Branch picker (mobile-friendly) |
-| `/branches/<slug>/hub.html` | Reading order with big tap targets |
-| `/commits/.../explainer.html` | Interactive quiz |
+1. **PR number** (e.g. PR #3)
+2. **Thread title** (same name as the PR explainer)
+3. **Brief** — one sentence about what the explainer covers
 
-On laptop only: `http://127.0.0.1:3456/` also works.
+Tap a card → read the full interactive explainer (quiz included).
 
-## Where to read (incremental order)
+Use **Mark as finished** on the workbook or inside the explainer — progress is saved in your browser (localStorage).
 
-**Open your branch's reading order** — commits listed oldest-first:
+The server finds explainers across **all worktrees and branches** — no checkout needed.
 
-```text
-docs/understanding/branches/<branch-slug>/reading-order.md
-```
+## View on your phone
 
-Example: `docs/understanding/branches/cursor-explain-diff-understanding-layer-d250/reading-order.md`
+**GitHub will not work** for interactive explainers (`.html` opens as source code).
 
-| Column | Meaning |
-|--------|---------|
-| **#** | Read in this order |
-| **Tier** | `full` · `light` · `skip` |
-| **Read** | Link to explainer, `—` if skipped, `*(pending)*` if not written yet |
-
-Many commits → many docs is fine. **Order is what matters.**
-
-## Other paths
-
-| I want to… | Open |
-|------------|------|
-| PR roll-up | `prs/<branch-slug>/explainer.html` (via `understanding:serve`) |
-| Full-tier template | `_templates/explainer.html` |
-| Light-tier template | `_templates/explainer-light.md` |
-| Micro-world ideas | `commits/.../micro-world-proposal.md` |
+Use the LAN URL from your terminal (same Wi‑Fi), e.g. `http://192.168.1.42:3456/`
 
 ## Agents
 
@@ -61,7 +39,13 @@ Run the **`understanding` skill bundle**: `.cursor/skills/understanding/SKILL.md
 
 ```bash
 npm run understanding:index -- --branch "$(git branch --show-current)" --base main
-npm run understanding:serve   # tell human the phone URL
+npm run understanding:serve
 ```
 
-Not every commit gets an explainer — see commit policy in the skill bundle.
+Each PR roll-up needs `prs/<branch-slug>/explainer.content.json` with:
+
+| Field | Used for |
+|-------|----------|
+| `title` | Thread name in the workbook |
+| `meta` | PR number (`PR #3 · …`) |
+| `glance` | Brief summary on the card |

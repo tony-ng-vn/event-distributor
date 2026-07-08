@@ -1,0 +1,109 @@
+{
+  "title": "Fix event feed dropping events after 24 hours",
+  "meta": "Commit 87f4c9d · tier full · entry #1 of 1",
+  "seriesLink": "../../branches/cursor-fix-event-persistence-0847/reading-order.md",
+  "glance": "Events were saved in Postgres but disappeared from the app about a day after their start time. The feed API filtered out anything older than 24 hours. This commit removes that filter and sorts upcoming events first, then recent past events.",
+  "backgroundDeep": "The app stores shared events in InsForge Postgres. Ingest writes rows via POST; the feed reads them via GET /api/events → listFeedEvents().",
+  "backgroundNarrow": "fetchUpcomingEventRows() used .gte('start_at', now - 24h). Once an event's start time was more than a day ago, every feed reload hid it — even though the row still existed.",
+  "goal": "If someone adds an event to the shared feed, it should stay visible until an admin deletes it — not vanish because a server-side date window expired.",
+  "figure": "<span class=\"box\">Postgres row</span><span class=\"arrow\">→</span><span class=\"box\">API query</span><span class=\"arrow\">→</span><span class=\"box\">Feed UI</span>",
+  "intuition": "Persistence was fine; the read filter made it look like data loss. Remove the cutoff, then sort so upcoming events appear first (nearest first) and past events follow (most recent first).",
+  "steps": [
+    {
+      "label": "Remove the 24-hour cutoff",
+      "body": "fetchAllEventRows() selects all events without .gte('start_at', cutoff), then applies sortFeedEventRows.",
+      "pre": "const { data } = await db.database\n  .from('events')\n  .select(eventSelect)\n  .order('start_at', { ascending: true });\nconst events = sortFeedEventRows((data ?? []) as InsforgeEventRow[]);"
+    },
+    {
+      "label": "Sort upcoming first",
+      "body": "sortFeedEventRows splits on start_at >= now: upcoming events nearest-first, then past events most-recent-first."
+    },
+    {
+      "label": "Regression test",
+      "body": "Integration test inserts an event from 3 days ago and asserts listFeedEvents() still returns it.",
+      "pre": "const pastStart = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);\n// ... insert row ...\nexpect(feed.some((e) => e.id === inserted?.id)).toBe(true);"
+    }
+  ],
+  "quiz": [
+    {
+      "q": "Why did events seem to disappear even though they were in the database?",
+      "correct": 1,
+      "options": [
+        "RLS policies hid old rows",
+        "The API excluded rows with start_at older than 24 hours",
+        "Events were stored only in sessionStorage",
+        "A nightly cleanup job deleted them"
+      ],
+      "feedback": [
+        "❌ RLS allows public read; the filter was in application code.",
+        "✅ The query used .gte('start_at', cutoff) with a rolling 24h window.",
+        "❌ Event data is server-persisted.",
+        "❌ No TTL or cron cleanup exists."
+      ]
+    },
+    {
+      "q": "How are feed results ordered after this fix?",
+      "correct": 1,
+      "options": [
+        "Oldest events first, all rows",
+        "Upcoming first (nearest first), then past events (most recent first)",
+        "Random order",
+        "Only future events, unsorted"
+      ],
+      "feedback": [
+        "❌ Upcoming events come first.",
+        "✅ sortFeedEventRows splits on start_at >= now.",
+        "❌",
+        "❌ Past events are included again."
+      ]
+    },
+    {
+      "q": "Which function name changed to reflect the new behavior?",
+      "correct": 2,
+      "options": [
+        "listFeedEvents → listAllFeedEvents only",
+        "ingestLumaEvent → ingestAnyEvent",
+        "fetchUpcomingEventRows → fetchAllEventRows",
+        "deleteEvent → softDeleteEvent"
+      ],
+      "feedback": [
+        "❌ listFeedEvents still exists; it now delegates to listAllFeedEvents.",
+        "❌ Ingest unchanged.",
+        "✅ The internal fetch helper was renamed.",
+        "❌ Admin delete unchanged."
+      ]
+    },
+    {
+      "q": "Does this commit change how admin delete works?",
+      "correct": 1,
+      "options": [
+        "Yes — anyone can delete",
+        "No — only the feed query and sort changed",
+        "Yes — soft delete added",
+        "Yes — events auto-delete after 24h"
+      ],
+      "feedback": [
+        "❌ Admin-only delete unchanged.",
+        "✅",
+        "❌",
+        "❌ That was the bug we fixed."
+      ]
+    },
+    {
+      "q": "When is the understanding layer generated for this PR?",
+      "correct": 1,
+      "options": [
+        "Automatically after every git commit",
+        "Once, after the PR is created and the feature is production-ready",
+        "Only when merged to main",
+        "Never — docs are optional"
+      ],
+      "feedback": [
+        "❌ Per-PR workflow — not per commit.",
+        "✅ Goal method: implement → review loop → PR → understanding.",
+        "❌ Generated on the feature branch before merge.",
+        "❌ Required for human review."
+      ]
+    }
+  ]
+}
