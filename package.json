@@ -4,6 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:worktree": "node scripts/run-dev-worktree.mjs",
+    "dev:port": "node scripts/resolve-dev-port.mjs",
+    "dev:registry": "node scripts/worktree-dev-registry.mjs list",
+    "worktree:setup": "node scripts/setup-worktree.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

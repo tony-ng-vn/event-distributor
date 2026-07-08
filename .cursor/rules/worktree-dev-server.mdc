@@ -1,0 +1,79 @@
+---
+description: Use unique dev-server ports for git worktrees; never bind worktrees to 3000
+alwaysApply: true
+---
+
+# Worktree dev servers
+
+When creating or using a git worktree:
+
+## Shared local config (env)
+
+**Always copy** `.env.local` and `.env` from the main repo into each worktree.
+
+After `git worktree add`:
+
+```bash
+cd .worktrees/<name>
+npm run worktree:setup
+```
+
+This copies from main → worktree (overwriting any existing copies):
+
+| Path | Required |
+|------|----------|
+| `.env.local` | Yes — Clerk + InsForge keys |
+| `.env` | If present in main |
+| `.insforge/` | If present in main |
+
+Credentials live in the **main repo checkout**. Re-run `npm run worktree:setup` after updating main `.env.local` to refresh a worktree.
+
+First-time main repo setup:
+
+```bash
+cd <main-repo-root>
+cp .env.example .env.local   # add Clerk + InsForge keys
+```
+
+## Port rules
+
+| Checkout | Port | Command |
+|----------|------|---------|
+| **Main repo** (`/workspace` or repo root) | `3000` | `npm run dev` |
+| **Git worktree** (path contains `/.worktrees/`) | **unique** `3100–3899` | `npm run dev:worktree` |
+
+**Never** run `npm run dev` (port 3000) from inside a worktree. Port 3000 is reserved for the main checkout.
+
+## Before starting a worktree server
+
+1. `cd` into the worktree root (not the main repo).
+2. Copy shared config from main:
+   ```bash
+   npm run worktree:setup
+   ```
+3. Start the server:
+   ```bash
+   npm run dev:worktree
+   ```
+
+## How agents discover the right port
+
+Each worktree writes local metadata on first `dev:worktree` run:
+
+| File | Purpose |
+|------|---------|
+| `.worktree-dev-port` | Plain port number (quick read) |
+| `.worktree-dev-port.json` | `port`, `path`, `branch`, `url` |
+| `.worktrees/dev-servers.json` | Registry of all worktree servers (main repo) |
+
+To list every known worktree URL:
+
+```bash
+npm run dev:registry
+```
+
+Always tell the human the **exact URL** from `.worktree-dev-port.json` (e.g. `http://localhost:3847`), not `http://localhost:3000`.
+
+## Stopping servers
+
+Before starting, check whether a port is already in use. Kill stale servers on the worktree's assigned port, not blindly on 3000.
