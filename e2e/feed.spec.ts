@@ -104,6 +104,46 @@ test.describe("shared Luma feed", () => {
     await expect(page.getByRole("heading", { name: "AI Builders Meetup" })).toBeVisible();
   });
 
+  test("your events is a top-level tab on desktop, not in the sidebar", async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    const seed = await request.post("/api/e2e/seed", {
+      headers: { "x-e2e-secret": E2E_SECRET },
+    });
+    const seedBody = await seed.json();
+    const eventId = seedBody.event.id as string;
+
+    const userId = await authenticatePage(page, request);
+
+    const accept = await request.post(`/api/events/${eventId}/accept`, {
+      headers: {
+        "x-e2e-secret": E2E_SECRET,
+        "x-e2e-user-id": userId,
+      },
+    });
+    expect(accept.ok()).toBeTruthy();
+
+    await page.goto("/");
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/events") && response.status() === 200,
+    );
+
+    const aside = page.locator("aside");
+    await expect(
+      aside.getByRole("heading", { name: "Your events" }),
+    ).toBeHidden();
+
+    await page.getByTestId("tab-mine").click();
+    await expect(page.getByTestId("your-events-tab")).toBeVisible();
+    await expect(
+      page.getByTestId("your-events-tab").getByText("AI Builders Meetup"),
+    ).toBeVisible();
+  });
+
   test("accept records attendee and shows interested state in UI", async ({
     page,
     request,
