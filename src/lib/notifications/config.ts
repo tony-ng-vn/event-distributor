@@ -41,3 +41,45 @@ export function getUnsubscribeSecret(): string {
 export function isEmailDeliveryEnabled(): boolean {
   return process.env.NOTIFICATIONS_EMAIL_ENABLED === "true";
 }
+
+const DEFAULT_SENDER_NAME = "Event Radar";
+
+/**
+ * Brevo transactional API key. Fail loud: an unset key on the real-send path
+ * would otherwise surface as an opaque 401 from Brevo per recipient. Only called
+ * once delivery is enabled, so the dry-run/dev path never needs it.
+ */
+export function getBrevoApiKey(): string {
+  const key = process.env.BREVO_API_KEY;
+  if (!key) {
+    throw new Error(
+      "BREVO_API_KEY is not set but real email delivery is enabled. Set BREVO_API_KEY.",
+    );
+  }
+  return key;
+}
+
+/**
+ * Verified Brevo sender (from address + display name). The email must be a
+ * sender Brevo has verified, or Brevo rejects the send. Name defaults to
+ * "Event Radar" when unset.
+ */
+export function getBrevoSender(): { email: string; name: string } {
+  const email = process.env.BREVO_SENDER_EMAIL;
+  if (!email) {
+    throw new Error(
+      "BREVO_SENDER_EMAIL is not set but real email delivery is enabled. Set BREVO_SENDER_EMAIL to a Brevo-verified sender.",
+    );
+  }
+  const name = process.env.BREVO_SENDER_NAME?.trim() || DEFAULT_SENDER_NAME;
+  return { email, name };
+}
+
+/**
+ * Temporary prod-test toggle: when true, the actor (event adder) is NOT excluded
+ * from recipients, so the maintainer can add an event and receive the email.
+ * Default off. Intended to be flipped in Vercel for a test then removed.
+ */
+export function isIncludeActorEnabled(): boolean {
+  return process.env.NOTIFICATIONS_TEST_INCLUDE_SELF === "true";
+}

@@ -1,38 +1,41 @@
 /**
- * Email channel adapter over InsForge's managed sender (SES under the hood).
+ * Email channel adapter over Brevo's transactional REST API.
  *
- * Uses an anon-key client -- the documented, tested path for emails.send -- not
- * the admin client. Delivery is gated by isEmailDeliveryEnabled(): when off, the
- * adapter logs a dry-run line and sends nothing, so development and CI never mail
- * the real friend group. InsForge appends its own List-Unsubscribe header per
- * recipient; we do not (and cannot) set headers here.
+ * We POST straight to https://api.brevo.com/v3/smtp/email with fetch -- no SDK
+ * dependency needed for one endpoint. Brevo's free tier (300 emails/day, one
+ * verified sender) covers this friend-group app; the previous InsForge
+ * emails.send path is a paid feature and returned 403 in prod.
+ *
+ * Delivery is gated by isEmailDeliveryEnabled(): when off, the adapter logs a
+ * dry-run line (user id, never the address) and sends nothing, so development
+ * and CI never mail the real friend group. Config getters (api key, sender) are
+ * only read on the real-send branch, so the dry-run path needs no Brevo setup.
  */
-import { createClient } from "@insforge/sdk";
-import { isEmailDeliveryEnabled } from "@/lib/notifications/config";
+import {
+  getBrevoApiKey,
+  getBrevoSender,
+  isEmailDeliveryEnabled,
+} from "@/lib/notifications/config";
 import type { EmailMessage } from "@/lib/notifications/types";
 
-const EMAIL_FROM_NAME = "Event Radar";
-
-let cachedClient: ReturnType<typeof createClient> | null = null;
-
-function getEmailClient() {
-  if (cachedClient) return cachedClient;
-
-  const baseUrl =
-    process.env.NEXT_PUBLIC_INSFORGE_URL ?? process.env.INSFORGE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY;
-
-  if (!baseUrl || !anonKey) {
-    throw new Error(
-      "InsForge email client is not configured. Set NEXT_PUBLIC_INSFORGE_URL and NEXT_PUBLIC_INSFORGE_ANON_KEY.",
-    );
-  }
-
-  cachedClient = createClient({ baseUrl, anonKey });
-  return cachedClient;
-}
+const BREVO_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
 
 export type SendResult = { sent: boolean; skipped: boolean };
+
+/**
+ * Custom headers for one-click unsubscribe (RFC 8058). The URL points at our
+ * POST unsubscribe endpoint with the recipient's signed token; the endpoint
+ * reads the token from the query and ignores the body, so a one-click POST works.
+ */
+function unsubscribeHeaders(
+  unsubscribeUrl: string | undefined,
+): Record<string, string> {
+  if (!unsubscribeUrl) return {};
+  return {
+    "List-Unsubscribe": `<${unsubscribeUrl}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
+}
 
 /** Send one rendered email, honoring the dry-run delivery guard. */
 export async function sendNotificationEmail(
@@ -47,13 +50,35 @@ export async function sendNotificationEmail(
     return { sent: false, skipped: true };
   }
 
-  const { error } = await getEmailClient().emails.send({
-    to: message.to,
+  const sender = getBrevoSender();
+  const headers = unsubscribeHeaders(message.unsubscribeUrl);
+
+  const body = {
+    sender,
+    to: [{ email: message.to }],
     subject: message.subject,
-    html: message.html,
-    from: EMAIL_FROM_NAME,
+    htmlContent: message.html,
+    textContent: message.text,
+    ...(Object.keys(headers).length > 0 ? { headers } : {}),
+  };
+
+  const response = await fetch(BREVO_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "api-key": getBrevoApiKey(),
+      accept: "application/json",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
   });
 
-  if (error) throw new Error(error.message);
+  if (!response.ok) {
+    // Body may not be JSON on an error; read as text so nothing is lost.
+    const detail = await response.text().catch(() => "");
+    throw new Error(
+      `Brevo send failed (HTTP ${response.status}): ${detail || response.statusText}`,
+    );
+  }
+
   return { sent: true, skipped: false };
 }

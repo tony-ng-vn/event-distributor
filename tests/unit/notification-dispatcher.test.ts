@@ -30,12 +30,14 @@ const intent: EventIngestedIntent = {
 function makeDeps(
   recipients: EmailRecipient[],
   sendEmail = vi.fn(async () => ({})),
+  includeActor = false,
 ): DispatchDeps {
   return {
     loadRecipients: vi.fn(async () => recipients),
     sendEmail,
     appBaseUrl: "https://app.example.com",
     unsubscribeSecret: SECRET,
+    includeActor,
   };
 }
 
@@ -65,6 +67,12 @@ describe("dispatchEventIngested", () => {
     const deps = makeDeps([]);
     await dispatchEventIngested(intent, deps);
     expect(deps.loadRecipients).toHaveBeenCalledWith("actor");
+  });
+
+  it("includes the actor (loads with null) when includeActor is on", async () => {
+    const deps = makeDeps([], vi.fn(async () => ({})), true);
+    await dispatchEventIngested(intent, deps);
+    expect(deps.loadRecipients).toHaveBeenCalledWith(null);
   });
 
   it("sends nothing when no one is enabled", async () => {
