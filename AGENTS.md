@@ -53,4 +53,5 @@ Key patterns:
 - Database inserts take an array: `insert([{ ... }])`.
 - Reference users with `auth.users(id)`; use `auth.uid()` in RLS policies.
 - For storage uploads, persist both the returned `url` and `key`.
+- **Database safety:** agents and tests must never run destructive helpers against production. See `.cursor/rules/insforge-database-safety.mdc` and README § InsForge environments.
 <!-- INSFORGE:END -->

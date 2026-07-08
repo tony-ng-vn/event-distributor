@@ -2,6 +2,7 @@
  * E2E test-only API — disabled unless E2E_TEST=true (Playwright sets this).
  */
 import { NextResponse } from "next/server";
+import { assertDestructiveWritesAllowed } from "@/lib/db-safety";
 import { createUser, resetDatabase, seedDemoEvent } from "@/lib/events-service";
 import { getInsforgeAdmin } from "@/lib/db";
 
@@ -11,9 +12,14 @@ function assertE2E() {
   }
 }
 
+function assertE2EDatabase() {
+  assertDestructiveWritesAllowed("e2e seed");
+}
+
 export async function POST(request: Request) {
   try {
     assertE2E();
+    assertE2EDatabase();
     const secret = request.headers.get("x-e2e-secret");
     if (secret !== process.env.E2E_TEST_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,6 +37,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     assertE2E();
+    assertE2EDatabase();
     const secret = request.headers.get("x-e2e-secret");
     if (secret !== process.env.E2E_TEST_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,6 +53,7 @@ export async function DELETE(request: Request) {
 export async function PUT(request: Request) {
   try {
     assertE2E();
+    assertE2EDatabase();
     const secret = request.headers.get("x-e2e-secret");
     if (secret !== process.env.E2E_TEST_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

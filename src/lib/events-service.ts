@@ -8,6 +8,7 @@
  *   4. passEvent — signed-in user marks event as passed (creates Pass row)
  */
 import { isUserAdmin } from "@/lib/admin";
+import { assertDestructiveWritesAllowed } from "@/lib/db-safety";
 import { getInsforgeAdmin } from "@/lib/db";
 import { newId } from "@/lib/ids";
 import {
@@ -446,6 +447,8 @@ export async function deleteEvent(
 
 /** Wipes all data — used by tests only. */
 export async function resetDatabase() {
+  assertDestructiveWritesAllowed("resetDatabase");
+
   const db = getInsforgeAdmin();
   const { error: passesError } = await db.database
     .from("passes")

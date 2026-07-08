@@ -16,7 +16,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "E2E_TEST=true LUMA_FETCH_MODE=mock DATABASE_URL='file:./e2e.db' npm run dev -- --port 3001",
+      "E2E_TEST=true E2E_TEST_SECRET=local-e2e-secret INSFORGE_PRODUCTION_URL=${INSFORGE_PRODUCTION_URL:-https://yy57ijjh.us-east.insforge.app} LUMA_FETCH_MODE=mock npm run dev -- --port 3001",
     url: "http://localhost:3001",
     reuseExistingServer: false,
     timeout: 120_000,
