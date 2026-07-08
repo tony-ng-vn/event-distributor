@@ -23,11 +23,14 @@ export function EventTitleLink({
       : "text-base font-semibold leading-snug tracking-tight text-foreground";
   const wrapperClass =
     size === "detail" ? "mt-0" : "mt-0.5 min-h-[2.75rem]";
+  // Cards share subgrid row heights, so clamp titles to keep rows aligned.
+  // The detail sheet has room, so show the full title there.
+  const clampClass = size === "card" ? "line-clamp-2" : "";
 
   if (!href) {
     return (
       <h3
-        className={`${wrapperClass} line-clamp-2 ${titleClass} ${className}`.trim()}
+        className={`${wrapperClass} ${clampClass} ${titleClass} ${className}`.trim()}
       >
         {title}
       </h3>
@@ -40,7 +43,7 @@ export function EventTitleLink({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className={`event-title-link group line-clamp-2 ${titleClass}`}
+        className={`event-title-link group ${clampClass} ${titleClass}`.trim()}
         data-testid="event-title-link"
         onClick={(event) => event.stopPropagation()}
       >

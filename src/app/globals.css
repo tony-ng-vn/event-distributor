@@ -226,13 +226,18 @@ body {
   }
 
   .event-title-link-text {
-    text-decoration: underline transparent;
+    /* Persistent, subtle underline so touch and reduced-motion users can see
+       the title is a link; hover strengthens it to full currentColor. */
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 30%, transparent);
     text-underline-offset: 3px;
     transition: text-decoration-color var(--motion-duration) var(--motion-ease);
   }
 
   .event-title-link-icon {
-    @apply ml-1 inline-block text-xs font-normal text-muted opacity-0;
+    /* Visible by default (not hover-only) so the link cue reaches every user. */
+    @apply ml-1 inline-block text-xs font-normal text-muted;
+    opacity: 0.6;
     transition: opacity var(--motion-duration) var(--motion-ease);
   }
 

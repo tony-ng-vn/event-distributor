@@ -114,8 +114,10 @@ export function EventFeedCard({
             type="button"
             onClick={onOpen}
             className="w-full text-left"
-            aria-label={`Open details for ${event.title}`}
           >
+            {/* No aria-label here: the date button above already exposes
+                "Open details for {title}", so this button is named by its own
+                subtitle text instead of announcing the same label twice. */}
             <p className="mt-0.5 line-clamp-1 text-sm text-muted">{subtitle}</p>
           </button>
         </div>
