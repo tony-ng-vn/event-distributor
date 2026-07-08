@@ -34,4 +34,9 @@ export type EmailMessage = {
   subject: string;
   html: string;
   text: string;
+  /**
+   * Per-recipient signed unsubscribe URL. Used to set the List-Unsubscribe
+   * header for one-click opt-out; the same link also appears in the body.
+   */
+  unsubscribeUrl?: string;
 };
