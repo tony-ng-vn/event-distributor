@@ -110,7 +110,34 @@ export function SignInPromptModal({
   );
 }
 
-/** Header auth control — sign-in/sign-up when logged out, profile when signed in. */
+/** Gear glyph for the Settings entry in the user menu. */
+function SettingsGearIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+/**
+ * Header auth control — sign-in/sign-up when logged out, profile when signed in.
+ *
+ * The signed-in menu carries a Settings link (Clerk `UserButton.Link`) so the
+ * /settings page is reachable from the app on every breakpoint; the UserButton
+ * itself sits in the header with no breakpoint gating, so mobile users get the
+ * same dropdown.
+ */
 export function AuthButton() {
   return (
     <div className="flex items-center gap-2">
@@ -127,7 +154,15 @@ export function AuthButton() {
         </SignUpButton>
       </Show>
       <Show when="signed-in">
-        <UserButton />
+        <UserButton>
+          <UserButton.MenuItems>
+            <UserButton.Link
+              label="Settings"
+              href="/settings"
+              labelIcon={<SettingsGearIcon />}
+            />
+          </UserButton.MenuItems>
+        </UserButton>
       </Show>
     </div>
   );
