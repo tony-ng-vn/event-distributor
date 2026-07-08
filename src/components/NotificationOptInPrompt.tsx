@@ -3,7 +3,7 @@
  *
  * Mounted top-level (app layout), NOT inside the feed tabs. Shows once per user:
  * whenever a signed-in user has not yet answered (no row or has_responded=false).
- * "Yes" enables email; "No thanks"/dismiss records the answer so we never nag
+ * "Turn on email" enables email; "Not now"/dismiss records the answer so we never nag
  * again. All persistence is server-side via /api/me/notification-preferences.
  */
 "use client";
@@ -78,7 +78,7 @@ export function NotificationOptInPrompt() {
           Get an email when a new event is added?
         </h2>
         <p className="mt-1 text-sm text-muted">
-          One short email whenever someone shares a new event. No digests, no spam.
+          Turn it on below to get one email whenever a friend adds a new event.
           You can change this anytime in Settings.
         </p>
         <div className="mt-4 flex gap-2">
@@ -89,7 +89,7 @@ export function NotificationOptInPrompt() {
             className="btn-secondary flex-1 py-2.5 disabled:opacity-50"
             data-testid="notif-optin-decline"
           >
-            No thanks
+            Not now
           </button>
           <button
             type="button"
@@ -98,7 +98,7 @@ export function NotificationOptInPrompt() {
             className="btn-primary flex-1 py-2.5 disabled:opacity-50"
             data-testid="notif-optin-accept"
           >
-            {saving ? "Saving..." : "Yes, email me"}
+            {saving ? "Saving..." : "Turn on email"}
           </button>
         </div>
       </div>
