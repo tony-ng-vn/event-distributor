@@ -70,7 +70,6 @@ export function EventCardVariantsPreview() {
             <EventFeedCard
               event={MOCK_EVENT}
               status="accepted"
-              showAcceptedActions
               removeInterestLayout={layout}
               onAccept={() => undefined}
               onPass={() => undefined}

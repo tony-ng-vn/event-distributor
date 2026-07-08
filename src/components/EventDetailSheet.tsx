@@ -1,6 +1,6 @@
 /**
  * Slide-over panel with full event details (opens when you tap a card).
- * Same Accept/Pass actions as EventFeedCard.
+ * Same Interested/Pass actions as EventFeedCard.
  */
 "use client";
 
@@ -24,7 +24,6 @@ export function EventDetailSheet({
   passed,
   isAdmin,
   showPassedActions = false,
-  showAcceptedActions = false,
   removeInterestLayout = "stacked",
 }: {
   event: FeedEvent | null;
@@ -38,7 +37,6 @@ export function EventDetailSheet({
   passed?: boolean;
   isAdmin?: boolean;
   showPassedActions?: boolean;
-  showAcceptedActions?: boolean;
   removeInterestLayout?: RemoveInterestLayout;
 }) {
   if (!event) return null;
@@ -95,13 +93,11 @@ export function EventDetailSheet({
 
           <EventAttendeeSections event={event} interactive showCount />
 
-          {accepted && showAcceptedActions ? (
+          {accepted ? (
             <RemoveInterestAction
               layout={removeInterestLayout}
               onUnaccept={onUnaccept}
             />
-          ) : accepted ? (
-            <EventResponseStatus variant="accepted" />
           ) : passed && showPassedActions ? (
             <div className="space-y-2">
               <EventResponseStatus variant="passed" />
@@ -114,8 +110,13 @@ export function EventDetailSheet({
                 >
                   Undo pass
                 </button>
-                <button type="button" onClick={onAccept} className="btn-accept flex-1 py-3">
-                  Accept
+                <button
+                  type="button"
+                  onClick={onAccept}
+                  className="btn-accept flex-1 py-3"
+                  aria-label={`Interested in ${event.title} -- opens the event page in a new tab`}
+                >
+                  Interested
                 </button>
               </div>
             </div>
@@ -136,8 +137,9 @@ export function EventDetailSheet({
                 onClick={onAccept}
                 className="btn-accept flex-1 py-3"
                 data-testid="accept-button"
+                aria-label={`Interested in ${event.title} -- opens the event page in a new tab`}
               >
-                Accept
+                Interested
               </button>
             </div>
           )}
