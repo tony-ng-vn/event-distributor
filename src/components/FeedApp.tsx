@@ -7,6 +7,7 @@
  *   Anonymous pass → sessionStorage only (no backend pass row)
  *
  * Responsive: 2-col feed on desktop, bottom tabs on mobile, calendar sidebar lg+.
+ * Your events is a top-level tab on all breakpoints (desktop header + mobile nav).
  */
 "use client";
 
@@ -558,18 +559,33 @@ export function FeedApp() {
     </div>
   );
 
-  const mainTabs = viewerIsAdmin
-    ? ([
-        ["feed", "Feed"],
-        ["admin", "Admin"],
-      ] as const)
-    : ([["feed", "Feed"]] as const);
+  const yourEventsContent = (
+    <div className="space-y-4" data-testid="your-events-tab">
+      <div>
+        <p className="text-sm font-medium text-foreground">Your events</p>
+        <p className="text-sm text-muted">Events you marked as interested</p>
+      </div>
+      <CalendarEventList
+        events={acceptedEvents}
+        isAdmin={viewerIsAdmin}
+        exitingEventIds={exitingEventIds}
+        onDelete={handleDelete}
+        onSelectEvent={setDetailEvent}
+      />
+    </div>
+  );
+
+  const mainTabs = [
+    ["feed", "Feed"],
+    ["mine", "Your events"],
+    ...(viewerIsAdmin ? ([["admin", "Admin"]] as const) : []),
+  ] as const;
 
   const mobileTabs = [
     ["feed", "Feed"],
     ...(viewerIsAdmin ? ([["admin", "Admin"]] as const) : []),
     ["calendar", "Calendar"],
-    ["mine", "My Events"],
+    ["mine", "Your events"],
   ] as const;
 
   if (!isLoaded) {
@@ -650,12 +666,12 @@ export function FeedApp() {
           {adminContent}
         </section>
 
+        <section className={activeTab === "mine" ? "block" : "hidden lg:hidden"}>
+          {yourEventsContent}
+        </section>
+
         <section
-          className={
-            activeTab === "calendar" || activeTab === "mine"
-              ? "block lg:hidden"
-              : "hidden"
-          }
+          className={activeTab === "calendar" ? "block lg:hidden" : "hidden"}
         >
           {activeTab === "calendar" && (
             <div className="space-y-4">
@@ -675,15 +691,6 @@ export function FeedApp() {
               />
             </div>
           )}
-          {activeTab === "mine" && (
-            <CalendarEventList
-              events={acceptedEvents}
-              isAdmin={viewerIsAdmin}
-              exitingEventIds={exitingEventIds}
-              onDelete={handleDelete}
-              onSelectEvent={setDetailEvent}
-            />
-          )}
         </section>
 
         <aside className="hidden space-y-4 lg:block">
@@ -694,18 +701,6 @@ export function FeedApp() {
             onSelectDate={setSelectedDate}
             onNavigate={setCalendarDate}
           />
-          <div className="glass-card rounded-2xl p-4">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">
-              Your events
-            </h3>
-            <CalendarEventList
-              events={acceptedEvents}
-              isAdmin={viewerIsAdmin}
-              exitingEventIds={exitingEventIds}
-              onDelete={handleDelete}
-              onSelectEvent={setDetailEvent}
-            />
-          </div>
         </aside>
       </main>
 

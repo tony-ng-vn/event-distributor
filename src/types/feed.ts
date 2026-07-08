@@ -48,5 +48,5 @@ export type FeedEvent = {
 /** Filter pills above the feed: all | pending | accepted */
 export type FeedFilter = "all" | "pending" | "accepted";
 
-/** Bottom nav on mobile: Feed | Admin | Calendar | My Events */
+/** App tabs: Feed | Your events | Admin (admin only) | Calendar (mobile only) */
 export type MobileTab = "feed" | "admin" | "calendar" | "mine";
