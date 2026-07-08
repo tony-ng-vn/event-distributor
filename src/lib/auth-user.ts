@@ -46,6 +46,17 @@ async function syncClerkUser() {
 
   if (existing) {
     const name = clerkName ?? existing.name;
+
+    // Skip the write when nothing changed -- this runs on every authed request.
+    if (
+      existing.email === email &&
+      existing.name === name &&
+      existing.image === image &&
+      existing.is_admin === isAdmin
+    ) {
+      return existing;
+    }
+
     const { data: updated, error: updateError } = await db.database
       .from("users")
       .update({ email, name, image, is_admin: isAdmin })
@@ -88,20 +99,6 @@ export async function resolveViewerUserId(
   return user?.id ?? null;
 }
 
-export async function resolveViewerIsAdmin(
-  request?: Request,
-): Promise<boolean> {
-  if (request) {
-    const e2eUserId = resolveE2EUserId(request);
-    if (e2eUserId) {
-      return isUserAdmin(e2eUserId);
-    }
-  }
-
-  const user = await syncClerkUser();
-  return user?.is_admin === true;
-}
-
 /** Requires a signed-in viewer (Clerk or E2E). Throws when missing. */
 export async function requireViewerUserId(request?: Request): Promise<string> {
   const userId = await resolveViewerUserId(request);
@@ -109,5 +106,26 @@ export async function requireViewerUserId(request?: Request): Promise<string> {
     throw new Error("Sign in required to view events");
   }
   return userId;
+}
+
+/**
+ * Viewer id + admin flag from ONE Clerk sync. Separate id/admin resolvers each
+ * ran their own sync (two Clerk fetches + two users-table round-trips per request).
+ */
+export async function requireViewer(
+  request?: Request,
+): Promise<{ userId: string; isAdmin: boolean }> {
+  if (request) {
+    const e2eUserId = resolveE2EUserId(request);
+    if (e2eUserId) {
+      return { userId: e2eUserId, isAdmin: await isUserAdmin(e2eUserId) };
+    }
+  }
+
+  const user = await syncClerkUser();
+  if (!user) {
+    throw new Error("Sign in required to view events");
+  }
+  return { userId: user.id, isAdmin: user.is_admin === true };
 }
 

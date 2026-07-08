@@ -10,7 +10,6 @@ import {
   createUser,
   deleteEvent,
   ingestLumaEvent,
-  listAllFeedEvents,
   listFeedEvents,
   passEvent,
   previewLumaIngest,
@@ -218,7 +217,7 @@ describe("events service", () => {
       email: "creator@example.com",
     });
 
-    const feed = await listAllFeedEvents();
+    const feed = await listFeedEvents();
     expect(feed[0]?.addedBy?.name).toBe("Creator User");
   });
 
@@ -259,7 +258,7 @@ describe("events service", () => {
     );
   });
 
-  it("listAllFeedEvents includes passed events with viewerPassed flag", async () => {
+  it("listFeedEvents includes passed events with viewerPassed flag", async () => {
     const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
     const passer = await createUser({
       email: "passer@example.com",
@@ -268,7 +267,7 @@ describe("events service", () => {
 
     await passEvent(event.id, passer.id);
 
-    const allEvents = await listAllFeedEvents(passer.id);
+    const allEvents = await listFeedEvents(passer.id);
     expect(allEvents).toHaveLength(1);
     expect(allEvents[0]?.id).toBe(event.id);
     expect(allEvents[0]?.viewerPassed).toBe(true);
@@ -291,7 +290,7 @@ describe("events service", () => {
     expect(feed).toHaveLength(1);
     expect(feed[0]?.viewerPassed).toBe(false);
 
-    const allEvents = await listAllFeedEvents(user.id);
+    const allEvents = await listFeedEvents(user.id);
     expect(allEvents[0]?.viewerPassed).toBe(false);
   });
 });

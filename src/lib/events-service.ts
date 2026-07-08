@@ -19,42 +19,10 @@ import {
   normalizeSourceUrl,
   type LumaMetadata,
 } from "@/lib/event-page";
+import type { FeedEvent } from "@/types/feed";
 
-type AttendeeSummary = {
-  id: string;
-  name: string | null;
-  image: string | null;
-};
-
-type CreatorSummary = {
-  id: string;
-  name: string | null;
-  image: string | null;
-  email: string | null;
-};
-
-export type FeedEvent = {
-  id: string;
-  lumaUrl: string;
-  title: string;
-  description: string;
-  coverImageUrl: string | null;
-  startAt: string;
-  endAt: string;
-  location: string;
-  isOnline: boolean;
-  meetingUrl: string | null;
-  hostName: string | null;
-  hostAvatarUrl: string | null;
-  createdAt: string;
-  acceptCount: number;
-  attendees: AttendeeSummary[];
-  passCount: number;
-  passAttendees: AttendeeSummary[];
-  viewerAccepted: boolean;
-  viewerPassed: boolean;
-  addedBy: CreatorSummary | null;
-};
+type AttendeeSummary = FeedEvent["attendees"][number];
+type CreatorSummary = NonNullable<FeedEvent["addedBy"]>;
 
 type InsforgeUser = {
   id: string;
@@ -131,7 +99,6 @@ function mapAttendeeSummaries(
 function serializeEvent(
   event: InsforgeEventRow,
   viewerUserId?: string | null,
-  viewerPassed = false,
 ): FeedEvent {
   const attendees = mapAttendeeSummaries(event.accepts ?? []);
   const passAttendees = mapAttendeeSummaries(event.passes ?? []);
@@ -157,7 +124,9 @@ function serializeEvent(
     viewerAccepted: viewerUserId
       ? attendees.some((a) => a.id === viewerUserId)
       : false,
-    viewerPassed,
+    viewerPassed: viewerUserId
+      ? passAttendees.some((a) => a.id === viewerUserId)
+      : false,
     addedBy: serializeCreator(event.added_by_user),
   };
 }
@@ -186,8 +155,7 @@ async function fetchAllEventRows() {
 
   const { data, error } = await db.database
     .from("events")
-    .select(eventSelect)
-    .order("start_at", { ascending: true });
+    .select(eventSelect);
 
   if (error) throw new Error(error.message);
 
@@ -211,39 +179,10 @@ async function fetchAllEventRows() {
   return events;
 }
 
-async function getViewerPassedEventIds(
-  viewerUserId: string,
-): Promise<Set<string>> {
-  const db = getInsforgeAdmin();
-  const { data: passedRows, error: passError } = await db.database
-    .from("passes")
-    .select("event_id")
-    .eq("user_id", viewerUserId);
-
-  if (passError) throw new Error(passError.message);
-
-  return new Set((passedRows ?? []).map((row) => row.event_id as string));
-}
-
-/** GET /api/events?scope=all — all persisted events including passed ones. */
-export async function listAllFeedEvents(viewerUserId?: string | null) {
-  const events = await fetchAllEventRows();
-  const passedEventIds = viewerUserId
-    ? await getViewerPassedEventIds(viewerUserId)
-    : new Set<string>();
-
-  return events.map((event) =>
-    serializeEvent(
-      event,
-      viewerUserId,
-      viewerUserId ? passedEventIds.has(event.id) : false,
-    ),
-  );
-}
-
-/** GET /api/events — all persisted events (partitioned in Feed UI). */
+/** GET /api/events -- all persisted events (partitioned per-viewer in Feed UI). */
 export async function listFeedEvents(viewerUserId?: string | null) {
-  return listAllFeedEvents(viewerUserId);
+  const events = await fetchAllEventRows();
+  return events.map((event) => serializeEvent(event, viewerUserId));
 }
 
 /** POST ingest with preview:true — fetch event metadata without saving. */
@@ -319,8 +258,8 @@ export async function ingestLumaEvent(lumaUrl: string, addedByUserId?: string) {
   return serialized;
 }
 
-/** POST /api/events/[id]/accept — user joins in-app guest list (not Luma RSVP). */
-export async function acceptEvent(eventId: string, userId: string) {
+/** Shared accept/pass precondition -- clear errors instead of raw FK failures. */
+async function assertEventAndUserExist(eventId: string, userId: string) {
   const db = getInsforgeAdmin();
 
   const { data: event, error: eventError } = await db.database
@@ -340,6 +279,28 @@ export async function acceptEvent(eventId: string, userId: string) {
 
   if (userError) throw new Error(userError.message);
   if (!user) throw new Error("User not found");
+}
+
+/** Re-read one event with all embeds and serialize it for the viewer. */
+async function reloadSerializedEvent(eventId: string, userId: string) {
+  const db = getInsforgeAdmin();
+
+  const { data: updated, error: updatedError } = await db.database
+    .from("events")
+    .select(eventSelect)
+    .eq("id", eventId)
+    .single();
+
+  if (updatedError) throw new Error(updatedError.message);
+
+  return serializeEvent(updated as InsforgeEventRow, userId);
+}
+
+/** POST /api/events/[id]/accept — user joins in-app guest list (not Luma RSVP). */
+export async function acceptEvent(eventId: string, userId: string) {
+  const db = getInsforgeAdmin();
+
+  await assertEventAndUserExist(eventId, userId);
 
   const { data: existing, error: existingError } = await db.database
     .from("accepts")
@@ -364,15 +325,7 @@ export async function acceptEvent(eventId: string, userId: string) {
 
   await unpassEvent(eventId, userId);
 
-  const { data: updated, error: updatedError } = await db.database
-    .from("events")
-    .select(eventSelect)
-    .eq("id", eventId)
-    .single();
-
-  if (updatedError) throw new Error(updatedError.message);
-
-  return serializeEvent(updated as InsforgeEventRow, userId);
+  return reloadSerializedEvent(eventId, userId);
 }
 
 /** DELETE accept — remove user interest from in-app guest list. No-op if not accepted. */
@@ -387,38 +340,14 @@ export async function unacceptEvent(eventId: string, userId: string) {
 
   if (deleteError) throw new Error(deleteError.message);
 
-  const { data: updated, error: updatedError } = await db.database
-    .from("events")
-    .select(eventSelect)
-    .eq("id", eventId)
-    .single();
-
-  if (updatedError) throw new Error(updatedError.message);
-
-  return serializeEvent(updated as InsforgeEventRow, userId);
+  return reloadSerializedEvent(eventId, userId);
 }
 
 /** POST /api/events/[id]/pass — mark event as passed for viewer (Past events section). */
 export async function passEvent(eventId: string, userId: string) {
   const db = getInsforgeAdmin();
 
-  const { data: event, error: eventError } = await db.database
-    .from("events")
-    .select("id")
-    .eq("id", eventId)
-    .maybeSingle();
-
-  if (eventError) throw new Error(eventError.message);
-  if (!event) throw new Error("Event not found");
-
-  const { data: user, error: userError } = await db.database
-    .from("users")
-    .select("id")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (userError) throw new Error(userError.message);
-  if (!user) throw new Error("User not found");
+  await assertEventAndUserExist(eventId, userId);
 
   const { data: existing, error: existingError } = await db.database
     .from("passes")

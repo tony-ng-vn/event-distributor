@@ -13,9 +13,8 @@ import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { EventThumbnail } from "@/components/EventThumbnail";
 import { EventTitleLink } from "@/components/EventTitleLink";
 import { RemoveInterestAction } from "@/components/RemoveInterestAction";
+import type { CardStatus } from "@/lib/feed-partition";
 import type { FeedEvent } from "@/types/feed";
-
-type CardStatus = "pending" | "accepted" | "passed" | "accepting";
 
 export function EventFeedCard({
   event,
