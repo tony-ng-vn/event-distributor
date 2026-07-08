@@ -9,6 +9,7 @@
 import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventThumbnail } from "@/components/EventThumbnail";
 import { LumaEventLink } from "@/components/LumaEventLink";
+import { RemoveInterestAction } from "@/components/RemoveInterestAction";
 import {
   addMonths,
   formatMonthYear,
@@ -117,12 +118,14 @@ export function CalendarEventList({
   isAdmin = false,
   onDelete,
   exitingEventIds = {},
+  onUnaccept,
 }: {
   events: FeedEvent[];
   onSelectEvent?: (event: FeedEvent) => void;
   isAdmin?: boolean;
   onDelete?: (eventId: string) => void;
   exitingEventIds?: Record<string, true>;
+  onUnaccept?: (eventId: string) => void;
 }) {
   if (events.length === 0) {
     return (
@@ -173,7 +176,13 @@ export function CalendarEventList({
             </div>
           </button>
           <EventAttendeeSections event={event} showSocialCopy showCount={false} />
-          <div className="px-4 pb-4">
+          <div className="space-y-2 px-4 pb-4">
+            {onUnaccept && event.viewerAccepted && (
+              <RemoveInterestAction
+                layout="stacked"
+                onUnaccept={() => onUnaccept(event.id)}
+              />
+            )}
             <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
           </div>
         </div>
