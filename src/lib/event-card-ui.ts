@@ -1,4 +1,4 @@
-import { resolveEventHref } from "@/lib/luma";
+import { resolveEventHref } from "@/lib/event-page";
 
 /** Placement options for the Remove interest control on accepted event cards. */
 export type RemoveInterestLayout = "stacked" | "inline-badge" | "text-link";

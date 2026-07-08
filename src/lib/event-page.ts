@@ -1,3 +1,4 @@
+// Named event-page (not luma) because this parses any event page, not only Luma.
 /**
  * Event URL parsing and metadata extraction.
  *
