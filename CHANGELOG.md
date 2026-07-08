@@ -15,8 +15,12 @@ Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGE
 
 **Events API**
 
-- Loading the feed is lighter on the server: the viewer is looked up once per request instead of twice, an unchanged profile no longer rewrites its database row, and the "did I pass this event" check reuses data the main query already fetched.
+- The "did I pass this event" check reuses data the main feed query already fetched instead of running a second query.
 - Accept and remove-interest responses now report your pass state correctly instead of always saying "not passed".
+
+**Auth**
+
+- The viewer is looked up once per request instead of twice, and an unchanged Clerk profile no longer rewrites its database row on every request.
 
 **Notifications**
 
@@ -26,6 +30,10 @@ Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGE
 
 - Deep cleanup pass: deleted the unused Google Calendar module and two heavyweight unused dependencies (googleapis, cheerio), the leftover card-layout comparison page, an orphaned prisma/ folder, and a few hundred lines of dead helpers, duplicate types, and deprecated aliases.
 - Event titles from Luma now have the site suffix stripped consistently for every separator style Luma uses.
+
+**Docs**
+
+- Fixed pointers that led nowhere: a database-safety error message referenced a deleted README section, and AGENTS.md referenced a deleted cursor rule.
 
 ---
 
