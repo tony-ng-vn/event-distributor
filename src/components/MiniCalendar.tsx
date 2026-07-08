@@ -1,15 +1,10 @@
 /**
- * Sidebar / mobile calendar — filter feed by day; list events you've Accepted.
- *
- * MiniCalendar: month grid with dots on days that have events.
- * CalendarEventList: simple list of accepted events ("My Events" tab).
+ * Sidebar / mobile calendar — month grid that filters the feed by day.
+ * Dots mark days that have events. The "Your events" list itself renders the
+ * shared EventFeedCard (see FeedApp), so this file no longer owns a list view.
  */
 "use client";
 
-import { EventAttendeeSections } from "@/components/EventAttendeeSections";
-import { EventThumbnail } from "@/components/EventThumbnail";
-import { LumaEventLink } from "@/components/LumaEventLink";
-import { RemoveInterestAction } from "@/components/RemoveInterestAction";
 import {
   addMonths,
   formatMonthYear,
@@ -108,85 +103,6 @@ export function MiniCalendar({
           Clear date filter
         </button>
       )}
-    </div>
-  );
-}
-
-export function CalendarEventList({
-  events,
-  onSelectEvent,
-  isAdmin = false,
-  onDelete,
-  exitingEventIds = {},
-  onUnaccept,
-}: {
-  events: FeedEvent[];
-  onSelectEvent?: (event: FeedEvent) => void;
-  isAdmin?: boolean;
-  onDelete?: (eventId: string) => void;
-  exitingEventIds?: Record<string, true>;
-  onUnaccept?: (eventId: string) => void;
-}) {
-  if (events.length === 0) {
-    return (
-      <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted">
-        No events you&apos;re interested in yet.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {events.map((event) => (
-        <div
-          key={event.id}
-          className={`glass-card relative overflow-hidden rounded-xl ${
-            exitingEventIds[event.id] ? "event-card-exiting" : ""
-          }`}
-          data-testid={`calendar-event-${event.id}`}
-        >
-          {isAdmin && onDelete && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(event.id);
-              }}
-              className="btn-delete absolute right-2 top-2 z-10 px-2 py-0.5 text-[11px]"
-              aria-label={`Delete ${event.title}`}
-              data-testid="delete-event-button"
-            >
-              Delete
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => onSelectEvent?.(event)}
-            className={`flex w-full gap-3.5 p-4 text-left ${isAdmin && onDelete ? "pr-14" : ""} ${
-              onSelectEvent ? "cursor-pointer hover:opacity-90" : ""
-            }`}
-            disabled={!onSelectEvent}
-          >
-            <EventThumbnail event={event} className="shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="font-medium text-foreground">{event.title}</p>
-              <p className="mt-1 text-sm text-muted">
-                {new Date(event.startAt).toLocaleString()}
-              </p>
-            </div>
-          </button>
-          <EventAttendeeSections event={event} showSocialCopy showCount={false} />
-          <div className="space-y-2 px-4 pb-4">
-            {onUnaccept && event.viewerAccepted && (
-              <RemoveInterestAction
-                layout="stacked"
-                onUnaccept={() => onUnaccept(event.id)}
-              />
-            )}
-            <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

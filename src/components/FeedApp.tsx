@@ -17,7 +17,7 @@ import { partitionFeedEvents } from "@/lib/feed-partition";
 import { runInterested } from "@/lib/interested-action";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
 import { AuthButton, SignInGate, SignInPromptModal } from "@/components/AuthControls";
-import { CalendarEventList, MiniCalendar } from "@/components/MiniCalendar";
+import { MiniCalendar } from "@/components/MiniCalendar";
 import { AdminEventCard } from "@/components/AdminEventCard";
 import { EventDetailSheet } from "@/components/EventDetailSheet";
 import { EventFeedCard } from "@/components/EventFeedCard";
@@ -440,6 +440,41 @@ export function FeedApp() {
     );
   }
 
+  /**
+   * Your events / Calendar list. Reuses the same EventFeedCard as the feed so the
+   * two stay identical; a single-column grid gives the card's subgrid rows a parent.
+   */
+  function renderAcceptedCards(sectionEvents: FeedEvent[]) {
+    if (sectionEvents.length === 0) {
+      return (
+        <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted">
+          No events you&apos;re interested in yet.
+        </p>
+      );
+    }
+    return (
+      <div className="grid auto-rows-min gap-3">
+        {sectionEvents.map((event) => (
+          <EventFeedCard
+            key={event.id}
+            event={event}
+            status="accepted"
+            isAdmin={viewerIsAdmin}
+            isExiting={Boolean(exitingEventIds[event.id])}
+            onAccept={() =>
+              void runInterested(event, { accept: performAccept })
+            }
+            onPass={() => handlePass(event.id)}
+            onUnpass={() => handleUnpass(event.id)}
+            onUnaccept={() => handleUnaccept(event.id)}
+            onDelete={() => handleDelete(event.id)}
+            onOpen={() => setDetailEvent(event)}
+          />
+        ))}
+      </div>
+    );
+  }
+
   const feedContent = (
     <div className="space-y-4">
       {!loading && summaryEvents.length > 0 && (
@@ -574,14 +609,7 @@ export function FeedApp() {
         <p className="text-sm font-medium text-foreground">Your events</p>
         <p className="text-sm text-muted">Events you marked as interested</p>
       </div>
-      <CalendarEventList
-        events={acceptedEvents}
-        isAdmin={viewerIsAdmin}
-        exitingEventIds={exitingEventIds}
-        onDelete={handleDelete}
-        onSelectEvent={setDetailEvent}
-        onUnaccept={handleUnaccept}
-      />
+      {renderAcceptedCards(acceptedEvents)}
     </div>
   );
 
@@ -668,16 +696,19 @@ export function FeedApp() {
       </header>
 
       <main className="mx-auto grid max-w-[100rem] gap-6 px-4 py-6 pb-32 sm:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-8 lg:pb-6">
+        {/* Mount only the active tab's cards. The feed and Your events now share
+            EventFeedCard (same event-card-{id} testid), so keeping both mounted
+            would collide; gating on activeTab keeps one set of cards in the DOM. */}
         <section className={activeTab === "feed" ? "block" : "hidden lg:hidden"}>
-          {feedContent}
+          {activeTab === "feed" && feedContent}
         </section>
 
         <section className={activeTab === "admin" ? "block" : "hidden lg:hidden"}>
-          {adminContent}
+          {activeTab === "admin" && adminContent}
         </section>
 
         <section className={activeTab === "mine" ? "block" : "hidden lg:hidden"}>
-          {yourEventsContent}
+          {activeTab === "mine" && yourEventsContent}
         </section>
 
         <section
@@ -692,14 +723,7 @@ export function FeedApp() {
                 onSelectDate={setSelectedDate}
                 onNavigate={setCalendarDate}
               />
-              <CalendarEventList
-                events={acceptedEvents}
-                isAdmin={viewerIsAdmin}
-                exitingEventIds={exitingEventIds}
-                onDelete={handleDelete}
-                onSelectEvent={setDetailEvent}
-                onUnaccept={handleUnaccept}
-              />
+              {renderAcceptedCards(acceptedEvents)}
             </div>
           )}
         </section>
