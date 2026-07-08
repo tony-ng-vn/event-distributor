@@ -7,7 +7,9 @@
 import { formatDateTime } from "@/lib/dates";
 import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventResponseStatus } from "@/components/EventResponseStatus";
-import { LumaEventLink } from "@/components/LumaEventLink";
+import { EventTitleLink } from "@/components/EventTitleLink";
+import { RemoveInterestAction } from "@/components/RemoveInterestAction";
+import type { RemoveInterestLayout } from "@/lib/event-card-ui";
 import type { FeedEvent } from "@/types/feed";
 
 export function EventDetailSheet({
@@ -23,6 +25,7 @@ export function EventDetailSheet({
   isAdmin,
   showPassedActions = false,
   showAcceptedActions = false,
+  removeInterestLayout = "stacked",
 }: {
   event: FeedEvent | null;
   onClose: () => void;
@@ -36,6 +39,7 @@ export function EventDetailSheet({
   isAdmin?: boolean;
   showPassedActions?: boolean;
   showAcceptedActions?: boolean;
+  removeInterestLayout?: RemoveInterestLayout;
 }) {
   if (!event) return null;
 
@@ -67,9 +71,11 @@ export function EventDetailSheet({
           )}
 
           <div>
-            <h3 className="text-2xl font-semibold tracking-tight text-foreground">
-              {event.title}
-            </h3>
+            <EventTitleLink
+              title={event.title}
+              lumaUrl={event.lumaUrl}
+              size="detail"
+            />
             <p className="mt-2 text-sm text-muted">{formatDateTime(event.startAt)}</p>
           </div>
 
@@ -90,17 +96,10 @@ export function EventDetailSheet({
           <EventAttendeeSections event={event} interactive showCount />
 
           {accepted && showAcceptedActions ? (
-            <div className="space-y-2">
-              <EventResponseStatus variant="accepted" />
-              <button
-                type="button"
-                onClick={onUnaccept}
-                className="btn-pass w-full py-3"
-                data-testid="unaccept-button"
-              >
-                Remove interest
-              </button>
-            </div>
+            <RemoveInterestAction
+              layout={removeInterestLayout}
+              onUnaccept={onUnaccept}
+            />
           ) : accepted ? (
             <EventResponseStatus variant="accepted" />
           ) : passed && showPassedActions ? (
@@ -142,8 +141,6 @@ export function EventDetailSheet({
               </button>
             </div>
           )}
-
-          <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
 
           {isAdmin && onDelete && (
             <button

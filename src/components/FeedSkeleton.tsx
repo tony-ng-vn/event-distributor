@@ -11,7 +11,7 @@ export function FeedSkeleton() {
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="glass-card row-span-4 grid grid-rows-subgrid gap-3 overflow-hidden rounded-2xl"
+          className="glass-card row-span-3 grid grid-rows-subgrid gap-3 overflow-hidden rounded-2xl"
         >
           <div className="flex gap-3.5 px-4 pt-4">
             <div className="h-[72px] w-[72px] shrink-0 animate-pulse rounded-xl bg-surface-muted" />

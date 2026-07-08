@@ -9,7 +9,9 @@
 import { formatCardDateTime } from "@/lib/dates";
 import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventResponseStatus } from "@/components/EventResponseStatus";
-import { LumaEventLink } from "@/components/LumaEventLink";
+import { EventTitleLink } from "@/components/EventTitleLink";
+import { RemoveInterestAction } from "@/components/RemoveInterestAction";
+import type { RemoveInterestLayout } from "@/lib/event-card-ui";
 import type { FeedEvent } from "@/types/feed";
 
 type CardStatus = "pending" | "accepted" | "passed" | "accepting";
@@ -25,6 +27,7 @@ export function EventFeedCard({
   onOpen,
   showPassedActions = false,
   showAcceptedActions = false,
+  removeInterestLayout = "stacked",
   isAdmin = false,
   isExiting = false,
 }: {
@@ -38,6 +41,7 @@ export function EventFeedCard({
   onOpen: () => void;
   showPassedActions?: boolean;
   showAcceptedActions?: boolean;
+  removeInterestLayout?: RemoveInterestLayout;
   isAdmin?: boolean;
   isExiting?: boolean;
 }) {
@@ -51,7 +55,7 @@ export function EventFeedCard({
 
   return (
     <article
-      className={`glass-card relative row-span-4 grid grid-rows-subgrid gap-3 overflow-hidden rounded-2xl transition ${
+      className={`glass-card relative row-span-3 grid grid-rows-subgrid gap-3 overflow-hidden rounded-2xl transition ${
         passed && !accepted ? "opacity-75" : ""
       } ${isExiting ? "event-card-exiting" : ""}`}
       data-testid={`event-card-${event.id}`}
@@ -94,19 +98,27 @@ export function EventFeedCard({
           </div>
         </button>
 
-        <button
-          type="button"
-          onClick={onOpen}
-          className="min-w-0 flex-1 text-left"
-        >
-          <p className="text-xs font-medium text-muted">
-            {formatCardDateTime(event.startAt)}
-          </p>
-          <h3 className="mt-0.5 line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-snug tracking-tight text-foreground">
-            {event.title}
-          </h3>
-          <p className="mt-0.5 line-clamp-1 text-sm text-muted">{subtitle}</p>
-        </button>
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={onOpen}
+            className="w-full text-left"
+            aria-label={`Open details for ${event.title}`}
+          >
+            <p className="text-xs font-medium text-muted">
+              {formatCardDateTime(event.startAt)}
+            </p>
+          </button>
+          <EventTitleLink title={event.title} lumaUrl={event.lumaUrl} />
+          <button
+            type="button"
+            onClick={onOpen}
+            className="w-full text-left"
+            aria-label={`Open details for ${event.title}`}
+          >
+            <p className="mt-0.5 line-clamp-1 text-sm text-muted">{subtitle}</p>
+          </button>
+        </div>
       </div>
 
       <EventAttendeeSections
@@ -116,19 +128,12 @@ export function EventFeedCard({
         className="[&_.going-strip]:mb-0"
       />
 
-      <div className="px-4">
+      <div className="px-4 pb-4">
         {accepted && showAcceptedActions ? (
-          <div className="space-y-2">
-            <EventResponseStatus variant="accepted" />
-            <button
-              type="button"
-              onClick={onUnaccept}
-              className="btn-pass w-full py-3"
-              data-testid="unaccept-button"
-            >
-              Remove interest
-            </button>
-          </div>
+          <RemoveInterestAction
+            layout={removeInterestLayout}
+            onUnaccept={onUnaccept}
+          />
         ) : accepted ? (
           <EventResponseStatus variant="accepted" />
         ) : passed && showPassedActions ? (
@@ -177,10 +182,6 @@ export function EventFeedCard({
             </button>
           </div>
         )}
-      </div>
-
-      <div className="px-4 pb-4">
-        <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
       </div>
     </article>
   );
