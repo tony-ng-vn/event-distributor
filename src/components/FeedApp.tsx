@@ -14,6 +14,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { partitionFeedEvents } from "@/lib/feed-partition";
+import { runInterested } from "@/lib/interested-action";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
 import { AuthButton, SignInGate, SignInPromptModal } from "@/components/AuthControls";
 import { CalendarEventList, MiniCalendar } from "@/components/MiniCalendar";
@@ -225,8 +226,14 @@ export function FeedApp() {
     [events, passedIds, cardState],
   );
 
-  /** POST accept; 401 opens sign-in modal. */
-  async function performAccept(eventId: string) {
+  /**
+   * POST accept; returns true only when interest was recorded so the caller
+   * (runInterested) can then open the event page. 401 opens the sign-in modal
+   * and returns false. Server reconciliation runs in the background so the
+   * new-tab open fires promptly -- browsers block popups once the click's
+   * user activation has expired behind an extra round-trip.
+   */
+  async function performAccept(eventId: string): Promise<boolean> {
     setCardState((prev) => ({ ...prev, [eventId]: "accepting" }));
     try {
       const response = await fetch(
@@ -238,18 +245,19 @@ export function FeedApp() {
       if (response.status === 401) {
         setCardState((prev) => ({ ...prev, [eventId]: "pending" }));
         setConnectOpen(true);
-        return;
+        return false;
       }
 
       if (!response.ok) throw new Error(data.error ?? "Accept failed");
 
+      setCardState((prev) => ({ ...prev, [eventId]: "accepted" }));
       setToast("Marked as interested");
-      await syncEventsFromServer(
-        detailEvent?.id === eventId ? eventId : null,
-      );
+      void syncEventsFromServer(detailEvent?.id === eventId ? eventId : null);
+      return true;
     } catch (err) {
       setCardState((prev) => ({ ...prev, [eventId]: "pending" }));
       setToast(err instanceof Error ? err.message : "Accept failed");
+      return false;
     }
   }
 
@@ -417,12 +425,13 @@ export function FeedApp() {
             status={cardState[event.id] ?? "pending"}
             isAdmin={viewerIsAdmin}
             isExiting={Boolean(exitingEventIds[event.id])}
-            onAccept={() => performAccept(event.id)}
+            onAccept={() =>
+              void runInterested(event, { accept: performAccept })
+            }
             onPass={() => handlePass(event.id)}
             onUnpass={() => handleUnpass(event.id)}
             onUnaccept={() => handleUnaccept(event.id)}
             showPassedActions={options?.showPastActions}
-            showAcceptedActions={options?.showPastActions}
             onDelete={() => handleDelete(event.id)}
             onOpen={() => setDetailEvent(event)}
           />
@@ -762,19 +771,17 @@ export function FeedApp() {
       <EventDetailSheet
         event={detailEvent}
         onClose={() => setDetailEvent(null)}
-        onAccept={() => detailEvent && performAccept(detailEvent.id)}
+        onAccept={() => {
+          if (detailEvent) {
+            void runInterested(detailEvent, { accept: performAccept });
+          }
+        }}
         onPass={() => detailEvent && handlePass(detailEvent.id)}
         onUnpass={() => detailEvent && handleUnpass(detailEvent.id)}
         onUnaccept={() => detailEvent && handleUnaccept(detailEvent.id)}
         onDelete={() => detailEvent && handleDelete(detailEvent.id)}
         isAdmin={viewerIsAdmin}
         showPassedActions={activeTab === "admin"}
-        showAcceptedActions={
-          detailEvent
-            ? detailEvent.viewerAccepted ||
-              cardState[detailEvent.id] === "accepted"
-            : false
-        }
         accepted={
           detailEvent
             ? detailEvent.viewerAccepted || cardState[detailEvent.id] === "accepted"

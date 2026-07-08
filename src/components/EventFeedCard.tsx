@@ -1,8 +1,9 @@
 /**
  * One event in the social-row card layout.
  *
- * Sections: thumbnail + title row → "Who's going" strip → Pass/Accept buttons.
- * Accept requires sign-in; Pass is client-only (handled in FeedApp).
+ * Sections: thumbnail + title row -> "Who's going" strip -> Pass/Interested buttons.
+ * Interested requires sign-in and records interest, then opens the event page
+ * in a new tab; Pass is client-only (handled in FeedApp).
  */
 "use client";
 
@@ -27,7 +28,6 @@ export function EventFeedCard({
   onDelete,
   onOpen,
   showPassedActions = false,
-  showAcceptedActions = false,
   removeInterestLayout = "stacked",
   isAdmin = false,
   isExiting = false,
@@ -41,7 +41,6 @@ export function EventFeedCard({
   onDelete?: () => void;
   onOpen: () => void;
   showPassedActions?: boolean;
-  showAcceptedActions?: boolean;
   removeInterestLayout?: RemoveInterestLayout;
   isAdmin?: boolean;
   isExiting?: boolean;
@@ -119,13 +118,11 @@ export function EventFeedCard({
       />
 
       <div className="px-4 pb-4">
-        {accepted && showAcceptedActions ? (
+        {accepted ? (
           <RemoveInterestAction
             layout={removeInterestLayout}
             onUnaccept={onUnaccept}
           />
-        ) : accepted ? (
-          <EventResponseStatus variant="accepted" />
         ) : passed && showPassedActions ? (
           <div className="space-y-2">
             <EventResponseStatus variant="passed" />
@@ -144,8 +141,9 @@ export function EventFeedCard({
                 disabled={status === "accepting"}
                 className="btn-accept py-3 disabled:opacity-60"
                 data-testid="accept-button"
+                aria-label={`Interested in ${event.title} -- opens the event page in a new tab`}
               >
-                {status === "accepting" ? "Accepting..." : "Accept"}
+                {status === "accepting" ? "Saving..." : "Interested"}
               </button>
             </div>
           </div>
@@ -167,8 +165,9 @@ export function EventFeedCard({
               disabled={status === "accepting"}
               className="btn-accept py-3 disabled:opacity-60"
               data-testid="accept-button"
+              aria-label={`Interested in ${event.title} -- opens the event page in a new tab`}
             >
-              {status === "accepting" ? "Accepting..." : "Accept"}
+              {status === "accepting" ? "Saving..." : "Interested"}
             </button>
           </div>
         )}
