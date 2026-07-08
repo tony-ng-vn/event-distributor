@@ -12,6 +12,7 @@ import { isUserAdmin } from "@/lib/admin";
 import { assertDestructiveWritesAllowed } from "@/lib/db-safety";
 import { getInsforgeAdmin } from "@/lib/db";
 import { newId } from "@/lib/ids";
+import { scheduleEventIngestedNotification } from "@/lib/notifications/notify";
 import {
   fetchEventMetadata,
   isEventSourceUrl,
@@ -300,7 +301,22 @@ export async function ingestLumaEvent(lumaUrl: string, addedByUserId?: string) {
 
   if (error) throw new Error(error.message);
 
-  return serializeEvent(event as InsforgeEventRow);
+  const serialized = serializeEvent(event as InsforgeEventRow);
+
+  // Single notification seam: emit after a successful write. Delivery is async
+  // and failure-isolated, so it never slows or breaks ingest.
+  scheduleEventIngestedNotification({
+    id: serialized.id,
+    title: serialized.title,
+    startAt: serialized.startAt,
+    isOnline: serialized.isOnline,
+    location: serialized.location,
+    addedBy: serialized.addedBy
+      ? { id: serialized.addedBy.id, name: serialized.addedBy.name }
+      : null,
+  });
+
+  return serialized;
 }
 
 /** POST /api/events/[id]/accept — user joins in-app guest list (not Luma RSVP). */

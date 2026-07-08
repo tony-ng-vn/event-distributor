@@ -8,6 +8,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NotificationOptInPrompt } from "@/components/NotificationOptInPrompt";
 import "./globals.css";
 
 /** Match Clerk sign-in UI to our black/white Luma-style theme. */
@@ -60,6 +61,7 @@ export default function RootLayout({
           signUpUrl="/sign-up"
         >
           {children}
+          <NotificationOptInPrompt />
         </ClerkProvider>
       </body>
     </html>
