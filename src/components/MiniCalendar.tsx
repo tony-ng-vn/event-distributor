@@ -7,6 +7,7 @@
 "use client";
 
 import { EventAttendeeSections } from "@/components/EventAttendeeSections";
+import { EventThumbnail } from "@/components/EventThumbnail";
 import { LumaEventLink } from "@/components/LumaEventLink";
 import {
   addMonths,
@@ -158,15 +159,18 @@ export function CalendarEventList({
           <button
             type="button"
             onClick={() => onSelectEvent?.(event)}
-            className={`w-full p-4 text-left ${isAdmin && onDelete ? "pr-14" : ""} ${
+            className={`flex w-full gap-3.5 p-4 text-left ${isAdmin && onDelete ? "pr-14" : ""} ${
               onSelectEvent ? "cursor-pointer hover:opacity-90" : ""
             }`}
             disabled={!onSelectEvent}
           >
-            <p className="font-medium text-foreground">{event.title}</p>
-            <p className="mt-1 text-sm text-muted">
-              {new Date(event.startAt).toLocaleString()}
-            </p>
+            <EventThumbnail event={event} className="shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-foreground">{event.title}</p>
+              <p className="mt-1 text-sm text-muted">
+                {new Date(event.startAt).toLocaleString()}
+              </p>
+            </div>
           </button>
           <EventAttendeeSections event={event} showSocialCopy showCount={false} />
           <div className="px-4 pb-4">
