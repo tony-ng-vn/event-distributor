@@ -20,9 +20,11 @@ export function EventFeedCard({
   onAccept,
   onPass,
   onUnpass,
+  onUnaccept,
   onDelete,
   onOpen,
   showPassedActions = false,
+  showAcceptedActions = false,
   isAdmin = false,
   isExiting = false,
 }: {
@@ -31,9 +33,11 @@ export function EventFeedCard({
   onAccept: () => void;
   onPass: () => void;
   onUnpass?: () => void;
+  onUnaccept?: () => void;
   onDelete?: () => void;
   onOpen: () => void;
   showPassedActions?: boolean;
+  showAcceptedActions?: boolean;
   isAdmin?: boolean;
   isExiting?: boolean;
 }) {
@@ -113,7 +117,19 @@ export function EventFeedCard({
       />
 
       <div className="px-4">
-        {accepted ? (
+        {accepted && showAcceptedActions ? (
+          <div className="space-y-2">
+            <EventResponseStatus variant="accepted" />
+            <button
+              type="button"
+              onClick={onUnaccept}
+              className="btn-pass w-full py-3"
+              data-testid="unaccept-button"
+            >
+              Remove interest
+            </button>
+          </div>
+        ) : accepted ? (
           <EventResponseStatus variant="accepted" />
         ) : passed && showPassedActions ? (
           <div className="space-y-2">

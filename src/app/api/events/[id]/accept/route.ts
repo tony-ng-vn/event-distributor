@@ -6,7 +6,7 @@
  */
 import { NextResponse } from "next/server";
 import { resolveViewerUserId } from "@/lib/auth-user";
-import { acceptEvent } from "@/lib/events-service";
+import { acceptEvent, unacceptEvent } from "@/lib/events-service";
 
 export async function POST(
   request: Request,
@@ -27,6 +27,30 @@ export async function POST(
     return NextResponse.json({ event });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Accept failed";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await context.params;
+    const userId = await resolveViewerUserId(request);
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Sign in required to remove interest", code: "AUTH_REQUIRED" },
+        { status: 401 },
+      );
+    }
+
+    const event = await unacceptEvent(id, userId);
+    return NextResponse.json({ event });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Remove interest failed";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

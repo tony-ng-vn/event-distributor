@@ -12,6 +12,7 @@ import {
   listFeedEvents,
   passEvent,
   resetDatabase,
+  unacceptEvent,
   unpassEvent,
 } from "@/lib/events-service";
 
@@ -73,6 +74,26 @@ describe("events service", () => {
     expect(accepted.viewerAccepted).toBe(true);
     expect(accepted.acceptCount).toBe(1);
     expect(accepted.attendees[0]?.name).toBe("Guest User");
+  });
+
+  it("unacceptEvent removes interest so event returns to new feed section", async () => {
+    const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
+    const user = await createUser({
+      email: "guest@example.com",
+      name: "Guest User",
+    });
+
+    await acceptEvent(event.id, user.id);
+    expect((await listFeedEvents(user.id))[0]?.viewerAccepted).toBe(true);
+
+    const unaccepted = await unacceptEvent(event.id, user.id);
+    expect(unaccepted.viewerAccepted).toBe(false);
+    expect(unaccepted.acceptCount).toBe(0);
+    expect(unaccepted.attendees).toHaveLength(0);
+
+    const feed = await listFeedEvents(user.id);
+    expect(feed).toHaveLength(1);
+    expect(feed[0]?.viewerAccepted).toBe(false);
   });
 
   it("allows admin to delete any event and blocks non-admin", async () => {

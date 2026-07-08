@@ -132,4 +132,50 @@ test.describe("shared Luma feed", () => {
     await expect(page.getByTestId("accepted-state")).toBeVisible();
     await expect(page.getByText("1 interested")).toBeVisible();
   });
+
+  test("unaccept removes interest and moves event back to new feed", async ({
+    page,
+    request,
+  }) => {
+    const seed = await request.post("/api/e2e/seed", {
+      headers: { "x-e2e-secret": E2E_SECRET },
+    });
+    const seedBody = await seed.json();
+    const eventId = seedBody.event.id as string;
+
+    const userId = await authenticatePage(page, request);
+
+    const accept = await request.post(`/api/events/${eventId}/accept`, {
+      headers: {
+        "x-e2e-secret": E2E_SECRET,
+        "x-e2e-user-id": userId,
+      },
+    });
+    expect(accept.ok()).toBeTruthy();
+
+    await page.goto("/");
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/events") && response.status() === 200,
+    );
+    await expect(page.getByTestId("feed-past-events")).toBeVisible();
+    await expect(page.getByTestId("accepted-state")).toBeVisible();
+
+    const unaccept = await request.delete(`/api/events/${eventId}/accept`, {
+      headers: {
+        "x-e2e-secret": E2E_SECRET,
+        "x-e2e-user-id": userId,
+      },
+    });
+    expect(unaccept.ok()).toBeTruthy();
+
+    await page.reload();
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/events") && response.status() === 200,
+    );
+    await expect(page.getByTestId("feed-new-events")).toBeVisible();
+    await expect(page.getByTestId("accepted-state")).toBeHidden();
+    await expect(page.getByTestId("accept-button")).toBeVisible();
+  });
 });
