@@ -1,7 +1,7 @@
 /**
  * Integration tests for events-service (InsForge + Luma mock ingest/accept).
  */
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import { isUserAdmin } from "@/lib/admin";
 import {
   acceptEvent,
@@ -11,10 +11,12 @@ import {
   listAllFeedEvents,
   listFeedEvents,
   passEvent,
+  previewLumaIngest,
   resetDatabase,
   unacceptEvent,
   unpassEvent,
 } from "@/lib/events-service";
+import * as luma from "@/lib/luma";
 
 describe("events service", () => {
   beforeEach(async () => {
@@ -61,6 +63,22 @@ describe("events service", () => {
     await expect(
       ingestLumaEvent("https://localhost/private-event"),
     ).rejects.toThrow(/valid https/i);
+  });
+
+  it("rejects ingest and preview when event page validation fails", async () => {
+    vi.spyOn(luma, "fetchEventMetadata").mockRejectedValueOnce(
+      new Error(luma.INVALID_EVENT_PAGE_MESSAGE),
+    );
+    await expect(ingestLumaEvent("https://lu.ma/bogus-slug")).rejects.toThrow(
+      luma.INVALID_EVENT_PAGE_MESSAGE,
+    );
+
+    vi.spyOn(luma, "fetchEventMetadata").mockRejectedValueOnce(
+      new Error(luma.INVALID_EVENT_PAGE_MESSAGE),
+    );
+    await expect(previewLumaIngest("https://lu.ma/bogus-slug")).rejects.toThrow(
+      luma.INVALID_EVENT_PAGE_MESSAGE,
+    );
   });
 
   it("records accept without calendar sync", async () => {
