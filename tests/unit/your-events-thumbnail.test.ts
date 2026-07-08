@@ -63,3 +63,29 @@ describe("your-events list cover image", () => {
     expect(html).not.toContain("<img");
   });
 });
+
+describe("your-events list remove-interest control", () => {
+  const noop = () => {};
+
+  it("shows the remove-interest button for an interested event when onUnaccept is provided", () => {
+    const html = renderToStaticMarkup(
+      createElement(CalendarEventList, {
+        events: [makeEvent({ id: "interested", viewerAccepted: true })],
+        onUnaccept: noop,
+      }),
+    );
+
+    expect(html).toContain('data-testid="unaccept-button"');
+    expect(html).toContain("Remove interest");
+  });
+
+  it("omits the remove-interest button when no onUnaccept handler is passed", () => {
+    const html = renderToStaticMarkup(
+      createElement(CalendarEventList, {
+        events: [makeEvent({ id: "interested", viewerAccepted: true })],
+      }),
+    );
+
+    expect(html).not.toContain('data-testid="unaccept-button"');
+  });
+});

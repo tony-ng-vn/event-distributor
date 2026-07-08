@@ -580,6 +580,7 @@ export function FeedApp() {
         exitingEventIds={exitingEventIds}
         onDelete={handleDelete}
         onSelectEvent={setDetailEvent}
+        onUnaccept={handleUnaccept}
       />
     </div>
   );
@@ -697,6 +698,7 @@ export function FeedApp() {
                 exitingEventIds={exitingEventIds}
                 onDelete={handleDelete}
                 onSelectEvent={setDetailEvent}
+                onUnaccept={handleUnaccept}
               />
             </div>
           )}
