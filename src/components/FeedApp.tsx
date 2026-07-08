@@ -731,7 +731,9 @@ export function FeedApp() {
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              data-testid={`tab-${tab}`}
+              // Distinct from the desktop nav's tab-${tab} so testid lookups
+              // (e.g. e2e "tab-mine") resolve to a single element.
+              data-testid={`mobile-tab-${tab}`}
               className={`py-3 text-xs font-medium transition active:scale-[0.98] sm:text-sm ${
                 activeTab === tab ? "text-foreground" : "text-muted"
               }`}
