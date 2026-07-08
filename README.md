@@ -1,98 +1,31 @@
 # Event Radar
 
-Shared Luma event feed for your friend group — paste links, see who's interested, mark events you're in.
+A shared event feed for a group of friends.
 
-## Features
+## Why I built this
 
-- **Friends-only feed** — sign in to see and share events with your group
-- **Luma URL ingest** — paste `lu.ma` links; metadata fetched via Open Graph
-- **Accept / Pass** — accept shows interest in-app (not Luma RSVP); pass moves events to your past list
-- **Who's interested** — avatar stack + count from in-app accept records
-- **Clerk auth** — sign up / sign in for guest list identity (RSVP on Luma separately)
-- **Responsive UI** — social feed layout, mobile tabs (Feed / Calendar / My Events)
+My friends and I kept missing things.
+Someone would find a fun event, drop the link in the group chat, and it would scroll away under everyone else's messages.
+By the time we remembered it, the event had passed, or nobody knew who was actually going.
 
-## Quick start
+We did not need another social network. We just needed one quiet place to put "hey, this is happening, who's in?"
+So I built Event Radar for my group. It is small on purpose.
 
-```bash
-npm install
-npx @insforge/cli link --project-id <your-project-id>   # once per machine
-cp .env.example .env.local   # add Clerk + InsForge keys
-npm run db:migrate
-npm run dev
-```
+## How it works
 
-Open http://localhost:3000
+Someone finds an event and pastes the link.
+Event Radar reads the page and turns it into a card with the title, date, place, and image, so nobody has to type any of it.
 
-## Environment
+Everyone in the group sees it in one shared feed.
+If you are into it, you tap Interested: that puts you on the list and opens the event page so you can finish signing up.
+If you are not, you Pass and it drops off your feed.
 
-Copy `.env.example` to `.env.local`:
+Along the way you can see who else is interested before you decide, keep your own events in one tab, and glance at what's coming up on a calendar.
+If you want a nudge, turn on a short email that arrives whenever a friend adds something new: one email, no digests, and you can turn it off in Settings anytime.
 
-| Variable | Description |
-|----------|-------------|
-| `INSFORGE_URL` / `INSFORGE_API_KEY` | InsForge backend (server-only admin key) |
-| `NEXT_PUBLIC_INSFORGE_URL` / `NEXT_PUBLIC_INSFORGE_ANON_KEY` | InsForge public client config |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
-| `CLERK_SECRET_KEY` | Clerk secret key |
-| `NEXT_PUBLIC_CLERK_*_URL` | Sign-in/up paths (defaults in `.env.example`) |
-| `LUMA_FETCH_MODE` | `mock` for local dev; `live` in production |
+That is the whole thing: share a link, see who's in, do not miss the plan.
 
-E2E variables (`E2E_TEST`, `E2E_TEST_SECRET`) are injected by Playwright — not needed for daily dev.
+## Contributing
 
-## InsForge environments
-
-This repo currently links to one InsForge parent project (**Event for Friends**). There is **no automatic dev/prod split** — local `.env.local`, Vercel production, and tests all use whatever `INSFORGE_URL` you configure.
-
-| Environment | InsForge target | Destructive test helpers |
-|-------------|-----------------|-------------------------|
-| Production app (Vercel) | Parent project URL | Blocked in code |
-| Local dev (default) | Parent project URL | App writes OK; `resetDatabase` / e2e seed **blocked** |
-| Integration / E2E tests | **InsForge branch** or separate project | Allowed only with `INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true` |
-
-**Never run `npm test` or `npm run test:e2e` against production credentials.** Integration tests call `resetDatabase()`, which deletes all events, users, accepts, and passes.
-
-### Safe test setup (InsForge branch)
-
-```bash
-npx @insforge/cli branch create dev-test
-npx @insforge/cli branch switch dev-test
-# Update .env.local (or a dedicated .env.test.local) with the branch oss_host + api_key
-# INSFORGE_PRODUCTION_URL=https://yy57ijjh.us-east.insforge.app
-# INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true
-```
-
-Check branches: `npx @insforge/cli branch list`. Check backups: `npx @insforge/cli backups list`.
-
-## Production
-
-See **[docs/deploy/production.md](docs/deploy/production.md)** — Clerk + InsForge + Vercel checklist for sharing with friends.
-
-## Scripts
-
-```bash
-npm run dev            # Start dev server
-npm run check          # Fast local check-in (lint + typecheck + unit tests)
-npm run check:deploy   # Pre-push gate — adds production build (matches Vercel)
-npm run check:full     # Deploy gate + InsForge integration tests
-npm run build          # Production build
-npm test               # All Vitest tests
-npm run test:unit      # Unit tests only
-npm run test:integration  # InsForge integration tests
-npm run test:e2e       # E2E tests (Playwright)
-```
-
-Failed check-ins cache output under `.check-in/latest.json` and `.check-in/latest.log` so you can inspect errors without re-running everything.
-
-**Before pushing:** run `npm run check:deploy` to catch TypeScript and build failures locally (the same class of error that broke the Vercel deploy).
-
-## Docs
-
-- [Production deploy](docs/deploy/production.md)
-- [PRD](docs/prd/shared-event-feed-mvp.md)
-- [ADR-0001](docs/adr/0001-shared-luma-event-feed-architecture.md)
-- [GitHub Issue #1](https://github.com/tony-ng-vn/event-distributor/issues/1)
-
-## Architecture
-
-- **Next.js App Router** + **InsForge Postgres** + **Clerk**
-- **Event API** (`/api/events`, `/api/events/ingest`, `/api/events/[id]/accept`) as the shared-state boundary
-- Client-only pass tracking via `sessionStorage`
+This is a personal project for one friend group, so it is not open for contributions.
+If you found a bug or have an idea and want to help, please open an issue first so we can talk it through before any pull request.
