@@ -9,6 +9,7 @@
 import { formatCardDateTime } from "@/lib/dates";
 import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventResponseStatus } from "@/components/EventResponseStatus";
+import { EventThumbnail } from "@/components/EventThumbnail";
 import { EventTitleLink } from "@/components/EventTitleLink";
 import { RemoveInterestAction } from "@/components/RemoveInterestAction";
 import type { RemoveInterestLayout } from "@/lib/event-card-ui";
@@ -79,23 +80,10 @@ export function EventFeedCard({
         <button
           type="button"
           onClick={onOpen}
-          className="shrink-0 overflow-hidden rounded-xl bg-surface-muted"
+          className="shrink-0"
           aria-label={`Open ${event.title}`}
         >
-          <div className="h-[72px] w-[72px] lg:h-20 lg:w-20">
-            {event.coverImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={event.coverImageUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs text-muted">
-                No image
-              </div>
-            )}
-          </div>
+          <EventThumbnail event={event} />
         </button>
 
         <div className="min-w-0 flex-1">
