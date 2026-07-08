@@ -36,10 +36,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const userId = await requireViewerUserId(request);
-    const body = (await request.json()) as {
-      emailEnabled?: unknown;
-      hasResponded?: unknown;
-    };
+    const body = (await request.json()) as { emailEnabled?: unknown };
 
     if (typeof body.emailEnabled !== "boolean") {
       return NextResponse.json(
@@ -48,10 +45,12 @@ export async function PATCH(request: Request) {
       );
     }
 
+    // hasResponded is server-controlled: any PATCH is a user response, so we
+    // force it true. Ignoring a client-sent false prevents forcing the opt-in
+    // prompt to re-trigger.
     const preference = await upsertNotificationPreference(userId, {
       emailEnabled: body.emailEnabled,
-      hasResponded:
-        typeof body.hasResponded === "boolean" ? body.hasResponded : true,
+      hasResponded: true,
     });
 
     return NextResponse.json({ preference });

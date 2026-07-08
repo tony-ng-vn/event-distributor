@@ -9,12 +9,27 @@
 
 const DEFAULT_APP_URL = "http://localhost:3000";
 
+/**
+ * Base URL for email CTA and unsubscribe links.
+ *
+ * When real delivery is on we refuse to fall back to localhost: an unset
+ * NEXT_PUBLIC_APP_URL would otherwise mail the group links that point at
+ * localhost -- broken and, worse, un-unsubscribable. The localhost fallback is
+ * only for the dry-run/dev path.
+ */
 export function getAppBaseUrl(): string {
-  const url =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.APP_BASE_URL ??
-    DEFAULT_APP_URL;
-  return url.replace(/\/+$/, "");
+  const configured =
+    process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_BASE_URL ?? null;
+
+  if (configured) return configured.replace(/\/+$/, "");
+
+  if (isEmailDeliveryEnabled()) {
+    throw new Error(
+      "NEXT_PUBLIC_APP_URL is not set but NOTIFICATIONS_EMAIL_ENABLED=true. Refusing to send email with localhost links.",
+    );
+  }
+
+  return DEFAULT_APP_URL;
 }
 
 /** Secret for signing unsubscribe tokens. Empty string when unset. */

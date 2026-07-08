@@ -28,6 +28,8 @@ export type EmailRecipient = {
 
 /** A rendered, ready-to-send email for one recipient. */
 export type EmailMessage = {
+  /** Recipient user id -- used for logging instead of the email address (PII). */
+  userId: string;
   to: string;
   subject: string;
   html: string;

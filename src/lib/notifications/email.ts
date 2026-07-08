@@ -40,8 +40,9 @@ export async function sendNotificationEmail(
 ): Promise<SendResult> {
   if (!isEmailDeliveryEnabled()) {
     // Guard: no real send unless NOTIFICATIONS_EMAIL_ENABLED=true.
+    // Log the user id, not the email address (PII).
     console.info(
-      `[notifications] dry-run email to ${message.to}: ${message.subject}`,
+      `[notifications] dry-run email to user ${message.userId}: ${message.subject}`,
     );
     return { sent: false, skipped: true };
   }

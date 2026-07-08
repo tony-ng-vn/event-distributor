@@ -7,6 +7,11 @@
  * token for another user without the secret.
  *
  * Format: base64url(userId) + "." + base64url(hmac). Both halves are ASCII.
+ *
+ * Note: tokens intentionally never expire. An unsubscribe link should keep
+ * working no matter how old the email is; the worst case is a user unsubscribing
+ * themselves, which they can undo in Settings. Rotate the secret to invalidate
+ * all outstanding tokens if ever needed.
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 

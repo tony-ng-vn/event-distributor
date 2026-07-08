@@ -73,6 +73,7 @@ export function buildMessagesForEventIngested(
       unsubscribeUrl,
     });
     return {
+      userId: recipient.userId,
       to: recipient.email,
       subject: rendered.subject,
       html: rendered.html,
@@ -114,8 +115,9 @@ export async function dispatchEventIngested(
     } catch (error) {
       failures += 1;
       const reason = error instanceof Error ? error.message : "unknown error";
+      // Log the user id, not the email address (PII).
       console.error(
-        `[notifications] failed to send to ${message.to}: ${reason}`,
+        `[notifications] failed to send to user ${message.userId}: ${reason}`,
       );
     }
   }
