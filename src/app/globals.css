@@ -1,6 +1,12 @@
 /**
  * Global styles — Luma-inspired neutral palette (white, gray, black).
  * Design tokens in :root; reusable classes in @layer components (.btn-primary, .glass-card, …).
+ *
+ * Dark theme: same tokens, re-declared for :root[data-theme="dark"] (explicit
+ * choice, set by the inline script in layout.tsx + ThemeToggle) and mirrored
+ * under prefers-color-scheme for the brief window before that script runs /
+ * for user agents with JS disabled. The explicit attribute always wins so an
+ * explicit light choice is not clobbered by a dark OS preference.
  */
 @import "tailwindcss";
 
@@ -17,6 +23,7 @@
   --glass-bg: #ffffff;
   --glass-border: #ebebeb;
   --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --glass-header-bg: rgba(255, 255, 255, 0.92);
   --hover-lift: -3px;
   --hover-lift-sm: -2px;
   --hover-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
@@ -36,6 +43,70 @@
   --status-pass-icon-bg: #fecaca;
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-duration: 220ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0a0a0a;
+    --background-subtle: #141414;
+    --foreground: #f2f2f2;
+    --foreground-secondary: #b3b3b3;
+    --muted: #8f8f8f;
+    --border: #262626;
+    --border-strong: #3a3a3a;
+    --surface: #141414;
+    --surface-muted: #1e1e1e;
+    --glass-bg: #161616;
+    --glass-border: #2a2a2a;
+    --glass-header-bg: rgba(10, 10, 10, 0.85);
+    --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --hover-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+    --hover-accept-bg: #0f2a1c;
+    --hover-accept-border: #1f5c3a;
+    --hover-accept-text: #6ee7a0;
+    --hover-decline-bg: #2a1616;
+    --hover-decline-border: #5c2424;
+    --hover-decline-text: #f28b82;
+    --status-accept-bg: #10251a;
+    --status-accept-border: #1f5c3a;
+    --status-accept-text: #86efac;
+    --status-accept-icon-bg: #1a3d29;
+    --status-pass-bg: #2a1616;
+    --status-pass-border: #5c2424;
+    --status-pass-text: #fca5a5;
+    --status-pass-icon-bg: #3d1f1f;
+  }
+}
+
+:root[data-theme="dark"] {
+  --background: #0a0a0a;
+  --background-subtle: #141414;
+  --foreground: #f2f2f2;
+  --foreground-secondary: #b3b3b3;
+  --muted: #8f8f8f;
+  --border: #262626;
+  --border-strong: #3a3a3a;
+  --surface: #141414;
+  --surface-muted: #1e1e1e;
+  --glass-bg: #161616;
+  --glass-border: #2a2a2a;
+  --glass-header-bg: rgba(10, 10, 10, 0.85);
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --hover-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  --hover-accept-bg: #0f2a1c;
+  --hover-accept-border: #1f5c3a;
+  --hover-accept-text: #6ee7a0;
+  --hover-decline-bg: #2a1616;
+  --hover-decline-border: #5c2424;
+  --hover-decline-text: #f28b82;
+  --status-accept-bg: #10251a;
+  --status-accept-border: #1f5c3a;
+  --status-accept-text: #86efac;
+  --status-accept-icon-bg: #1a3d29;
+  --status-pass-bg: #2a1616;
+  --status-pass-border: #5c2424;
+  --status-pass-text: #fca5a5;
+  --status-pass-icon-bg: #3d1f1f;
 }
 
 @theme inline {
@@ -79,7 +150,7 @@ body {
   }
 
   .glass-header {
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--glass-header-bg);
     border-bottom: 1px solid var(--border);
   }
 

@@ -1,11 +1,11 @@
 /**
- * /settings — account and notification settings.
+ * /settings — account, notification, and appearance settings.
  *
- * Minimal surface for Phase 1: a Notifications section to toggle new-event
- * emails. Server component shell; the interactive section is a client component.
+ * Server component shell; each interactive section is its own client component.
  */
 import Link from "next/link";
 import { NotificationSettings } from "@/components/NotificationSettings";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata = {
   title: "Settings — Event Radar",
@@ -28,7 +28,8 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-8">
+      <main className="mx-auto w-full max-w-lg flex-1 space-y-6 px-4 py-8">
+        <ThemeToggle />
         <NotificationSettings />
       </main>
     </div>
