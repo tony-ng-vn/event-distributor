@@ -4,7 +4,7 @@
  */
 "use client";
 
-import { isLumaUrl, resolveEventHref } from "@/lib/luma";
+import { isLumaUrl, resolveEventHref } from "@/lib/event-page";
 
 export function LumaEventLink({
   lumaUrl,

@@ -14,7 +14,7 @@ import {
   parseEventHtml,
   parseLumaHtml,
   resolveEventHref,
-} from "@/lib/luma";
+} from "@/lib/event-page";
 
 const fixturePath = join(process.cwd(), "tests/fixtures/luma-demo-head.html");
 

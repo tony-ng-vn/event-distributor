@@ -18,7 +18,7 @@ import {
   unacceptEvent,
   unpassEvent,
 } from "@/lib/events-service";
-import * as luma from "@/lib/luma";
+import * as luma from "@/lib/event-page";
 
 describe("events service", () => {
   beforeEach(async () => {

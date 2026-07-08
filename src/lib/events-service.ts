@@ -17,7 +17,7 @@ import {
   isEventSourceUrl,
   normalizeSourceUrl,
   type LumaMetadata,
-} from "@/lib/luma";
+} from "@/lib/event-page";
 
 export type AttendeeSummary = {
   id: string;
