@@ -144,6 +144,14 @@ if (args.includes("--json")) {
   process.exit(result.ok ? 0 : 1);
 }
 
+if (result.error) {
+  console.error(result.error);
+  console.error("");
+  console.error("This checkout already has env files — use npm run dev here.");
+  console.error("worktree:setup is only for checkouts under .worktrees/<name>/");
+  process.exit(1);
+}
+
 console.log(`Main repo:   ${result.mainRoot}`);
 console.log(`Worktree:    ${result.worktreeRoot}`);
 console.log("");

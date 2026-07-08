@@ -38,6 +38,30 @@ Copy `.env.example` to `.env.local`:
 
 E2E variables (`E2E_TEST`, `E2E_TEST_SECRET`) are injected by Playwright — not needed for daily dev.
 
+## InsForge environments
+
+This repo currently links to one InsForge parent project (**Event for Friends**). There is **no automatic dev/prod split** — local `.env.local`, Vercel production, and tests all use whatever `INSFORGE_URL` you configure.
+
+| Environment | InsForge target | Destructive test helpers |
+|-------------|-----------------|-------------------------|
+| Production app (Vercel) | Parent project URL | Blocked in code |
+| Local dev (default) | Parent project URL | App writes OK; `resetDatabase` / e2e seed **blocked** |
+| Integration / E2E tests | **InsForge branch** or separate project | Allowed only with `INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true` |
+
+**Never run `npm test` or `npm run test:e2e` against production credentials.** Integration tests call `resetDatabase()`, which deletes all events, users, accepts, and passes.
+
+### Safe test setup (InsForge branch)
+
+```bash
+npx @insforge/cli branch create dev-test
+npx @insforge/cli branch switch dev-test
+# Update .env.local (or a dedicated .env.test.local) with the branch oss_host + api_key
+# INSFORGE_PRODUCTION_URL=https://yy57ijjh.us-east.insforge.app
+# INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true
+```
+
+Check branches: `npx @insforge/cli branch list`. Check backups: `npx @insforge/cli backups list`.
+
 ## Production
 
 See **[docs/deploy/production.md](docs/deploy/production.md)** — Clerk + InsForge + Vercel checklist for sharing with friends.
