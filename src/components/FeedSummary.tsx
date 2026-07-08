@@ -4,14 +4,12 @@
  */
 "use client";
 
-import { collectUniqueAttendees, getAttendeeInitials } from "@/lib/attendees";
+import {
+  avatarClass,
+  collectUniqueAttendees,
+  getAttendeeInitials,
+} from "@/lib/attendees";
 import type { FeedEvent } from "@/types/feed";
-
-const AVATAR_CLASSES = [
-  "bg-neutral-200 text-neutral-600",
-  "bg-neutral-300 text-neutral-700",
-  "bg-neutral-400 text-neutral-800",
-] as const;
 
 export function FeedSummary({
   events,
@@ -32,7 +30,7 @@ export function FeedSummary({
         {previewAttendees.map((attendee, index) => (
           <span
             key={attendee.id}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface text-[11px] font-semibold ${AVATAR_CLASSES[index % AVATAR_CLASSES.length]}`}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface text-[11px] font-semibold ${avatarClass(index)}`}
             title={attendee.name ?? "Guest"}
           >
             {attendee.image ? (

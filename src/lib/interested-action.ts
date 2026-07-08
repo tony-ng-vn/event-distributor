@@ -7,7 +7,7 @@
  * succeeds do we open the event's own source page in a new tab so the user can
  * finish real sign-up/RSVP. A failed accept must never navigate.
  */
-import { getEventTitleHref } from "@/lib/event-card-ui";
+import { resolveEventHref } from "@/lib/event-page";
 
 /** Just the fields the Interested flow needs, so it stays easy to test. */
 type EventSource = { lumaUrl: string | null | undefined };
@@ -21,7 +21,7 @@ type WindowOpen = (
 
 /**
  * Open an event's source page in a new tab. No-op when the stored URL is
- * missing or unsafe (getEventTitleHref returns null), so a broken link never
+ * missing or unsafe (resolveEventHref returns null), so a broken link never
  * pops a blank tab. noopener,noreferrer keeps the external page from touching
  * this one.
  */
@@ -29,7 +29,7 @@ export function openEventPage(
   event: EventSource,
   open: WindowOpen = (url, target, features) => window.open(url, target, features),
 ): void {
-  const href = getEventTitleHref(event.lumaUrl);
+  const href = resolveEventHref(event.lumaUrl);
   if (!href) return;
   open(href, "_blank", "noopener,noreferrer");
 }

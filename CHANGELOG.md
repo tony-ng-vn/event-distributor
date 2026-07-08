@@ -1,7 +1,41 @@
 # Changelog
 
 Notable changes to Event Radar.
-Add a 1-2 sentence entry when a PR merges. Newest first.
+Add an entry when a PR merges. Newest first.
+Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
+Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
+
+## v0.1.1
+
+2026-07-08
+
+**Feed**
+
+- The Admin tab now reads from the same event list as the rest of the app, so opening it no longer triggers a second identical download and every action refreshes the feed once instead of twice.
+
+**Events API**
+
+- The "did I pass this event" check reuses data the main feed query already fetched instead of running a second query.
+- Accept and remove-interest responses now report your pass state correctly instead of always saying "not passed".
+
+**Auth**
+
+- The viewer is looked up once per request instead of twice, and an unchanged Clerk profile no longer rewrites its database row on every request.
+
+**Notifications**
+
+- Removed the temporary self-notify test toggle (NOTIFICATIONS_TEST_INCLUDE_SELF); the person who adds an event is always excluded from its announcement email, as designed.
+
+**Infrastructure**
+
+- Deep cleanup pass: deleted the unused Google Calendar module and two heavyweight unused dependencies (googleapis, cheerio), the leftover card-layout comparison page, an orphaned prisma/ folder, and a few hundred lines of dead helpers, duplicate types, and deprecated aliases.
+- Event titles from Luma now have the site suffix stripped consistently for every separator style Luma uses.
+
+**Docs**
+
+- Fixed pointers that led nowhere: a database-safety error message referenced a deleted README section, and AGENTS.md referenced a deleted cursor rule.
+
+---
 
 ## 2026-07-08
 

@@ -1,13 +1,21 @@
 /**
- * Attendee display helpers (avatars + "Maya, Jordan and 5 others" copy).
+ * Attendee display helpers (avatar initials, colors, dedup).
  *
- * Pure functions — no React, no database. Used by AttendeeStack and FeedSummary.
+ * Pure functions -- no React, no database. Used by AttendeeStack and FeedSummary.
  */
-type NamedAttendee = {
-  name: string | null;
-};
 
-/** "Maya Kim" → "MK" for avatar circles when there is no profile photo. */
+/** Rotating neutral tones so adjacent avatar circles stay distinguishable. */
+const AVATAR_CLASSES = [
+  "bg-neutral-200 text-neutral-600",
+  "bg-neutral-300 text-neutral-700",
+  "bg-neutral-400 text-neutral-800",
+] as const;
+
+export function avatarClass(index: number): string {
+  return AVATAR_CLASSES[index % AVATAR_CLASSES.length];
+}
+
+/** "Maya Kim" -> "MK" for avatar circles when there is no profile photo. */
 export function getAttendeeInitials(name: string | null): string {
   if (!name?.trim()) return "?";
 
@@ -17,61 +25,6 @@ export function getAttendeeInitials(name: string | null): string {
   }
 
   return name.slice(0, 2).toUpperCase();
-}
-
-/** Builds human-readable social proof text for the "who's going" row. */
-export function formatAttendeeSummary(
-  attendees: NamedAttendee[],
-  acceptCount: number,
-): string {
-  return formatAttendeeGroupSummary(attendees, acceptCount, "interested");
-}
-
-/** Builds human-readable social proof text for the "who passed" row. */
-export function formatPassSummary(
-  attendees: NamedAttendee[],
-  passCount: number,
-): string {
-  return formatAttendeeGroupSummary(attendees, passCount, "passed");
-}
-
-type AttendeeGroupVariant = "interested" | "passed";
-
-function formatAttendeeGroupSummary(
-  attendees: NamedAttendee[],
-  totalCount: number,
-  variant: AttendeeGroupVariant,
-): string {
-  if (totalCount === 0) {
-    switch (variant) {
-      case "interested":
-        return "Be the first to say you're in";
-      case "passed":
-        return "Nobody passed yet";
-      default: {
-        const _exhaustive: never = variant;
-        return _exhaustive;
-      }
-    }
-  }
-
-  const names = attendees
-    .map((attendee) => attendee.name?.trim())
-    .filter((name): name is string => Boolean(name))
-    .slice(0, 2);
-
-  const remaining = totalCount - names.length;
-  const countLabel = variant === "interested" ? "interested" : "passed";
-
-  if (names.length === 0) return `${totalCount} ${countLabel}`;
-  if (remaining <= 0) {
-    return names.length === 1 ? names[0] : `${names[0]} and ${names[1]}`;
-  }
-  if (names.length === 1) {
-    return `${names[0]} and ${remaining} other${remaining === 1 ? "" : "s"}`;
-  }
-
-  return `${names[0]}, ${names[1]} and ${remaining} other${remaining === 1 ? "" : "s"}`;
 }
 
 /** Deduplicate people across multiple events for the feed summary bar. */

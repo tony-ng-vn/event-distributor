@@ -25,15 +25,11 @@ function resolveInsforgeConfig() {
 }
 
 export function getInsforgeAdmin(): InsForgeClient {
-  if (globalForInsforge.insforgeAdmin) {
-    return globalForInsforge.insforgeAdmin;
+  // Cached on globalThis so dev hot-reload and prod both reuse one client
+  // instead of constructing a new one per call site.
+  if (!globalForInsforge.insforgeAdmin) {
+    globalForInsforge.insforgeAdmin = createAdminClient(resolveInsforgeConfig());
   }
 
-  const client = createAdminClient(resolveInsforgeConfig());
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForInsforge.insforgeAdmin = client;
-  }
-
-  return client;
+  return globalForInsforge.insforgeAdmin;
 }

@@ -29,6 +29,10 @@ Canonical triage roles map to GitHub labels (`ready-for-agent`, etc.). See `docs
 
 Single-context repo. See `docs/agents/domain.md`.
 
+### Changelog
+
+CHANGELOG.md entries use `## vX.Y.Z` headings (date below, `---` between entries) with a subheading for each area the change touched (omit untouched ones), chosen from: **Feed** (client UI), **Events API** (routes + events-service), **Notifications** (email pipeline), **Auth** (Clerk/InsForge bridge), **Infrastructure** (deps, scripts, config, CI), **Docs**. Keep `package.json` version in sync with the newest entry.
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
@@ -54,5 +58,5 @@ Key patterns:
 - Database inserts take an array: `insert([{ ... }])`.
 - Reference users with `auth.users(id)`; use `auth.uid()` in RLS policies.
 - For storage uploads, persist both the returned `url` and `key`.
-- **Database safety:** agents and tests must never run destructive helpers against production. See `.cursor/rules/insforge-database-safety.mdc` and README § InsForge environments.
+- **Database safety:** agents and tests must never run destructive helpers against production (`yy57ijjh`). Develop and test against the dev project, and require `INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true` (integration tests) plus a non-production `INSFORGE_URL` before any reset helper runs (enforced in `src/lib/db-safety.ts`).
 <!-- INSFORGE:END -->

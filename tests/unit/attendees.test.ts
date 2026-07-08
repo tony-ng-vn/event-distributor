@@ -1,48 +1,26 @@
-/** Unit tests for avatar initials and "Maya, Jordan and N others" copy. */
+/** Unit tests for avatar initials and cross-event attendee dedup. */
 import { describe, expect, it } from "vitest";
-import {
-  formatAttendeeSummary,
-  formatPassSummary,
-  getAttendeeInitials,
-} from "@/lib/attendees";
+import { collectUniqueAttendees, getAttendeeInitials } from "@/lib/attendees";
 
-describe("formatAttendeeSummary", () => {
-  it("returns empty-state copy when nobody is interested", () => {
-    expect(formatAttendeeSummary([], 0)).toBe("Be the first to say you're in");
+describe("collectUniqueAttendees", () => {
+  it("collapses duplicate ids across events, keeping first-seen order", () => {
+    const maya = { id: "u1", name: "Maya", image: null };
+    const jordan = { id: "u2", name: "Jordan", image: "j.png" };
+    const events = [
+      { attendees: [maya, jordan] },
+      { attendees: [{ id: "u1", name: "Maya K", image: "m.png" }] },
+      { attendees: [{ id: "u3", name: null, image: null }] },
+    ];
+
+    expect(collectUniqueAttendees(events)).toEqual([
+      maya,
+      jordan,
+      { id: "u3", name: null, image: null },
+    ]);
   });
 
-  it("names two attendees and remaining count", () => {
-    expect(
-      formatAttendeeSummary(
-        [{ name: "Maya" }, { name: "Jordan" }, { name: "Alex" }],
-        7,
-      ),
-    ).toBe("Maya, Jordan and 5 others");
-  });
-
-  it("handles a single named attendee with overflow", () => {
-    expect(formatAttendeeSummary([{ name: "Maya" }], 4)).toBe(
-      "Maya and 3 others",
-    );
-  });
-});
-
-describe("formatPassSummary", () => {
-  it("returns subtle empty-state copy when nobody passed", () => {
-    expect(formatPassSummary([], 0)).toBe("Nobody passed yet");
-  });
-
-  it("names two passers and remaining count", () => {
-    expect(
-      formatPassSummary(
-        [{ name: "Sam" }, { name: "Riley" }, { name: "Alex" }],
-        5,
-      ),
-    ).toBe("Sam, Riley and 3 others");
-  });
-
-  it("handles count-only when names are missing", () => {
-    expect(formatPassSummary([{ name: null }], 2)).toBe("2 passed");
+  it("returns empty for no events", () => {
+    expect(collectUniqueAttendees([])).toEqual([]);
   });
 });
 

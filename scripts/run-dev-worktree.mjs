@@ -43,9 +43,6 @@ if (!existsSync(envPath)) {
 const envCheck = findMissingEnvKeys(envPath);
 if (envCheck.missingRequired.length > 0) {
   printMissingEnvHelp({
-    mainRoot: cwd.includes("/.worktrees/")
-      ? cwd.slice(0, cwd.indexOf("/.worktrees/"))
-      : cwd,
     envPath: cwd.includes("/.worktrees/")
       ? resolve(cwd.slice(0, cwd.indexOf("/.worktrees/")), ".env.local")
       : envPath,

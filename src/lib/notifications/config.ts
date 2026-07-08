@@ -74,12 +74,3 @@ export function getBrevoSender(): { email: string; name: string } {
   const name = process.env.BREVO_SENDER_NAME?.trim() || DEFAULT_SENDER_NAME;
   return { email, name };
 }
-
-/**
- * Temporary prod-test toggle: when true, the actor (event adder) is NOT excluded
- * from recipients, so the maintainer can add an event and receive the email.
- * Default off. Intended to be flipped in Vercel for a test then removed.
- */
-export function isIncludeActorEnabled(): boolean {
-  return process.env.NOTIFICATIONS_TEST_INCLUDE_SELF === "true";
-}

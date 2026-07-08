@@ -71,31 +71,14 @@ export function resolveEventHref(
   return trimmed;
 }
 
-/** @deprecated Use resolveEventHref — kept for callers that only need Luma links. */
-export function resolveLumaEventHref(
-  urlString: string | null | undefined,
-): string | null {
-  const trimmed = urlString?.trim();
-  if (!trimmed || !isLumaUrl(trimmed)) {
-    return null;
-  }
-  return trimmed;
-}
-
 /** Strip query/hash and trailing slash so duplicate URLs match the same event. */
-export function normalizeLumaUrl(urlString: string): string {
+export function normalizeSourceUrl(urlString: string): string {
   const url = new URL(urlString);
   url.hash = "";
   url.search = "";
   url.hostname = url.hostname.replace(/^www\./, "");
-  if (url.hostname === "luma.com" && !url.pathname.startsWith("/event/")) {
-    // keep as-is for calendar pages etc.
-  }
   return url.toString().replace(/\/$/, "");
 }
-
-/** Alias for normalizeLumaUrl — works for Luma and generic event links. */
-export const normalizeSourceUrl = normalizeLumaUrl;
 
 export interface LumaMetadata {
   title: string;
@@ -219,7 +202,6 @@ function parseJsonLdEvent(html: string): Partial<LumaMetadata> | null {
 
       const location = event.location as Record<string, unknown> | string | undefined;
       let locationStr = "";
-      const isOnline = false;
       let meetingUrl: string | null = null;
 
       if (typeof location === "string") {
@@ -238,7 +220,7 @@ function parseJsonLdEvent(html: string): Partial<LumaMetadata> | null {
         startAt: start ?? undefined,
         endAt: end ?? undefined,
         location: locationStr,
-        isOnline: isOnline || Boolean(meetingUrl),
+        isOnline: Boolean(meetingUrl),
         meetingUrl,
         hostName: organizer?.name ? String(organizer.name) : null,
       };
@@ -306,12 +288,8 @@ export function parseEventHtml(html: string, sourceUrl: string): LumaMetadata {
     (Boolean(meetingUrl) ||
       /online|virtual|zoom/i.test(location + description));
 
-  const cleanedTitle = isLumaUrl(sourceUrl)
-    ? title.replace(/\s*[|\-–—]\s*Luma\s*$/i, "").trim()
-    : title.trim();
-
   return {
-    title: cleanedTitle,
+    title: cleanEventTitle(title, sourceUrl),
     description,
     coverImageUrl,
     startAt,
@@ -321,11 +299,6 @@ export function parseEventHtml(html: string, sourceUrl: string): LumaMetadata {
     meetingUrl,
     hostName: jsonLd?.hostName ?? null,
   };
-}
-
-/** @deprecated Use parseEventHtml */
-export function parseLumaHtml(html: string, lumaUrl: string): LumaMetadata {
-  return parseEventHtml(html, lumaUrl);
 }
 
 export const INVALID_EVENT_PAGE_MESSAGE =
@@ -408,9 +381,4 @@ export async function fetchEventMetadata(sourceUrl: string): Promise<LumaMetadat
   const html = await response.text();
   assertRealEventPage(html, sourceUrl);
   return parseEventHtml(html, sourceUrl);
-}
-
-/** @deprecated Use fetchEventMetadata */
-export async function fetchLumaMetadata(lumaUrl: string): Promise<LumaMetadata> {
-  return fetchEventMetadata(lumaUrl);
 }

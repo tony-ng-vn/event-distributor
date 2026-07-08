@@ -10,13 +10,13 @@ export function normalizeInsforgeUrl(url: string): string {
   return url.trim().replace(/\/+$/, "").toLowerCase();
 }
 
-export function resolveInsforgeBaseUrl(): string | null {
+function resolveInsforgeBaseUrl(): string | null {
   const url =
     process.env.INSFORGE_URL ?? process.env.NEXT_PUBLIC_INSFORGE_URL ?? null;
   return url ? normalizeInsforgeUrl(url) : null;
 }
 
-export function resolveProductionInsforgeUrl(): string | null {
+function resolveProductionInsforgeUrl(): string | null {
   const url = process.env.INSFORGE_PRODUCTION_URL;
   return url ? normalizeInsforgeUrl(url) : null;
 }
@@ -34,7 +34,7 @@ export function assertDestructiveWritesAllowed(context: string): void {
   if (isProductionInsforgeDatabase()) {
     throw new Error(
       `Blocked ${context}: destructive writes are not allowed against the production InsForge database (${current}). ` +
-        "Use an InsForge branch or separate dev project for tests. See README.md#insforge-environments.",
+        "Use an InsForge branch or separate dev project for tests. See AGENTS.md (Database safety).",
     );
   }
 

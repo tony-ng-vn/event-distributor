@@ -2,9 +2,9 @@
  * Main app shell — state, data fetching, layout, modals.
  *
  * Data flow:
- *   mount → fetch /api/events → setEvents
- *   Mutations (add/accept/pass/unpass/delete) → API → syncEventsFromServer()
- *   Anonymous pass → sessionStorage only (no backend pass row)
+ *   mount -> fetch /api/events -> setEvents (one list feeds every tab)
+ *   Mutations (add/accept/pass/unpass/delete) -> API -> syncEventsFromServer()
+ *   Anonymous pass -> sessionStorage only (no backend pass row)
  *
  * Responsive: 2-col feed on desktop, bottom tabs on mobile, calendar sidebar lg+.
  * Your events is a top-level tab on all breakpoints (desktop header + mobile nav).
@@ -12,8 +12,8 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { partitionFeedEvents } from "@/lib/feed-partition";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { partitionFeedEvents, type CardStatus } from "@/lib/feed-partition";
 import { runInterested } from "@/lib/interested-action";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
 import { AuthButton, SignInGate, SignInPromptModal } from "@/components/AuthControls";
@@ -27,7 +27,7 @@ import { IngestModal } from "@/components/IngestModal";
 import { FeedbackModal } from "@/components/FeedbackModal";
 import type { FeedEvent, FeedFilter, MobileTab } from "@/types/feed";
 
-type CardState = Record<string, "pending" | "accepted" | "passed" | "accepting">;
+type CardState = Record<string, CardStatus>;
 
 const MOTION_MS = 220;
 
@@ -43,8 +43,6 @@ export function FeedApp() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FeedFilter>("all");
   const [activeTab, setActiveTab] = useState<MobileTab>("feed");
-  const [adminEvents, setAdminEvents] = useState<FeedEvent[] | null>(null);
-  const [adminEventsLoading, setAdminEventsLoading] = useState(false);
   const [passedIds, setPassedIds] = useState<string[]>([]);
   const [cardState, setCardState] = useState<CardState>({});
   const [ingestOpen, setIngestOpen] = useState(false);
@@ -57,11 +55,6 @@ export function FeedApp() {
   const [viewerIsAdmin, setViewerIsAdmin] = useState(false);
   const [exitingEventIds, setExitingEventIds] = useState<Record<string, true>>({});
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Record<string, true>>({});
-  const adminEventsLoadedRef = useRef(false);
-
-  useEffect(() => {
-    adminEventsLoadedRef.current = adminEvents !== null;
-  }, [adminEvents]);
 
   /** Load shared feed from API; merge server viewerAccepted into cardState. */
   const loadFeed = useCallback(async (options?: { silent?: boolean }): Promise<
@@ -99,47 +92,6 @@ export function FeedApp() {
     }
   }, []);
 
-  /** Load all events including passed ones (Admin tab). */
-  const loadAdminEvents = useCallback(async (options?: { silent?: boolean }): Promise<
-    FeedEvent[] | null
-  > => {
-    if (!options?.silent) {
-      setAdminEventsLoading(true);
-    }
-    try {
-      const response = await fetch("/api/events?scope=all", { cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Failed to load events");
-      setAdminEvents(data.events);
-      setViewerIsAdmin(data.viewerIsAdmin === true);
-      setCardState((prev) => {
-        const next = { ...prev };
-        for (const event of data.events as FeedEvent[]) {
-          if (event.viewerAccepted) next[event.id] = "accepted";
-          else if (event.viewerPassed) next[event.id] = "passed";
-          else if (!next[event.id]) next[event.id] = "pending";
-        }
-        return next;
-      });
-      return data.events as FeedEvent[];
-    } catch (err) {
-      if (!options?.silent) {
-        setToast(err instanceof Error ? err.message : "Failed to load events");
-      }
-      return null;
-    } finally {
-      if (!options?.silent) {
-        setAdminEventsLoading(false);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "admin" && adminEvents === null && !adminEventsLoading) {
-      void loadAdminEvents();
-    }
-  }, [activeTab, adminEvents, adminEventsLoading, loadAdminEvents]);
-
   useEffect(() => {
     if (activeTab === "admin" && !viewerIsAdmin) {
       setActiveTab("feed");
@@ -167,9 +119,6 @@ export function FeedApp() {
   /** Drop one event from all client state after backend confirms removal. */
   function removeEventFromState(eventId: string) {
     setEvents((prev) => prev.filter((event) => event.id !== eventId));
-    setAdminEvents((prev) =>
-      prev?.filter((event) => event.id !== eventId) ?? prev,
-    );
     setCardState((prev) => {
       const next = { ...prev };
       delete next[eventId];
@@ -179,12 +128,9 @@ export function FeedApp() {
     if (detailEvent?.id === eventId) setDetailEvent(null);
   }
 
-  /** Reconcile UI with server lists after a mutation. */
+  /** Reconcile UI with the server list after a mutation. */
   async function syncEventsFromServer(detailEventId?: string | null) {
     const feedEvents = await loadFeed({ silent: true });
-    if (adminEventsLoadedRef.current) {
-      await loadAdminEvents({ silent: true });
-    }
     if (detailEventId && feedEvents) {
       const updated = feedEvents.find((event) => event.id === detailEventId);
       if (updated) setDetailEvent(updated);
@@ -205,8 +151,6 @@ export function FeedApp() {
   );
 
   const visibleEventCount = newEvents.length + pastEvents.length;
-
-  const summaryEvents = useMemo(() => events, [events]);
 
   const acceptedEvents = useMemo(
     () =>
@@ -356,7 +300,6 @@ export function FeedApp() {
 
     const localTitle =
       events.find((event) => event.id === eventId)?.title ??
-      adminEvents?.find((event) => event.id === eventId)?.title ??
       (detailEvent?.id === eventId ? detailEvent.title : null) ??
       "Event";
 
@@ -477,9 +420,7 @@ export function FeedApp() {
 
   const feedContent = (
     <div className="space-y-4">
-      {!loading && summaryEvents.length > 0 && (
-        <FeedSummary events={summaryEvents} />
-      )}
+      {!loading && events.length > 0 && <FeedSummary events={events} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -569,18 +510,18 @@ export function FeedApp() {
     <div className="space-y-4" data-testid="admin-tab">
       <div>
         <p className="text-sm font-medium text-foreground">
-          {adminEventsLoading
+          {loading
             ? "Loading events..."
-            : `${adminEvents?.length ?? 0} event${adminEvents?.length === 1 ? "" : "s"}`}
+            : `${events.length} event${events.length === 1 ? "" : "s"}`}
         </p>
         <p className="text-sm text-muted">
           Who added each event and who&apos;s going
         </p>
       </div>
 
-      {adminEventsLoading ? (
+      {loading ? (
         <FeedSkeleton />
-      ) : !adminEvents || adminEvents.length === 0 ? (
+      ) : events.length === 0 ? (
         <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
           <p className="font-medium text-foreground">No events yet</p>
           <p className="mt-2 text-sm text-muted">
@@ -589,7 +530,7 @@ export function FeedApp() {
         </div>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-          {adminEvents.map((event) => (
+          {events.map((event) => (
             <AdminEventCard
               key={event.id}
               event={event}

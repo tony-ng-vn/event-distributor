@@ -22,7 +22,7 @@ type PreferenceRow = {
 };
 
 /** Defaults for a user who has never answered the opt-in prompt. */
-export function defaultPreference(userId: string): NotificationPreference {
+function defaultPreference(userId: string): NotificationPreference {
   return { userId, emailEnabled: false, hasResponded: false };
 }
 

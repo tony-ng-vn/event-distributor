@@ -3,7 +3,7 @@ import { getInsforgeAdmin } from "@/lib/db";
 /** Emails granted admin on Clerk sync (comma-separated in ADMIN_EMAILS). */
 const DEFAULT_ADMIN_EMAILS = ["tonythiennguyen17@gmail.com"];
 
-export function getAdminEmails(): string[] {
+function getAdminEmails(): string[] {
   const raw = process.env.ADMIN_EMAILS;
   if (!raw?.trim()) return DEFAULT_ADMIN_EMAILS;
   return raw

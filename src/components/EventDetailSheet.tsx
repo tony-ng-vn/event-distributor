@@ -9,7 +9,6 @@ import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { EventTitleLink } from "@/components/EventTitleLink";
 import { RemoveInterestAction } from "@/components/RemoveInterestAction";
-import type { RemoveInterestLayout } from "@/lib/event-card-ui";
 import type { FeedEvent } from "@/types/feed";
 
 export function EventDetailSheet({
@@ -24,7 +23,6 @@ export function EventDetailSheet({
   passed,
   isAdmin,
   showPassedActions = false,
-  removeInterestLayout = "stacked",
 }: {
   event: FeedEvent | null;
   onClose: () => void;
@@ -37,7 +35,6 @@ export function EventDetailSheet({
   passed?: boolean;
   isAdmin?: boolean;
   showPassedActions?: boolean;
-  removeInterestLayout?: RemoveInterestLayout;
 }) {
   if (!event) return null;
 
@@ -94,10 +91,7 @@ export function EventDetailSheet({
           <EventAttendeeSections event={event} interactive showCount />
 
           {accepted ? (
-            <RemoveInterestAction
-              layout={removeInterestLayout}
-              onUnaccept={onUnaccept}
-            />
+            <RemoveInterestAction onUnaccept={onUnaccept} />
           ) : passed && showPassedActions ? (
             <div className="space-y-2">
               <EventResponseStatus variant="passed" />
