@@ -27,7 +27,7 @@ export function EventTitleLink({
   if (!href) {
     return (
       <h3
-        className={`${wrapperClass} line-clamp-2 text-base font-semibold leading-snug tracking-tight text-foreground ${size === "detail" ? "text-2xl" : ""} ${className}`.trim()}
+        className={`${wrapperClass} line-clamp-2 ${titleClass} ${className}`.trim()}
       >
         {title}
       </h3>
