@@ -43,7 +43,7 @@ export function EventTitleLink({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className={`event-title-link group line-clamp-2 ${titleClass}`}
+        className={`event-title-link group ${clampClass} ${titleClass}`.trim()}
         data-testid="event-title-link"
         onClick={(event) => event.stopPropagation()}
       >
