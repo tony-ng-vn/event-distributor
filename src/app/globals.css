@@ -241,24 +241,6 @@ body {
     transition: opacity var(--motion-duration) var(--motion-ease);
   }
 
-  .remove-interest-inline {
-    @apply rounded-lg px-2.5 py-1 text-xs font-semibold;
-    color: var(--status-accept-text);
-    opacity: 0.85;
-    transition:
-      opacity var(--motion-duration) var(--motion-ease),
-      background-color var(--motion-duration) var(--motion-ease);
-  }
-
-  .remove-interest-text-link {
-    @apply px-0.5 text-sm font-medium text-muted;
-    text-decoration: underline transparent;
-    text-underline-offset: 3px;
-    transition:
-      color var(--motion-duration) var(--motion-ease),
-      text-decoration-color var(--motion-duration) var(--motion-ease);
-  }
-
   .feed-summary {
     @apply mb-4 flex items-center gap-3 rounded-xl border border-border bg-background-subtle px-4 py-3.5;
     transition:
@@ -302,16 +284,6 @@ body {
 
     .event-title-link:hover .event-title-link-icon {
       opacity: 1;
-    }
-
-    .remove-interest-inline:hover {
-      opacity: 1;
-      background-color: rgba(255, 255, 255, 0.45);
-    }
-
-    .remove-interest-text-link:hover {
-      color: var(--foreground-secondary);
-      text-decoration-color: currentColor;
     }
   }
 

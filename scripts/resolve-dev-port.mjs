@@ -13,14 +13,12 @@
 import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
 const MAIN_PORT = 3000;
 const WORKTREE_BASE = 3100;
 const WORKTREE_RANGE = 800;
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
 const cwd = process.cwd();
 
 function runGit(args, runCwd = cwd) {

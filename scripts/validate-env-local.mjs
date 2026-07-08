@@ -15,7 +15,7 @@ const RECOMMENDED_KEYS = [
   "NEXT_PUBLIC_INSFORGE_ANON_KEY",
 ];
 
-export function parseEnvFile(path) {
+function parseEnvFile(path) {
   if (!existsSync(path)) return {};
 
   const values = {};
@@ -38,7 +38,7 @@ export function findMissingEnvKeys(path) {
   return { missingRequired, missingRecommended, values };
 }
 
-export function printMissingEnvHelp({ mainRoot, envPath, missingRequired, missingRecommended }) {
+export function printMissingEnvHelp({ envPath, missingRequired, missingRecommended }) {
   console.error("");
   console.error(".env.local exists but required keys are still empty.");
   console.error(`Edit: ${envPath}`);

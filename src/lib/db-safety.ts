@@ -10,13 +10,13 @@ export function normalizeInsforgeUrl(url: string): string {
   return url.trim().replace(/\/+$/, "").toLowerCase();
 }
 
-export function resolveInsforgeBaseUrl(): string | null {
+function resolveInsforgeBaseUrl(): string | null {
   const url =
     process.env.INSFORGE_URL ?? process.env.NEXT_PUBLIC_INSFORGE_URL ?? null;
   return url ? normalizeInsforgeUrl(url) : null;
 }
 
-export function resolveProductionInsforgeUrl(): string | null {
+function resolveProductionInsforgeUrl(): string | null {
   const url = process.env.INSFORGE_PRODUCTION_URL;
   return url ? normalizeInsforgeUrl(url) : null;
 }

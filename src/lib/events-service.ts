@@ -20,13 +20,13 @@ import {
   type LumaMetadata,
 } from "@/lib/event-page";
 
-export type AttendeeSummary = {
+type AttendeeSummary = {
   id: string;
   name: string | null;
   image: string | null;
 };
 
-export type CreatorSummary = {
+type CreatorSummary = {
   id: string;
   name: string | null;
   image: string | null;

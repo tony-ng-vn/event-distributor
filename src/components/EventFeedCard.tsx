@@ -7,13 +7,12 @@
  */
 "use client";
 
-import { formatCardDateTime } from "@/lib/dates";
+import { formatDateTime } from "@/lib/dates";
 import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { EventThumbnail } from "@/components/EventThumbnail";
 import { EventTitleLink } from "@/components/EventTitleLink";
 import { RemoveInterestAction } from "@/components/RemoveInterestAction";
-import type { RemoveInterestLayout } from "@/lib/event-card-ui";
 import type { FeedEvent } from "@/types/feed";
 
 type CardStatus = "pending" | "accepted" | "passed" | "accepting";
@@ -28,7 +27,6 @@ export function EventFeedCard({
   onDelete,
   onOpen,
   showPassedActions = false,
-  removeInterestLayout = "stacked",
   isAdmin = false,
   isExiting = false,
 }: {
@@ -41,7 +39,6 @@ export function EventFeedCard({
   onDelete?: () => void;
   onOpen: () => void;
   showPassedActions?: boolean;
-  removeInterestLayout?: RemoveInterestLayout;
   isAdmin?: boolean;
   isExiting?: boolean;
 }) {
@@ -93,7 +90,7 @@ export function EventFeedCard({
             aria-label={`Open details for ${event.title}`}
           >
             <p className="text-xs font-medium text-muted">
-              {formatCardDateTime(event.startAt)}
+              {formatDateTime(event.startAt)}
             </p>
           </button>
           <EventTitleLink title={event.title} lumaUrl={event.lumaUrl} />
@@ -119,10 +116,7 @@ export function EventFeedCard({
 
       <div className="px-4 pb-4">
         {accepted ? (
-          <RemoveInterestAction
-            layout={removeInterestLayout}
-            onUnaccept={onUnaccept}
-          />
+          <RemoveInterestAction onUnaccept={onUnaccept} />
         ) : passed && showPassedActions ? (
           <div className="space-y-2">
             <EventResponseStatus variant="passed" />

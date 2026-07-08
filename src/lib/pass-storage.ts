@@ -23,12 +23,3 @@ export function passEvent(eventId: string): void {
   ids.add(eventId);
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
 }
-
-export function unpassEvent(eventId: string): void {
-  const ids = getPassedEventIds().filter((id) => id !== eventId);
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-}
-
-export function clearPassedEvents(): void {
-  sessionStorage.removeItem(STORAGE_KEY);
-}

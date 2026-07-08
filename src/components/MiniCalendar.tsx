@@ -11,7 +11,6 @@ import {
   getMonthGrid,
   isSameDay,
   isSameMonth,
-  startOfMonth,
 } from "@/lib/dates";
 import type { FeedEvent } from "@/types/feed";
 
@@ -106,5 +105,3 @@ export function MiniCalendar({
     </div>
   );
 }
-
-export { startOfMonth };

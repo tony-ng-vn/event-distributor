@@ -167,6 +167,3 @@ export function AuthButton() {
     </div>
   );
 }
-
-/** @deprecated Use SignInPromptModal */
-export const CalendarConnectModal = SignInPromptModal;

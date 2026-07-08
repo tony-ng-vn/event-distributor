@@ -33,7 +33,7 @@ function escapeHtml(value: string): string {
 }
 
 /** "Sat, Jul 12, 2026, 7:00 PM" in a fixed locale so output is deterministic. */
-export function formatEventDate(startAt: string): string {
+function formatEventDate(startAt: string): string {
   const date = new Date(startAt);
   if (Number.isNaN(date.getTime())) return startAt;
   return new Intl.DateTimeFormat("en-US", {
@@ -78,7 +78,7 @@ export function buildEventIngestedEmail(input: EventEmailInput): RenderedEmail {
     `Unsubscribe (no login needed): ${unsubscribeUrl}`,
   ].join("\n");
 
-  const html = `<!-- new event notification -->
+  const html = `
 <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 480px; margin: 0 auto; color: #0a0a0a;">
   <p style="font-size: 14px; color: #555; margin: 0 0 16px;">${escapeHtml(addedBy)} added a new event to Event Radar.</p>
   <div style="border: 1px solid #e5e5e5; border-radius: 12px; padding: 20px;">

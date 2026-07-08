@@ -19,7 +19,7 @@ function resolveE2EUserId(request: Request): string | null {
   return null;
 }
 
-export async function syncClerkUser() {
+async function syncClerkUser() {
   const { userId: clerkId } = await auth();
   if (!clerkId) return null;
 

@@ -3,7 +3,7 @@
  */
 "use client";
 
-import { getEventTitleHref } from "@/lib/event-card-ui";
+import { resolveEventHref } from "@/lib/event-page";
 
 export function EventTitleLink({
   title,
@@ -16,7 +16,7 @@ export function EventTitleLink({
   className?: string;
   size?: "card" | "detail";
 }) {
-  const href = getEventTitleHref(lumaUrl);
+  const href = resolveEventHref(lumaUrl);
   const titleClass =
     size === "detail"
       ? "text-2xl font-semibold leading-snug tracking-tight text-foreground"

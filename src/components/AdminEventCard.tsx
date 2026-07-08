@@ -3,7 +3,7 @@
  */
 "use client";
 
-import { formatCardDateTime } from "@/lib/dates";
+import { formatDateTime } from "@/lib/dates";
 import { getAttendeeInitials } from "@/lib/attendees";
 import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { LumaEventLink } from "@/components/LumaEventLink";
@@ -87,7 +87,7 @@ export function AdminEventCard({
           className="w-full rounded-xl border border-border bg-background-subtle px-4 py-3 text-left transition hover:bg-surface-muted"
         >
           <p className="text-xs font-medium text-muted">
-            {formatCardDateTime(event.startAt)}
+            {formatDateTime(event.startAt)}
           </p>
           <h3 className="mt-0.5 text-base font-semibold tracking-tight text-foreground">
             {event.title}

@@ -9,10 +9,8 @@ import {
   isEventSourceUrl,
   isLumaUrl,
   isValidEventPage,
-  normalizeLumaUrl,
   normalizeSourceUrl,
   parseEventHtml,
-  parseLumaHtml,
   resolveEventHref,
 } from "@/lib/event-page";
 
@@ -26,10 +24,10 @@ describe("luma URL helpers", () => {
   });
 
   it("normalizes Luma URLs for deduplication", () => {
-    expect(normalizeLumaUrl("https://www.lu.ma/demo/?ref=abc#section")).toBe(
+    expect(normalizeSourceUrl("https://www.lu.ma/demo/?ref=abc#section")).toBe(
       "https://lu.ma/demo",
     );
-    expect(normalizeLumaUrl("https://lu.ma/demo/")).toBe("https://lu.ma/demo");
+    expect(normalizeSourceUrl("https://lu.ma/demo/")).toBe("https://lu.ma/demo");
   });
 
   it("accepts https event source URLs and rejects unsafe ones", () => {
@@ -94,6 +92,19 @@ describe("generic event HTML parsing", () => {
   });
 });
 
+describe("luma title cleanup", () => {
+  it("strips the Luma suffix for every separator style", () => {
+    for (const separator of ["|", "-", "\u2013", "\u2014", "\u00b7"]) {
+      const html = `
+        <meta property="og:title" content="Demo Night ${separator} Luma" />
+        <meta property="og:description" content="A great event" />
+      `;
+      const metadata = parseEventHtml(html, "https://lu.ma/demo-night");
+      expect(metadata.title).toBe("Demo Night");
+    }
+  });
+});
+
 describe("luma cover image extraction", () => {
   it("parses Open Graph metadata from HTML", () => {
     const html = `
@@ -109,7 +120,7 @@ describe("luma cover image extraction", () => {
       </html>
     `;
 
-    const metadata = parseLumaHtml(html, "https://lu.ma/demo-night");
+    const metadata = parseEventHtml(html, "https://lu.ma/demo-night");
     expect(metadata.title).toContain("Demo Night");
     expect(metadata.coverImageUrl).toBe("https://example.com/cover.jpg");
     expect(metadata.location).toBe("SF");
@@ -117,7 +128,7 @@ describe("luma cover image extraction", () => {
 
   it("extracts cover image from real Luma HTML with JSON-LD image arrays", () => {
     const html = readFileSync(fixturePath, "utf8");
-    const metadata = parseLumaHtml(html, "https://lu.ma/demo");
+    const metadata = parseEventHtml(html, "https://lu.ma/demo");
 
     expect(metadata.coverImageUrl).toBe(
       "https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=1,anim=false,background=white,quality=75,width=1920,height=1920/event-covers/ub/4cf9793b-389d-4958-8a86-dd8ac71baee5",
@@ -136,7 +147,7 @@ describe("luma cover image extraction", () => {
       </script>
     `;
 
-    const metadata = parseLumaHtml(html, "https://lu.ma/image-object");
+    const metadata = parseEventHtml(html, "https://lu.ma/image-object");
     expect(metadata.coverImageUrl).toBe(
       "https://images.lumacdn.com/event-covers/test.jpg",
     );
@@ -147,7 +158,7 @@ describe("luma cover image extraction", () => {
       <meta property="og:image" content="//images.lumacdn.com/event-covers/relative.jpg" />
     `;
 
-    const metadata = parseLumaHtml(html, "https://lu.ma/relative");
+    const metadata = parseEventHtml(html, "https://lu.ma/relative");
     expect(metadata.coverImageUrl).toBe(
       "https://images.lumacdn.com/event-covers/relative.jpg",
     );
@@ -158,7 +169,7 @@ describe("luma cover image extraction", () => {
       <link rel="preload" as="image" href="https://images.lumacdn.com/cdn-cgi/image/format=auto/event-covers/ub/fallback-id" />
     `;
 
-    const metadata = parseLumaHtml(html, "https://lu.ma/fallback");
+    const metadata = parseEventHtml(html, "https://lu.ma/fallback");
     expect(metadata.coverImageUrl).toBe(
       "https://images.lumacdn.com/cdn-cgi/image/format=auto/event-covers/ub/fallback-id",
     );

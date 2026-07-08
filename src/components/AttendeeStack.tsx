@@ -6,20 +6,10 @@
 
 import { useState } from "react";
 import { AttendeeListModal } from "@/components/AttendeeListModal";
-import { getAttendeeInitials } from "@/lib/attendees";
+import { avatarClass, getAttendeeInitials } from "@/lib/attendees";
 import type { FeedEvent } from "@/types/feed";
 
-const AVATAR_CLASSES = [
-  "bg-neutral-200 text-neutral-600",
-  "bg-neutral-300 text-neutral-700",
-  "bg-neutral-400 text-neutral-800",
-] as const;
-
 type AttendeeStackVariant = "interested" | "passed";
-
-function avatarClass(index: number): string {
-  return AVATAR_CLASSES[index % AVATAR_CLASSES.length];
-}
 
 function emptyStateCopy(variant: AttendeeStackVariant): string {
   switch (variant) {
@@ -87,7 +77,7 @@ export function AttendeeStack({
   if (acceptCount === 0) {
     return (
       <p
-        className={`text-sm ${variant === "passed" ? "text-muted" : "text-muted"}`}
+        className="text-sm text-muted"
         data-testid={emptyTestId}
       >
         {emptyStateCopy(variant)}

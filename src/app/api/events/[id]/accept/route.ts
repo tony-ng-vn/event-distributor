@@ -1,7 +1,7 @@
 /**
  * POST /api/events/[id]/accept — mark "I'm going" on the in-app guest list.
  *
- * Requires sign-in (Clerk → Prisma User). Does NOT RSVP on Luma — that's separate.
+ * Requires sign-in (Clerk -> InsForge User). Does NOT RSVP on Luma — that's separate.
  * Returns updated event JSON with the viewer in attendees.
  */
 import { NextResponse } from "next/server";

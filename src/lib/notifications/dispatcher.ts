@@ -15,7 +15,6 @@
 import {
   getAppBaseUrl,
   getUnsubscribeSecret,
-  isIncludeActorEnabled,
 } from "@/lib/notifications/config";
 import { buildEventIngestedEmail } from "@/lib/notifications/email-content";
 import { sendNotificationEmail } from "@/lib/notifications/email";
@@ -32,11 +31,6 @@ export type DispatchDeps = {
   sendEmail: (message: EmailMessage) => Promise<unknown>;
   appBaseUrl: string;
   unsubscribeSecret: string;
-  /**
-   * Test toggle: when true, the actor is NOT excluded from recipients (they get
-   * the email too). Injected from config so this file stays env-free and testable.
-   */
-  includeActor: boolean;
 };
 
 export type DispatchResult = {
@@ -51,7 +45,6 @@ function defaultDeps(): DispatchDeps {
     sendEmail: sendNotificationEmail,
     appBaseUrl: getAppBaseUrl(),
     unsubscribeSecret: getUnsubscribeSecret(),
-    includeActor: isIncludeActorEnabled(),
   };
 }
 
@@ -61,7 +54,7 @@ function buildUnsubscribeUrl(appBaseUrl: string, token: string): string {
 }
 
 /** Build the per-recipient message for an event.ingested intent. */
-export function buildMessagesForEventIngested(
+function buildMessagesForEventIngested(
   intent: EventIngestedIntent,
   recipients: EmailRecipient[],
   appBaseUrl: string,
@@ -105,15 +98,7 @@ export async function dispatchEventIngested(
     return { recipientCount: 0, messages: [], failures: 0 };
   }
 
-  if (deps.includeActor) {
-    console.warn(
-      "[notifications] NOTIFICATIONS_TEST_INCLUDE_SELF is on: self-notify test mode, the actor is emailed too. Turn it off after testing.",
-    );
-  }
-  // Passing null tells the loader not to drop the actor, so the maintainer can
-  // add an event and receive the email during a prod test.
-  const actorToExclude = deps.includeActor ? null : intent.actorUserId;
-  const recipients = await deps.loadRecipients(actorToExclude);
+  const recipients = await deps.loadRecipients(intent.actorUserId);
   const messages = buildMessagesForEventIngested(
     intent,
     recipients,

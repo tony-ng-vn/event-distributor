@@ -71,8 +71,6 @@ if (!existsSync(configPath)) {
 
 const c = JSON.parse(readFileSync(configPath, "utf8"));
 const today = new Date().toISOString().slice(0, 10);
-const dirSlug = dir.replace(/\\/g, "/").split("/").pop() ?? "";
-const threadId = dir.includes("/prs/") || dir.includes("\\prs\\") ? dirSlug : c.threadId || "";
 
 const html = `<!DOCTYPE html>
 <html lang="en">

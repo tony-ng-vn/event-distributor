@@ -45,10 +45,6 @@ function slugify(text) {
     .slice(0, 64);
 }
 
-function shortSha(ref) {
-  return git(`rev-parse --short=7 ${ref}`);
-}
-
 function branchSlug(name) {
   return slugify(name.replace(/\//g, "-"));
 }

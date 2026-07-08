@@ -5,14 +5,12 @@ import {
   getBrevoApiKey,
   getBrevoSender,
   isEmailDeliveryEnabled,
-  isIncludeActorEnabled,
 } from "@/lib/notifications/config";
 
 const KEYS = [
   "NEXT_PUBLIC_APP_URL",
   "APP_BASE_URL",
   "NOTIFICATIONS_EMAIL_ENABLED",
-  "NOTIFICATIONS_TEST_INCLUDE_SELF",
   "BREVO_API_KEY",
   "BREVO_SENDER_EMAIL",
   "BREVO_SENDER_NAME",
@@ -56,14 +54,6 @@ describe("notification config", () => {
     process.env.NOTIFICATIONS_EMAIL_ENABLED = "true";
     process.env.NEXT_PUBLIC_APP_URL = "https://app.example.com";
     expect(getAppBaseUrl()).toBe("https://app.example.com");
-  });
-
-  it("includes the actor only when the flag is exactly \"true\"", () => {
-    expect(isIncludeActorEnabled()).toBe(false);
-    process.env.NOTIFICATIONS_TEST_INCLUDE_SELF = "1";
-    expect(isIncludeActorEnabled()).toBe(false);
-    process.env.NOTIFICATIONS_TEST_INCLUDE_SELF = "true";
-    expect(isIncludeActorEnabled()).toBe(true);
   });
 
   it("throws fail-loud when the Brevo api key is missing", () => {
