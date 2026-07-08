@@ -1,12 +1,14 @@
 /**
- * The "Your events" list (CalendarEventList) must show each event's cover image,
- * matching the main feed card: an <img> when a cover exists, a "No image"
- * placeholder when it is null.
+ * The "Your events" tab now renders the same EventFeedCard as the main feed
+ * (status "accepted"), so the two match exactly. These tests lock that in:
+ * the cover image (or "No image" placeholder) shows, the remove-interest control
+ * is present for an interested event, and no "View on Luma" link remains -- the
+ * feed dropped it and Your events must not bring it back.
  */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { CalendarEventList } from "@/components/MiniCalendar";
+import { EventFeedCard } from "@/components/EventFeedCard";
 import type { FeedEvent } from "@/types/feed";
 
 function makeEvent(overrides: Partial<FeedEvent>): FeedEvent {
@@ -35,16 +37,27 @@ function makeEvent(overrides: Partial<FeedEvent>): FeedEvent {
   };
 }
 
+const noop = () => {};
+
+function renderAcceptedCard(event: FeedEvent, onUnaccept: () => void = noop) {
+  return renderToStaticMarkup(
+    createElement(EventFeedCard, {
+      event,
+      status: "accepted",
+      onAccept: noop,
+      onPass: noop,
+      onUnaccept,
+      onOpen: noop,
+    }),
+  );
+}
+
 describe("your-events list cover image", () => {
   it("renders the cover image when the event has one", () => {
-    const html = renderToStaticMarkup(
-      createElement(CalendarEventList, {
-        events: [
-          makeEvent({
-            id: "with-cover",
-            coverImageUrl: "https://example.com/cover.jpg",
-          }),
-        ],
+    const html = renderAcceptedCard(
+      makeEvent({
+        id: "with-cover",
+        coverImageUrl: "https://example.com/cover.jpg",
       }),
     );
 
@@ -53,10 +66,8 @@ describe("your-events list cover image", () => {
   });
 
   it("renders a No image placeholder when the cover is null", () => {
-    const html = renderToStaticMarkup(
-      createElement(CalendarEventList, {
-        events: [makeEvent({ id: "no-cover", coverImageUrl: null })],
-      }),
+    const html = renderAcceptedCard(
+      makeEvent({ id: "no-cover", coverImageUrl: null }),
     );
 
     expect(html).toContain("No image");
@@ -65,27 +76,25 @@ describe("your-events list cover image", () => {
 });
 
 describe("your-events list remove-interest control", () => {
-  const noop = () => {};
-
-  it("shows the remove-interest button for an interested event when onUnaccept is provided", () => {
-    const html = renderToStaticMarkup(
-      createElement(CalendarEventList, {
-        events: [makeEvent({ id: "interested", viewerAccepted: true })],
-        onUnaccept: noop,
-      }),
+  it("shows the remove-interest button for an interested event", () => {
+    const html = renderAcceptedCard(
+      makeEvent({ id: "interested", viewerAccepted: true }),
     );
 
     expect(html).toContain('data-testid="unaccept-button"');
     expect(html).toContain("Remove interest");
   });
+});
 
-  it("omits the remove-interest button when no onUnaccept handler is passed", () => {
-    const html = renderToStaticMarkup(
-      createElement(CalendarEventList, {
-        events: [makeEvent({ id: "interested", viewerAccepted: true })],
-      }),
+describe("your-events list matches the feed", () => {
+  it("links the title like the feed and never shows a View on Luma link", () => {
+    const html = renderAcceptedCard(
+      makeEvent({ id: "linked", lumaUrl: "https://lu.ma/demo" }),
     );
 
-    expect(html).not.toContain('data-testid="unaccept-button"');
+    // Same linked title as the feed card.
+    expect(html).toContain('data-testid="event-title-link"');
+    // The feed removed the standalone "View on Luma" link; Your events must too.
+    expect(html).not.toContain("View on Luma");
   });
 });

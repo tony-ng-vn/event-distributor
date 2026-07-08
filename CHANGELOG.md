@@ -5,6 +5,8 @@ Add a 1-2 sentence entry when a PR merges. Newest first.
 
 ## 2026-07-08
 
+The Your events tab now uses the exact same event card as the main Feed, so the two match: same linked title, same actions, and no more "View on Luma" link (the Feed had already dropped it).
+
 Rewrote the README to explain what Event Radar is and why it exists, written for readers rather than contributors.
 
 The Remove interest button now also shows up on events listed in your Your events tab, so you can back out of an event from there too.
