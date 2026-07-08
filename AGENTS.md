@@ -29,6 +29,10 @@ Canonical triage roles map to GitHub labels (`ready-for-agent`, etc.). See `docs
 
 Single-context repo. See `docs/agents/domain.md`.
 
+### Changelog
+
+CHANGELOG.md entries use `## vX.Y.Z` headings (date below, `---` between entries) with these categories: **Feed** (client UI), **Events API** (routes + events-service), **Notifications** (email pipeline), **Auth** (Clerk/InsForge bridge), **Infrastructure** (deps, scripts, config, CI), **Docs**. Keep `package.json` version in sync with the newest entry.
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
