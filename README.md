@@ -8,6 +8,10 @@ My friends and I kept missing things.
 Someone would find a fun event, drop the link in the group chat, and it would scroll away under everyone else's messages.
 By the time we remembered it, the event had passed, or nobody knew who was actually going.
 
+The events were also scattered.
+The same link would have to go to a few different people who were not all in one group chat, so I kept copy-pasting the same thing over and over.
+I wanted to post an event once, in one place, and let whoever cared find it.
+
 We did not need another social network. We just needed one quiet place to put "hey, this is happening, who's in?"
 So I built Event Radar for my group. It is small on purpose.
 
