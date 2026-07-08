@@ -15,7 +15,7 @@ import { createServer } from "node:http";
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join, extname, normalize, relative } from "node:path";
 import { networkInterfaces } from "node:os";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const CWD = process.cwd();
 const PRIMARY_ROOT = join(CWD, "docs", "understanding");
@@ -44,8 +44,22 @@ function parseArgs(argv) {
   return args;
 }
 
-function git(cmd) {
-  return execSync(cmd, { encoding: "utf8", cwd: CWD, stdio: ["ignore", "pipe", "pipe"] }).trim();
+// Pass git args as an argv array (execFileSync, no shell) so branch names,
+// tree slugs, and request paths can never be interpreted as shell syntax.
+function git(...args) {
+  return execFileSync("git", args, {
+    encoding: "utf8",
+    cwd: CWD,
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
+}
+
+// Reject request paths that could traverse out of docs/understanding or smuggle
+// control characters into a git pathspec.
+function isSafeRelPath(relPath) {
+  if (!relPath || relPath.includes("\0")) return false;
+  if (/[\u0000-\u001f\u007f]/.test(relPath)) return false;
+  return !relPath.split(/[\\/]/).some((segment) => segment === "..");
 }
 
 function slugify(text) {
@@ -69,7 +83,7 @@ function decodeSourceId(id) {
 
 function currentBranch() {
   try {
-    return git("git branch --show-current");
+    return git("branch", "--show-current");
   } catch {
     return "";
   }
@@ -85,7 +99,7 @@ function listBranchSlugsFromFs(root) {
 
 function listWorktrees() {
   try {
-    const raw = git("git worktree list --porcelain");
+    const raw = git("worktree", "list", "--porcelain");
     const blocks = raw.split(/\n\n+/).filter(Boolean);
     return blocks
       .map((block) => {
@@ -102,7 +116,7 @@ function listWorktrees() {
 
 function listLocalBranches() {
   try {
-    return git('git for-each-ref --format="%(refname:short)" refs/heads/')
+    return git("for-each-ref", "--format=%(refname:short)", "refs/heads/")
       .split("\n")
       .filter(Boolean);
   } catch {
@@ -112,7 +126,7 @@ function listLocalBranches() {
 
 function listRemoteBranches() {
   try {
-    return git('git for-each-ref --format="%(refname:short)" refs/remotes/origin/')
+    return git("for-each-ref", "--format=%(refname:short)", "refs/remotes/origin/")
       .split("\n")
       .filter((b) => b && b !== "origin/HEAD" && !b.endsWith("/HEAD"));
   } catch {
@@ -122,16 +136,20 @@ function listRemoteBranches() {
 
 function branchHasUnderstanding(branch) {
   try {
-    git(`git cat-file -e "${branch}:docs/understanding/branches"`);
+    git("cat-file", "-e", `${branch}:docs/understanding/branches`);
     const slugs = git(
-      `git ls-tree --name-only "${branch}:docs/understanding/branches"`,
+      "ls-tree",
+      "--name-only",
+      `${branch}:docs/understanding/branches`,
     )
       .split("\n")
       .filter(Boolean);
     return slugs.some((slug) => {
       try {
         git(
-          `git cat-file -e "${branch}:docs/understanding/branches/${slug}/reading-order.md"`,
+          "cat-file",
+          "-e",
+          `${branch}:docs/understanding/branches/${slug}/reading-order.md`,
         );
         return true;
       } catch {
@@ -184,12 +202,14 @@ function discoverSources(localOnly) {
 
     let slugs = [];
     try {
-      slugs = git(`git ls-tree --name-only "${ref}:docs/understanding/branches"`)
+      slugs = git("ls-tree", "--name-only", `${ref}:docs/understanding/branches`)
         .split("\n")
         .filter((slug) => {
           try {
             git(
-              `git cat-file -e "${ref}:docs/understanding/branches/${slug}/reading-order.md"`,
+              "cat-file",
+              "-e",
+              `${ref}:docs/understanding/branches/${slug}/reading-order.md`,
             );
             return true;
           } catch {
@@ -226,6 +246,8 @@ function discoverSources(localOnly) {
 
 function readFromSource(source, relPath) {
   const clean = relPath.replace(/^\/+/, "");
+  if (!isSafeRelPath(clean)) return null;
+
   if (source.type === "fs") {
     const abs = join(source.root, clean);
     const rootNorm = normalize(source.root);
@@ -236,7 +258,7 @@ function readFromSource(source, relPath) {
 
   const gitPath = `docs/understanding/${clean}`;
   try {
-    return execSync(`git show "${source.branch}:${gitPath}"`, {
+    return execFileSync("git", ["show", `${source.branch}:${gitPath}`], {
       encoding: "buffer",
       cwd: CWD,
       maxBuffer: 16 * 1024 * 1024,
@@ -278,7 +300,7 @@ function listPrSlugs(source) {
     );
   }
   try {
-    return git(`git ls-tree --name-only "${source.branch}:docs/understanding/prs"`)
+    return git("ls-tree", "--name-only", `${source.branch}:docs/understanding/prs`)
       .split("\n")
       .filter(Boolean);
   } catch {
