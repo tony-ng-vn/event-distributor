@@ -598,6 +598,51 @@ export function FeedApp() {
     </div>
   );
 
+  const adminEventsContent = loading ? (
+    <FeedSkeleton />
+  ) : events.length === 0 ? (
+    <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
+      <p className="font-medium text-foreground">No events yet</p>
+      <p className="mt-2 text-sm text-muted">
+        Paste a link to share with your group.
+      </p>
+    </div>
+  ) : (
+    <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+      {events.map((event) => (
+        <AdminEventCard
+          key={event.id}
+          event={event}
+          isExiting={Boolean(exitingEventIds[event.id])}
+          onDelete={() => handleDelete(event.id)}
+          onOpen={() => setDetailEvent(event)}
+        />
+      ))}
+    </div>
+  );
+
+  const adminUsersContent = programUsersError ? (
+    <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
+      <p className="font-medium text-foreground">Could not load users</p>
+      <p className="mt-2 text-sm text-muted">{programUsersError}</p>
+      <button
+        type="button"
+        onClick={() => void loadProgramUsers()}
+        className="btn-secondary mt-4"
+      >
+        Try again
+      </button>
+    </div>
+  ) : (
+    <ProgramUsersAdmin
+      users={programUsers}
+      loading={programUsersLoading}
+      viewerUserId={programUsersViewerId}
+      pendingToggleId={pendingToggleId}
+      onToggleAdmin={handleToggleAdmin}
+    />
+  );
+
   const adminContent = (
     <div className="space-y-4" data-testid="admin-tab">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -636,50 +681,7 @@ export function FeedApp() {
         </div>
       </div>
 
-      {adminSubTab === "events" ? (
-        loading ? (
-          <FeedSkeleton />
-        ) : events.length === 0 ? (
-          <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
-            <p className="font-medium text-foreground">No events yet</p>
-            <p className="mt-2 text-sm text-muted">
-              Paste a link to share with your group.
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-            {events.map((event) => (
-              <AdminEventCard
-                key={event.id}
-                event={event}
-                isExiting={Boolean(exitingEventIds[event.id])}
-                onDelete={() => handleDelete(event.id)}
-                onOpen={() => setDetailEvent(event)}
-              />
-            ))}
-          </div>
-        )
-      ) : programUsersError ? (
-        <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
-          <p className="font-medium text-foreground">Could not load users</p>
-          <p className="mt-2 text-sm text-muted">{programUsersError}</p>
-          <button
-            type="button"
-            onClick={() => void loadProgramUsers()}
-            className="btn-secondary mt-4"
-          >
-            Try again
-          </button>
-        </div>
-      ) : (
-        <ProgramUsersAdmin
-          users={programUsers}
-          loading={programUsersLoading}
-          viewerUserId={programUsersViewerId}
-          pendingToggleId={pendingToggleId}
-          onToggleAdmin={handleToggleAdmin}
-        />
-      )}
+      {adminSubTab === "events" ? adminEventsContent : adminUsersContent}
     </div>
   );
 
