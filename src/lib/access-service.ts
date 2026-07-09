@@ -102,6 +102,20 @@ export type ProgramUser = {
   rsvpCount: number;
 };
 
+/** Tallies rows into a count keyed by one of their user-id columns, skipping nulls. */
+function countByUserId(
+  rows: Array<Record<string, unknown>>,
+  column: string,
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const userId = row[column] as string | null;
+    if (!userId) continue;
+    counts.set(userId, (counts.get(userId) ?? 0) + 1);
+  }
+  return counts;
+}
+
 /**
  * Admin view: every user in the program, with activity counts. Three plain
  * queries run in parallel and are aggregated in JS -- the InsForge/PostgREST
@@ -124,18 +138,8 @@ export async function listProgramUsers(): Promise<ProgramUser[]> {
   if (eventsResult.error) throw new Error(eventsResult.error.message);
   if (acceptsResult.error) throw new Error(acceptsResult.error.message);
 
-  const eventCounts = new Map<string, number>();
-  for (const row of eventsResult.data ?? []) {
-    const userId = row.added_by_user_id as string | null;
-    if (!userId) continue;
-    eventCounts.set(userId, (eventCounts.get(userId) ?? 0) + 1);
-  }
-
-  const rsvpCounts = new Map<string, number>();
-  for (const row of acceptsResult.data ?? []) {
-    const userId = row.user_id as string;
-    rsvpCounts.set(userId, (rsvpCounts.get(userId) ?? 0) + 1);
-  }
+  const eventCounts = countByUserId(eventsResult.data ?? [], "added_by_user_id");
+  const rsvpCounts = countByUserId(acceptsResult.data ?? [], "user_id");
 
   const users = (usersResult.data ?? []).map((row) => {
     const id = row.id as string;
