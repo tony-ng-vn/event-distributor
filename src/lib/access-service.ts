@@ -89,3 +89,95 @@ export async function approveUser(
 
   if (error) throw new Error(error.message);
 }
+
+export type ProgramUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  image: string | null;
+  isAdmin: boolean;
+  approved: boolean;
+  createdAt: string;
+  eventsCreatedCount: number;
+  rsvpCount: number;
+};
+
+/**
+ * Admin view: every user in the program, with activity counts. Three plain
+ * queries run in parallel and are aggregated in JS -- the InsForge/PostgREST
+ * embedded-relation select (`events!added_by_user_id(id)`) is only proven in
+ * this codebase in the events-to-users direction (see `eventSelect` in
+ * events-service.ts), not the reverse.
+ */
+export async function listProgramUsers(): Promise<ProgramUser[]> {
+  const db = getInsforgeAdmin();
+
+  const [usersResult, eventsResult, acceptsResult] = await Promise.all([
+    db.database
+      .from("users")
+      .select("id, email, name, image, is_admin, approved, created_at"),
+    db.database.from("events").select("added_by_user_id"),
+    db.database.from("accepts").select("user_id"),
+  ]);
+
+  if (usersResult.error) throw new Error(usersResult.error.message);
+  if (eventsResult.error) throw new Error(eventsResult.error.message);
+  if (acceptsResult.error) throw new Error(acceptsResult.error.message);
+
+  const eventCounts = new Map<string, number>();
+  for (const row of eventsResult.data ?? []) {
+    const userId = row.added_by_user_id as string | null;
+    if (!userId) continue;
+    eventCounts.set(userId, (eventCounts.get(userId) ?? 0) + 1);
+  }
+
+  const rsvpCounts = new Map<string, number>();
+  for (const row of acceptsResult.data ?? []) {
+    const userId = row.user_id as string;
+    rsvpCounts.set(userId, (rsvpCounts.get(userId) ?? 0) + 1);
+  }
+
+  const users = (usersResult.data ?? []).map((row) => {
+    const id = row.id as string;
+    return {
+      id,
+      email: row.email as string,
+      name: (row.name as string | null) ?? null,
+      image: (row.image as string | null) ?? null,
+      isAdmin: row.is_admin === true,
+      approved: row.approved === true,
+      createdAt: row.created_at as string,
+      eventsCreatedCount: eventCounts.get(id) ?? 0,
+      rsvpCount: rsvpCounts.get(id) ?? 0,
+    };
+  });
+
+  return users.sort((a, b) =>
+    (a.name?.trim() || a.email).localeCompare(b.name?.trim() || b.email, undefined, {
+      sensitivity: "base",
+    }),
+  );
+}
+
+/** Admin action: promote or demote another user's admin flag. */
+export async function setUserAdmin(
+  adminUserId: string,
+  targetUserId: string,
+  isAdmin: boolean,
+): Promise<void> {
+  const admin = await isUserAdmin(adminUserId);
+  if (!admin) {
+    throw new Error("Admin privileges required to change admin status");
+  }
+  if (targetUserId === adminUserId) {
+    throw new Error("Cannot change your own admin status");
+  }
+
+  const db = getInsforgeAdmin();
+  const { error } = await db.database
+    .from("users")
+    .update({ is_admin: isAdmin })
+    .eq("id", targetUserId);
+
+  if (error) throw new Error(error.message);
+}
