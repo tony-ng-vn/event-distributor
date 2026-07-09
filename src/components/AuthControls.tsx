@@ -13,8 +13,13 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 
-/** Full-page card shown when the feed is for signed-in friends only. */
-export function SignInGate() {
+/**
+ * Default landing for signed-out visitors. The app is invite-only, so the front
+ * door is the waitlist: signing up saves your spot (Clerk captures name + email,
+ * which we store as a pending user). Already-approved members sign in and go
+ * straight to the feed -- no second signup.
+ */
+export function WaitlistLanding() {
   return (
     <div className="app-shell flex min-h-dvh flex-col">
       <header className="glass-header">
@@ -32,35 +37,36 @@ export function SignInGate() {
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-10">
         <div
           className="glass-card rounded-2xl p-8 text-center"
-          data-testid="sign-in-gate"
+          data-testid="waitlist-landing"
         >
           <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Sign in to see your group&apos;s events
+            Join the waitlist
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            This feed is private to people in your group. Sign in to browse shared
-            event links, mark events you&apos;re interested in, and see who else
-            is planning to go. RSVP on the event page separately when you&apos;re ready.
+            This app is invite-only right now. Sign up to save your spot and
+            we&apos;ll let you in as soon as there&apos;s room. Once you&apos;re
+            approved, just sign back in with the same account -- you&apos;re
+            straight in, no second signup.
           </p>
           <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="btn-primary w-full py-3 sm:w-auto sm:px-8"
-                data-testid="sign-in-gate-button"
-              >
-                Sign in
-              </button>
-            </SignInButton>
             <SignUpButton mode="modal">
               <button
                 type="button"
-                className="btn-secondary w-full py-3 sm:w-auto sm:px-8"
-                data-testid="sign-up-gate-button"
+                className="btn-primary w-full py-3 sm:w-auto sm:px-8"
+                data-testid="waitlist-join-button"
               >
-                Create account
+                Join the waitlist
               </button>
             </SignUpButton>
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className="btn-secondary w-full py-3 sm:w-auto sm:px-8"
+                data-testid="waitlist-signin-button"
+              >
+                Already have access? Sign in
+              </button>
+            </SignInButton>
           </div>
         </div>
       </main>

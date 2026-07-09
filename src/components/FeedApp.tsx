@@ -18,9 +18,9 @@ import { runInterested } from "@/lib/interested-action";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
 import {
   AuthButton,
-  SignInGate,
   SignInPromptModal,
   WaitlistGate,
+  WaitlistLanding,
 } from "@/components/AuthControls";
 import { MiniCalendar } from "@/components/MiniCalendar";
 import { AdminEventCard } from "@/components/AdminEventCard";
@@ -587,7 +587,7 @@ export function FeedApp() {
   }
 
   if (!isSignedIn) {
-    return <SignInGate />;
+    return <WaitlistLanding />;
   }
 
   if (waitlisted) {

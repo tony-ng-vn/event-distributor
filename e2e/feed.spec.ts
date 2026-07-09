@@ -57,9 +57,10 @@ test.describe("shared Luma feed", () => {
     );
   }
 
-  test("shows sign-in gate when not authenticated", async ({ page }) => {
+  test("shows the waitlist landing when not authenticated", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("sign-in-gate")).toBeVisible();
+    await expect(page.getByTestId("waitlist-landing")).toBeVisible();
+    await expect(page.getByTestId("waitlist-join-button")).toBeVisible();
     await expect(page.getByTestId("empty-feed")).toBeHidden();
   });
 
