@@ -8,6 +8,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { NotificationOptInPrompt } from "@/components/NotificationOptInPrompt";
 import "./globals.css";
 
@@ -63,6 +64,7 @@ export default function RootLayout({
           {children}
           <NotificationOptInPrompt />
         </ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );
