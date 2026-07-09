@@ -49,26 +49,46 @@ export type ProgramUser = {
 
 export async function listProgramUsers(): Promise<ProgramUser[]> {
   const db = getInsforgeAdmin();
-  const { data, error } = await db.database
-    .from("users")
-    .select(
-      "id, email, name, image, is_admin, approved, created_at, " +
-        "created_events:events!added_by_user_id(id), accepts(id)",
-    );
 
-  if (error) throw new Error(error.message);
+  const [usersResult, eventsResult, acceptsResult] = await Promise.all([
+    db.database
+      .from("users")
+      .select("id, email, name, image, is_admin, approved, created_at"),
+    db.database.from("events").select("added_by_user_id"),
+    db.database.from("accepts").select("user_id"),
+  ]);
 
-  const users = (data ?? []).map((row) => ({
-    id: row.id as string,
-    email: row.email as string,
-    name: (row.name as string | null) ?? null,
-    image: (row.image as string | null) ?? null,
-    isAdmin: row.is_admin === true,
-    approved: row.approved === true,
-    createdAt: row.created_at as string,
-    eventsCreatedCount: ((row.created_events as unknown[]) ?? []).length,
-    rsvpCount: ((row.accepts as unknown[]) ?? []).length,
-  }));
+  if (usersResult.error) throw new Error(usersResult.error.message);
+  if (eventsResult.error) throw new Error(eventsResult.error.message);
+  if (acceptsResult.error) throw new Error(acceptsResult.error.message);
+
+  const eventCounts = new Map<string, number>();
+  for (const row of eventsResult.data ?? []) {
+    const userId = row.added_by_user_id as string | null;
+    if (!userId) continue;
+    eventCounts.set(userId, (eventCounts.get(userId) ?? 0) + 1);
+  }
+
+  const rsvpCounts = new Map<string, number>();
+  for (const row of acceptsResult.data ?? []) {
+    const userId = row.user_id as string;
+    rsvpCounts.set(userId, (rsvpCounts.get(userId) ?? 0) + 1);
+  }
+
+  const users = (usersResult.data ?? []).map((row) => {
+    const id = row.id as string;
+    return {
+      id,
+      email: row.email as string,
+      name: (row.name as string | null) ?? null,
+      image: (row.image as string | null) ?? null,
+      isAdmin: row.is_admin === true,
+      approved: row.approved === true,
+      createdAt: row.created_at as string,
+      eventsCreatedCount: eventCounts.get(id) ?? 0,
+      rsvpCount: rsvpCounts.get(id) ?? 0,
+    };
+  });
 
   return users.sort((a, b) =>
     (a.name?.trim() || a.email).localeCompare(b.name?.trim() || b.email, undefined, {
@@ -100,19 +120,23 @@ export async function setUserAdmin(
 }
 ```
 
-One query, single round trip: the InsForge/PostgREST-style embedded select
-(`events!added_by_user_id(id)`, `accepts(id)`) mirrors the existing pattern in
-`src/lib/events-service.ts`'s `eventSelect`. Sorting by display name happens
-in JS (case-insensitive, falls back to email) rather than in SQL, matching
-how other lists in this codebase sort after fetch.
+Three queries run in parallel (users, events, accepts), each a plain
+column select with no embedded-relation syntax — matching the proven pattern
+in `getViewerPassedEventIds` (`src/lib/events-service.ts`) rather than the
+untested-in-this-codebase reverse embed (`events!added_by_user_id(id)` from
+the `users` side; the only proven embed direction is events-to-users, via
+`eventSelect`). Counts are aggregated in JS with two `Map`s keyed by user id.
+Sorting by display name also happens in JS (case-insensitive, falls back to
+email), matching how other lists in this codebase sort after fetch.
 
 ## API routes
 
 `src/app/api/admin/users/route.ts`:
 - `GET` — `requireViewer(request)`, 403 if `!isAdmin`, else
-  `{ users: await listProgramUsers() }`. Mirrors
-  `src/app/api/admin/waitlist/route.ts` exactly (same guard, same error
-  shape).
+  `{ users: await listProgramUsers(), viewerUserId }` (the `userId` from
+  `requireViewer`, so the client can disable the toggle on the viewer's own
+  row without a second round trip). Otherwise mirrors
+  `src/app/api/admin/waitlist/route.ts` (same guard, same error shape).
 - `PATCH` — body `{ userId: string, isAdmin: boolean }`. Calls
   `requireApprovedViewerUserId(request)` then `setUserAdmin(...)`.
   `setUserAdmin` enforces the admin check and the no-self-demotion rule
@@ -129,18 +153,26 @@ in `ADMIN_EMAILS`).
 
 Fix: mirror the existing `approved` pattern at `auth-user.ts:60`
 (`const approved = existing.approved === true || preapproved;`) for
-`is_admin`:
+`is_admin`. Extract the merge into a small pure helper in `src/lib/admin.ts`
+(next to `isAdminEmail`) so it is unit-testable without mocking Clerk:
 
 ```ts
-const isAdminGranted = isAdminEmail(email) || existing.is_admin === true;
+/** Allowlist only ever grants admin on sync; a manual promotion persists. */
+export function resolveAdminFlag(
+  email: string,
+  existingIsAdmin: boolean,
+): boolean {
+  return isAdminEmail(email) || existingIsAdmin;
+}
 ```
 
-and use `isAdminGranted` in both the skip-write comparison and the
-`update(...)` call. Net effect: `ADMIN_EMAILS` only ever grants admin on
-sync, never revokes it — manual promotions persist across logins, and manual
-demotion of a non-allowlisted admin sticks. Demoting someone whose email is
-in `ADMIN_EMAILS` will not stick (expected: the env list is the owner
-override).
+`auth-user.ts` calls `resolveAdminFlag(email, existing?.is_admin === true)`
+in place of `isAdminEmail(email)`, and uses that result in both the
+skip-write comparison and the `update(...)` call. Net effect: `ADMIN_EMAILS`
+only ever grants admin on sync, never revokes it — manual promotions persist
+across logins, and manual demotion of a non-allowlisted admin sticks.
+Demoting someone whose email is in `ADMIN_EMAILS` will not stick (expected:
+the env list is the owner override).
 
 ## UI
 
@@ -172,10 +204,11 @@ in / callbacks out):
 - `access-service.test.ts`: `listProgramUsers` returns correct counts and
   alphabetical order (including a null-name-falls-back-to-email case);
   `setUserAdmin` rejects self-demotion and non-admin callers.
-- `auth-user.test.ts` (or wherever the sync tests live): promoted user's
-  `is_admin` survives a subsequent sync where their email is not
-  allowlisted; a non-allowlisted admin can be demoted and stays demoted;
-  an allowlisted admin cannot be demoted (sync re-grants).
+- `admin.test.ts` (new, unit): `resolveAdminFlag` returns true when the
+  email is allowlisted regardless of the existing flag; returns true when
+  the existing flag is already true regardless of allowlist; returns false
+  only when both are false. This is the full behavior surface of the sync
+  fix, covered without mocking Clerk.
 - Route tests for `GET`/`PATCH /api/admin/users`: 401 signed out, 403
   non-admin, 400 self-demotion attempt, 200 happy path.
 - No e2e changes required — this is additive UI behind the existing admin
