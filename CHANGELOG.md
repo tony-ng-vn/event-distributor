@@ -5,6 +5,16 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.3.1
+
+2026-07-09
+
+**Feed**
+
+- Fixed "Add link" and other dark-filled buttons/pills rendering with invisible white-on-white text in dark mode; their text color now always follows the opposite theme surface, so it stays legible whether the button itself is light or dark.
+
+---
+
 ## v0.3.0
 
 2026-07-08

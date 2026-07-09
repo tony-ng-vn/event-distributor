@@ -868,7 +868,7 @@ export function FeedApp() {
           className="glass-card flex w-full items-center gap-3 rounded-2xl border border-border px-4 py-3 text-left active:scale-[0.99]"
           data-testid="add-luma-button-mobile"
         >
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-lg font-light text-white">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-lg font-light text-background">
             +
           </span>
           <span className="text-sm text-muted">
@@ -948,7 +948,7 @@ export function FeedApp() {
       />
 
       {toast && (
-        <div className="fixed bottom-28 left-1/2 z-50 -translate-x-1/2 rounded-full bg-foreground px-4 py-2 text-sm text-white shadow-md lg:bottom-6">
+        <div className="fixed bottom-28 left-1/2 z-50 -translate-x-1/2 rounded-full bg-foreground px-4 py-2 text-sm text-background shadow-md lg:bottom-6">
           {toast}
         </div>
       )}

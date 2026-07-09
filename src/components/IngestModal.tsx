@@ -128,7 +128,7 @@ export function IngestModal({
         )}
 
         {preview && (
-          <div className="mt-4 rounded-xl border border-white/50 bg-white/40 p-4 backdrop-blur">
+          <div className="mt-4 rounded-xl border border-background/50 bg-background/40 p-4 backdrop-blur">
             <p className="font-medium text-foreground">{preview.title}</p>
             <p className="mt-1 text-sm text-muted">
               {preview.location || (preview.isOnline ? "Online" : "Location TBD")}

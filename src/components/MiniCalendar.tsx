@@ -78,7 +78,7 @@ export function MiniCalendar({
               onClick={() => onSelectDate(selected ? null : day)}
               className={`relative flex h-9 items-center justify-center rounded-lg text-sm transition active:scale-[0.97] ${
                 selected
-                  ? "bg-foreground text-white"
+                  ? "bg-foreground text-background"
                   : inMonth
                     ? "text-foreground hover:bg-background-subtle"
                     : "text-muted/40"
