@@ -24,6 +24,7 @@ import {
 } from "@/components/AuthControls";
 import { MiniCalendar } from "@/components/MiniCalendar";
 import { AdminEventCard } from "@/components/AdminEventCard";
+import { ProgramUsersAdmin, type ProgramUserView } from "@/components/ProgramUsersAdmin";
 import { EventDetailSheet } from "@/components/EventDetailSheet";
 import { EventFeedCard } from "@/components/EventFeedCard";
 import { FeedSkeleton } from "@/components/FeedSkeleton";
@@ -59,6 +60,13 @@ export function FeedApp() {
   const [connectOpen, setConnectOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [viewerIsAdmin, setViewerIsAdmin] = useState(false);
+  const [adminSubTab, setAdminSubTab] = useState<"events" | "users">("events");
+  const [programUsers, setProgramUsers] = useState<ProgramUserView[] | null>(null);
+  const [programUsersLoading, setProgramUsersLoading] = useState(false);
+  const [programUsersViewerId, setProgramUsersViewerId] = useState<string | null>(
+    null,
+  );
+  const [pendingToggleId, setPendingToggleId] = useState<string | null>(null);
   const [exitingEventIds, setExitingEventIds] = useState<Record<string, true>>({});
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Record<string, true>>({});
 
@@ -102,6 +110,33 @@ export function FeedApp() {
       }
     }
   }, []);
+
+  /** Load the full user roster for the Admin tab's Users view (lazy, on first open). */
+  const loadProgramUsers = useCallback(async () => {
+    setProgramUsersLoading(true);
+    try {
+      const response = await fetch("/api/admin/users", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Failed to load users");
+      setProgramUsers(data.users as ProgramUserView[]);
+      setProgramUsersViewerId(data.viewerUserId as string);
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Failed to load users");
+    } finally {
+      setProgramUsersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (
+      activeTab === "admin" &&
+      adminSubTab === "users" &&
+      programUsers === null &&
+      !programUsersLoading
+    ) {
+      void loadProgramUsers();
+    }
+  }, [activeTab, adminSubTab, programUsers, programUsersLoading, loadProgramUsers]);
 
   useEffect(() => {
     if (activeTab === "admin" && !viewerIsAdmin) {
@@ -366,6 +401,39 @@ export function FeedApp() {
     }
   }
 
+  async function handleToggleAdmin(user: ProgramUserView) {
+    const nextIsAdmin = !user.isAdmin;
+    const label = user.name?.trim() || user.email;
+    const confirmMessage = nextIsAdmin
+      ? `Make ${label} an admin?`
+      : `Remove admin access from ${label}?`;
+
+    if (!window.confirm(confirmMessage)) return;
+
+    setPendingToggleId(user.id);
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, isAdmin: nextIsAdmin }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? "Update failed");
+
+      setProgramUsers((prev) =>
+        prev?.map((u) => (u.id === user.id ? { ...u, isAdmin: nextIsAdmin } : u)) ??
+        prev,
+      );
+      setToast(
+        nextIsAdmin ? `${label} is now an admin` : `${label} is no longer an admin`,
+      );
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setPendingToggleId(null);
+    }
+  }
+
   function renderFeedCards(
     sectionEvents: FeedEvent[],
     options?: { showPastActions?: boolean },
@@ -519,38 +587,73 @@ export function FeedApp() {
 
   const adminContent = (
     <div className="space-y-4" data-testid="admin-tab">
-      <div>
-        <p className="text-sm font-medium text-foreground">
-          {loading
-            ? "Loading events..."
-            : `${events.length} event${events.length === 1 ? "" : "s"}`}
-        </p>
-        <p className="text-sm text-muted">
-          Who added each event and who&apos;s going
-        </p>
-      </div>
-
-      {loading ? (
-        <FeedSkeleton />
-      ) : events.length === 0 ? (
-        <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
-          <p className="font-medium text-foreground">No events yet</p>
-          <p className="mt-2 text-sm text-muted">
-            Paste a link to share with your group.
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            {adminSubTab === "events"
+              ? loading
+                ? "Loading events..."
+                : `${events.length} event${events.length === 1 ? "" : "s"}`
+              : programUsersLoading
+                ? "Loading users..."
+                : `${programUsers?.length ?? 0} user${
+                    programUsers?.length === 1 ? "" : "s"
+                  }`}
+          </p>
+          <p className="text-sm text-muted">
+            {adminSubTab === "events"
+              ? "Who added each event and who's going"
+              : "Everyone signed up, with admin and approval status"}
           </p>
         </div>
-      ) : (
-        <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-          {events.map((event) => (
-            <AdminEventCard
-              key={event.id}
-              event={event}
-              isExiting={Boolean(exitingEventIds[event.id])}
-              onDelete={() => handleDelete(event.id)}
-              onOpen={() => setDetailEvent(event)}
-            />
+        <div className="flex flex-wrap gap-2" data-testid="admin-sub-tabs">
+          {(["events", "users"] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setAdminSubTab(value)}
+              className={`filter-pill ${
+                adminSubTab === value ? "filter-pill-active" : "filter-pill-inactive"
+              }`}
+              data-testid={`admin-sub-tab-${value}`}
+            >
+              {value}
+            </button>
           ))}
         </div>
+      </div>
+
+      {adminSubTab === "events" ? (
+        loading ? (
+          <FeedSkeleton />
+        ) : events.length === 0 ? (
+          <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
+            <p className="font-medium text-foreground">No events yet</p>
+            <p className="mt-2 text-sm text-muted">
+              Paste a link to share with your group.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+            {events.map((event) => (
+              <AdminEventCard
+                key={event.id}
+                event={event}
+                isExiting={Boolean(exitingEventIds[event.id])}
+                onDelete={() => handleDelete(event.id)}
+                onOpen={() => setDetailEvent(event)}
+              />
+            ))}
+          </div>
+        )
+      ) : (
+        <ProgramUsersAdmin
+          users={programUsers}
+          loading={programUsersLoading}
+          viewerUserId={programUsersViewerId}
+          pendingToggleId={pendingToggleId}
+          onToggleAdmin={handleToggleAdmin}
+        />
       )}
     </div>
   );
