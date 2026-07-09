@@ -39,6 +39,10 @@ Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGE
 
 ## 2026-07-08
 
+The app is now invite-only. New sign-ups land on a "you're on the list" screen and see no events until they are approved, so putting the app in front of a wider audience no longer exposes the group's plans to strangers. Everyone already using it was let in automatically.
+
+Admins get a Waitlist page (linked from Settings) to see who is waiting and approve people one tap.
+
 The Your events tab now uses the exact same event card as the main Feed, so the two match: same linked title, same actions, and no more "View on Luma" link (the Feed had already dropped it).
 
 Rewrote the README to explain what Event Radar is and why it exists, written for readers rather than contributors.

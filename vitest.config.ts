@@ -24,6 +24,10 @@ export default defineConfig({
           environment: "node",
           setupFiles: ["./tests/setup.integration.ts"],
           include: ["tests/integration/**/*.test.ts"],
+          // Every integration file shares one InsForge database and wipes it in
+          // beforeEach, so files must run one at a time or they race and delete
+          // rows out from under each other.
+          fileParallelism: false,
         },
         resolve: {
           alias: {

@@ -6,12 +6,15 @@
  *   preview: false → create Event row in database
  */
 import { NextResponse } from "next/server";
-import { requireViewerUserId } from "@/lib/auth-user";
+import {
+  requireApprovedViewerUserId,
+  WAITLIST_PENDING_MESSAGE,
+} from "@/lib/auth-user";
 import { ingestLumaEvent, previewLumaIngest } from "@/lib/events-service";
 
 export async function POST(request: Request) {
   try {
-    const viewerUserId = await requireViewerUserId(request);
+    const viewerUserId = await requireApprovedViewerUserId(request);
     const body = (await request.json()) as {
       lumaUrl?: string;
       preview?: boolean;
@@ -37,6 +40,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ event }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Ingest failed";
+    if (message === WAITLIST_PENDING_MESSAGE) {
+      return NextResponse.json(
+        { error: message, code: "WAITLIST_PENDING" },
+        { status: 403 },
+      );
+    }
     if (/sign in required/i.test(message)) {
       return NextResponse.json(
         { error: message, code: "AUTH_REQUIRED" },

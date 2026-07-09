@@ -469,6 +469,7 @@ export async function createUser(input: {
   name?: string | null;
   clerkId?: string | null;
   isAdmin?: boolean;
+  approved?: boolean;
 }) {
   const db = getInsforgeAdmin();
   const { data, error } = await db.database
@@ -480,9 +481,10 @@ export async function createUser(input: {
         name: input.name ?? null,
         clerk_id: input.clerkId ?? null,
         is_admin: input.isAdmin ?? false,
+        approved: input.approved ?? false,
       },
     ])
-    .select("id, email, name, image, clerk_id, is_admin")
+    .select("id, email, name, image, clerk_id, is_admin, approved")
     .single();
 
   if (error) throw new Error(error.message);
