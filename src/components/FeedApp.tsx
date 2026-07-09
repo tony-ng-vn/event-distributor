@@ -63,6 +63,7 @@ export function FeedApp() {
   const [adminSubTab, setAdminSubTab] = useState<"events" | "users">("events");
   const [programUsers, setProgramUsers] = useState<ProgramUserView[] | null>(null);
   const [programUsersLoading, setProgramUsersLoading] = useState(false);
+  const [programUsersError, setProgramUsersError] = useState<string | null>(null);
   const [programUsersViewerId, setProgramUsersViewerId] = useState<string | null>(
     null,
   );
@@ -114,14 +115,18 @@ export function FeedApp() {
   /** Load the full user roster for the Admin tab's Users view (lazy, on first open). */
   const loadProgramUsers = useCallback(async () => {
     setProgramUsersLoading(true);
+    setProgramUsersError(null);
     try {
       const response = await fetch("/api/admin/users", { cache: "no-store" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Failed to load users");
       setProgramUsers(data.users as ProgramUserView[]);
       setProgramUsersViewerId(data.viewerUserId as string);
+      setProgramUsersError(null);
     } catch (err) {
-      setToast(err instanceof Error ? err.message : "Failed to load users");
+      const message = err instanceof Error ? err.message : "Failed to load users";
+      setProgramUsersError(message);
+      setToast(message);
     } finally {
       setProgramUsersLoading(false);
     }
@@ -132,11 +137,19 @@ export function FeedApp() {
       activeTab === "admin" &&
       adminSubTab === "users" &&
       programUsers === null &&
-      !programUsersLoading
+      !programUsersLoading &&
+      !programUsersError
     ) {
       void loadProgramUsers();
     }
-  }, [activeTab, adminSubTab, programUsers, programUsersLoading, loadProgramUsers]);
+  }, [
+    activeTab,
+    adminSubTab,
+    programUsers,
+    programUsersLoading,
+    programUsersError,
+    loadProgramUsers,
+  ]);
 
   useEffect(() => {
     if (activeTab === "admin" && !viewerIsAdmin) {
