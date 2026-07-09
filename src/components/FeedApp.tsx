@@ -13,6 +13,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { selectCalendarEvents } from "@/lib/calendar-events";
 import { partitionFeedEvents, type CardStatus } from "@/lib/feed-partition";
 import { runInterested } from "@/lib/interested-action";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
@@ -218,6 +219,13 @@ export function FeedApp() {
         (event) => event.viewerAccepted || cardState[event.id] === "accepted",
       ),
     [events, cardState],
+  );
+
+  /** All events on every tab, except "Your events" which narrows the calendar
+   *  to only events the viewer is going to (see calendar-events.ts). */
+  const calendarEvents = useMemo(
+    () => selectCalendarEvents({ events, activeTab, cardState }),
+    [events, activeTab, cardState],
   );
 
   const pendingCount = useMemo(
@@ -831,7 +839,7 @@ export function FeedApp() {
           {activeTab === "calendar" && (
             <div className="space-y-4">
               <MiniCalendar
-                events={events}
+                events={calendarEvents}
                 currentDate={calendarDate}
                 selectedDate={selectedDate}
                 onSelectDate={setSelectedDate}
@@ -844,7 +852,7 @@ export function FeedApp() {
 
         <aside className="hidden space-y-4 lg:block">
           <MiniCalendar
-            events={events}
+            events={calendarEvents}
             currentDate={calendarDate}
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}

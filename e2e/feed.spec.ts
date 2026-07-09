@@ -219,4 +219,56 @@ test.describe("shared Luma feed", () => {
     await expect(page.getByTestId("accepted-state")).toBeHidden();
     await expect(page.getByTestId("accept-button")).toBeVisible();
   });
+
+  test("calendar narrows to accepted events on the Your events tab", async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    const seed = await request.post("/api/e2e/seed", {
+      headers: { "x-e2e-secret": E2E_SECRET },
+    });
+    const seedBody = await seed.json();
+    const eventId = seedBody.event.id as string;
+
+    const userId = await authenticatePage(page, request);
+
+    await page.goto("/");
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/events") && response.status() === 200,
+    );
+
+    const aside = page.locator("aside");
+
+    // Feed tab: the not-yet-accepted event still shows a dot.
+    await expect(aside.getByTestId("calendar-event-dot")).toHaveCount(1);
+
+    // Your events tab: nothing accepted yet, so the calendar has no dots.
+    await page.getByTestId("tab-mine").click();
+    await expect(aside.getByTestId("calendar-event-dot")).toHaveCount(0);
+
+    const accept = await request.post(`/api/events/${eventId}/accept`, {
+      headers: {
+        "x-e2e-secret": E2E_SECRET,
+        "x-e2e-user-id": userId,
+      },
+    });
+    expect(accept.ok()).toBeTruthy();
+
+    // activeTab is client-only state, not persisted -- a reload resets it to
+    // the Feed tab, so switch back to Your events explicitly before checking.
+    await page.reload();
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/events") && response.status() === 200,
+    );
+    await page.getByTestId("tab-mine").click();
+    await expect(aside.getByTestId("calendar-event-dot")).toHaveCount(1);
+
+    // Feed tab keeps showing the dot regardless of accept state.
+    await page.getByTestId("tab-feed").click();
+    await expect(aside.getByTestId("calendar-event-dot")).toHaveCount(1);
+  });
 });

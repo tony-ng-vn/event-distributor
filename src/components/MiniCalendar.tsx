@@ -86,7 +86,10 @@ export function MiniCalendar({
             >
               {day.getDate()}
               {hasEvent && !selected && (
-                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-foreground" />
+                <span
+                  className="absolute bottom-1 h-1 w-1 rounded-full bg-foreground"
+                  data-testid="calendar-event-dot"
+                />
               )}
             </button>
           );
