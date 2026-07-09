@@ -5,6 +5,21 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.3.0
+
+2026-07-08
+
+**Feed**
+
+- The Admin tab now has a Users view listing everyone in the program with their admin/pending status and how many events they've added and RSVP'd to.
+
+**Auth**
+
+- Admins can promote or demote another user's admin access from the new Users view (you can't change your own).
+- A manual admin promotion now survives the next sign-in instead of being silently reverted by the ADMIN_EMAILS allowlist sync.
+
+---
+
 ## v0.2.0
 
 2026-07-08
