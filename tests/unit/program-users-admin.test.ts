@@ -40,6 +40,17 @@ function render(props: Partial<Parameters<typeof ProgramUsersAdmin>[0]>) {
   );
 }
 
+/** Extract a specific <button>'s own opening tag by its data-testid, so
+ * disabled-state assertions check the real attribute instead of a
+ * substring window that can drift as nearby classes change. */
+function buttonTag(html: string, testId: string): string {
+  const marker = `data-testid="${testId}"`;
+  const markerIndex = html.indexOf(marker);
+  const tagStart = html.lastIndexOf("<button", markerIndex);
+  const tagEnd = html.indexOf(">", markerIndex);
+  return html.slice(tagStart, tagEnd + 1);
+}
+
 describe("ProgramUsersAdmin", () => {
   it("shows an Admin badge for admins and a Pending badge for unapproved users", () => {
     const html = render({});
@@ -60,16 +71,12 @@ describe("ProgramUsersAdmin", () => {
 
   it("disables the toggle on the viewer's own row", () => {
     const html = render({ viewerUserId: "admin-1" });
-    const rowStart = html.indexOf('data-testid="toggle-admin-admin-1"');
-    const rowMarkup = html.slice(rowStart - 20, rowStart + 200);
-    expect(rowMarkup).toContain("disabled");
+    expect(buttonTag(html, "toggle-admin-admin-1")).toContain('disabled=""');
   });
 
   it("does not disable the toggle on other rows", () => {
     const html = render({ viewerUserId: "admin-1" });
-    const rowStart = html.indexOf('data-testid="toggle-admin-pending-1"');
-    const rowMarkup = html.slice(rowStart - 20, rowStart + 200);
-    expect(rowMarkup).not.toContain("disabled");
+    expect(buttonTag(html, "toggle-admin-pending-1")).not.toContain('disabled=""');
   });
 
   it("shows a loading state", () => {

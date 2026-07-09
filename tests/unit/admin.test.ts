@@ -9,7 +9,11 @@ describe("resolveAdminFlag", () => {
   const original = process.env.ADMIN_EMAILS;
 
   afterEach(() => {
-    process.env.ADMIN_EMAILS = original;
+    if (original === undefined) {
+      delete process.env.ADMIN_EMAILS;
+    } else {
+      process.env.ADMIN_EMAILS = original;
+    }
   });
 
   it("grants admin when the email is on the allowlist, regardless of the existing flag", () => {

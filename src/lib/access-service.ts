@@ -165,6 +165,7 @@ export async function setUserAdmin(
   targetUserId: string,
   isAdmin: boolean,
 ): Promise<void> {
+  // Load-bearing: the PATCH route only enforces "approved", not "admin" -- this is the only admin gate.
   const admin = await isUserAdmin(adminUserId);
   if (!admin) {
     throw new Error("Admin privileges required to change admin status");

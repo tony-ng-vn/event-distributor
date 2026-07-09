@@ -118,7 +118,7 @@ export function FeedApp() {
     setProgramUsersError(null);
     try {
       const response = await fetch("/api/admin/users", { cache: "no-store" });
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error ?? "Failed to load users");
       setProgramUsers(data.users as ProgramUserView[]);
       setProgramUsersViewerId(data.viewerUserId as string);
@@ -659,6 +659,18 @@ export function FeedApp() {
             ))}
           </div>
         )
+      ) : programUsersError ? (
+        <div className="glass-card rounded-2xl border border-dashed border-border p-10 text-center">
+          <p className="font-medium text-foreground">Could not load users</p>
+          <p className="mt-2 text-sm text-muted">{programUsersError}</p>
+          <button
+            type="button"
+            onClick={() => void loadProgramUsers()}
+            className="btn-secondary mt-4"
+          >
+            Try again
+          </button>
+        </div>
       ) : (
         <ProgramUsersAdmin
           users={programUsers}
