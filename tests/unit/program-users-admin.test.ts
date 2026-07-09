@@ -34,7 +34,9 @@ function render(props: Partial<Parameters<typeof ProgramUsersAdmin>[0]>) {
       loading: false,
       viewerUserId: null,
       pendingToggleId: null,
+      pendingApproveId: null,
       onToggleAdmin: () => undefined,
+      onApprove: () => undefined,
       ...props,
     }),
   );
@@ -77,6 +79,17 @@ describe("ProgramUsersAdmin", () => {
   it("does not disable the toggle on other rows", () => {
     const html = render({ viewerUserId: "admin-1" });
     expect(buttonTag(html, "toggle-admin-pending-1")).not.toContain('disabled=""');
+  });
+
+  it("shows an Approve button on pending rows only", () => {
+    const html = render({});
+    expect(html).toContain('data-testid="approve-user-pending-1"');
+    expect(html).not.toContain('data-testid="approve-user-admin-1"');
+  });
+
+  it("disables the Approve button while its approval is in flight", () => {
+    const html = render({ pendingApproveId: "pending-1" });
+    expect(buttonTag(html, "approve-user-pending-1")).toContain('disabled=""');
   });
 
   it("shows a loading state", () => {

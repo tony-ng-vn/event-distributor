@@ -68,6 +68,7 @@ export function FeedApp() {
     null,
   );
   const [pendingToggleId, setPendingToggleId] = useState<string | null>(null);
+  const [pendingApproveId, setPendingApproveId] = useState<string | null>(null);
   const [exitingEventIds, setExitingEventIds] = useState<Record<string, true>>({});
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Record<string, true>>({});
 
@@ -447,6 +448,31 @@ export function FeedApp() {
     }
   }
 
+  /** Approve a pending user from the roster; reuses the waitlist approve endpoint. */
+  async function handleApproveUser(user: ProgramUserView) {
+    const label = user.name?.trim() || user.email;
+    setPendingApproveId(user.id);
+    try {
+      const response = await fetch("/api/admin/waitlist/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? "Approval failed");
+
+      setProgramUsers((prev) =>
+        prev?.map((u) => (u.id === user.id ? { ...u, approved: true } : u)) ??
+        prev,
+      );
+      setToast(`${label} is in`);
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Approval failed");
+    } finally {
+      setPendingApproveId(null);
+    }
+  }
+
   function renderFeedCards(
     sectionEvents: FeedEvent[],
     options?: { showPastActions?: boolean },
@@ -639,7 +665,9 @@ export function FeedApp() {
       loading={programUsersLoading}
       viewerUserId={programUsersViewerId}
       pendingToggleId={pendingToggleId}
+      pendingApproveId={pendingApproveId}
       onToggleAdmin={handleToggleAdmin}
+      onApprove={handleApproveUser}
     />
   );
 

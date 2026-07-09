@@ -12,6 +12,7 @@ Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGE
 **Feed**
 
 - The Admin tab now has a Users view listing everyone in the program with their admin/pending status and how many events they've added and RSVP'd to.
+- Pending sign-ups can be approved straight from the Users view, so admins no longer have to jump to the separate waitlist page to let someone in.
 
 **Auth**
 
