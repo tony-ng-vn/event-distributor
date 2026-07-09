@@ -15,7 +15,13 @@ import { listProgramUsers, setUserAdmin } from "@/lib/access-service";
 
 export async function GET(request: Request) {
   try {
-    const { userId, isAdmin } = await requireViewer(request);
+    const { userId, isAdmin, approved } = await requireViewer(request);
+    if (!approved) {
+      return NextResponse.json(
+        { error: WAITLIST_PENDING_MESSAGE, code: "WAITLIST_PENDING" },
+        { status: 403 },
+      );
+    }
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Admin privileges required" },
@@ -28,10 +34,13 @@ export async function GET(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unauthorized";
     const status = /sign in required/i.test(message) ? 401 : 400;
-    return NextResponse.json(
-      { error: message, code: "AUTH_REQUIRED" },
-      { status },
-    );
+    if (status === 401) {
+      return NextResponse.json(
+        { error: message, code: "AUTH_REQUIRED" },
+        { status },
+      );
+    }
+    return NextResponse.json({ error: message }, { status });
   }
 }
 

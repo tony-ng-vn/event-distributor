@@ -47,6 +47,15 @@ describe("GET /api/admin/users", () => {
     expect(response.status).toBe(401);
   });
 
+  it("returns 403 with WAITLIST_PENDING for an unapproved admin, without exposing the roster", async () => {
+    requireViewer.mockResolvedValue({ userId: "u1", isAdmin: true, approved: false });
+    const response = await GET(req("GET"));
+    const data = await response.json();
+    expect(response.status).toBe(403);
+    expect(data.code).toBe("WAITLIST_PENDING");
+    expect(listProgramUsers).not.toHaveBeenCalled();
+  });
+
   it("returns the roster and viewer id for an admin", async () => {
     requireViewer.mockResolvedValue({ userId: "admin-1", isAdmin: true, approved: true });
     listProgramUsers.mockResolvedValue([{ id: "u1", email: "a@example.com" }]);
@@ -55,6 +64,15 @@ describe("GET /api/admin/users", () => {
     expect(response.status).toBe(200);
     expect(data.users).toHaveLength(1);
     expect(data.viewerUserId).toBe("admin-1");
+  });
+
+  it("omits the AUTH_REQUIRED code for non-auth errors", async () => {
+    requireViewer.mockResolvedValue({ userId: "admin-1", isAdmin: true, approved: true });
+    listProgramUsers.mockRejectedValue(new Error("database unavailable"));
+    const response = await GET(req("GET"));
+    const data = await response.json();
+    expect(response.status).toBe(400);
+    expect(data.code).toBeUndefined();
   });
 });
 
