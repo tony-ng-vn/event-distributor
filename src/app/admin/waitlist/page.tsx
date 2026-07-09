@@ -1,27 +1,26 @@
 /**
- * /settings — account and notification settings.
+ * /admin/waitlist — review pending sign-ups and let people in.
  *
- * Minimal surface for Phase 1: a Notifications section to toggle new-event
- * emails. Server component shell; the interactive section is a client component.
+ * Server-component shell; the interactive list is a client component that
+ * self-guards against non-admin viewers via the API.
  */
 import Link from "next/link";
-import { AdminWaitlistLink } from "@/components/AdminWaitlistLink";
-import { NotificationSettings } from "@/components/NotificationSettings";
+import { WaitlistAdmin } from "@/components/WaitlistAdmin";
 
 export const metadata = {
-  title: "Settings — Event Radar",
+  title: "Waitlist — Event Radar",
 };
 
-export default function SettingsPage() {
+export default function WaitlistPage() {
   return (
     <div className="app-shell flex min-h-dvh flex-col">
       <header className="glass-header">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-foreground">
-              Settings
+              Waitlist
             </h1>
-            <p className="text-sm text-muted">Manage how Event Radar reaches you</p>
+            <p className="text-sm text-muted">Approve who gets into the group</p>
           </div>
           <Link href="/" className="btn-secondary whitespace-nowrap">
             Back to events
@@ -30,8 +29,7 @@ export default function SettingsPage() {
       </header>
 
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-8">
-        <NotificationSettings />
-        <AdminWaitlistLink />
+        <WaitlistAdmin />
       </main>
     </div>
   );

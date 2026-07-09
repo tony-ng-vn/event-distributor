@@ -16,7 +16,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { partitionFeedEvents, type CardStatus } from "@/lib/feed-partition";
 import { runInterested } from "@/lib/interested-action";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
-import { AuthButton, SignInGate, SignInPromptModal } from "@/components/AuthControls";
+import {
+  AuthButton,
+  SignInGate,
+  SignInPromptModal,
+  WaitlistGate,
+} from "@/components/AuthControls";
 import { MiniCalendar } from "@/components/MiniCalendar";
 import { AdminEventCard } from "@/components/AdminEventCard";
 import { EventDetailSheet } from "@/components/EventDetailSheet";
@@ -41,6 +46,7 @@ export function FeedApp() {
   const [events, setEvents] = useState<FeedEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waitlisted, setWaitlisted] = useState(false);
   const [filter, setFilter] = useState<FeedFilter>("all");
   const [activeTab, setActiveTab] = useState<MobileTab>("feed");
   const [passedIds, setPassedIds] = useState<string[]>([]);
@@ -67,7 +73,12 @@ export function FeedApp() {
     try {
       const response = await fetch("/api/events", { cache: "no-store" });
       const data = await response.json();
+      if (response.status === 403 && data.code === "WAITLIST_PENDING") {
+        setWaitlisted(true);
+        return null;
+      }
       if (!response.ok) throw new Error(data.error ?? "Failed to load feed");
+      setWaitlisted(false);
       setEvents(data.events);
       setViewerIsAdmin(data.viewerIsAdmin === true);
       setCardState((prev) => {
@@ -577,6 +588,10 @@ export function FeedApp() {
 
   if (!isSignedIn) {
     return <SignInGate />;
+  }
+
+  if (waitlisted) {
+    return <WaitlistGate />;
   }
 
   return (

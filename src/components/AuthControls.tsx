@@ -68,6 +68,42 @@ export function SignInGate() {
   );
 }
 
+/** Full-page card shown to a signed-in user still waiting for approval. */
+export function WaitlistGate() {
+  return (
+    <div className="app-shell flex min-h-dvh flex-col">
+      <header className="glass-header">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight text-foreground">
+              Events
+            </h1>
+            <p className="text-sm text-muted">Shared plans with your group</p>
+          </div>
+          <AuthButton />
+        </div>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-10">
+        <div
+          className="glass-card rounded-2xl p-8 text-center"
+          data-testid="waitlist-gate"
+        >
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+            You&apos;re on the list
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Thanks for signing up. This app is invite-only for now, so your
+            account is waiting for approval. We&apos;ll let you in as soon as
+            someone from the group adds you. Nothing else to do -- you can close
+            this tab and come back later.
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+}
+
 /** Modal when user tries Accept without being signed in. */
 export function SignInPromptModal({
   open,

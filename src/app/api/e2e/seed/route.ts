@@ -79,7 +79,7 @@ export async function PUT(request: Request) {
     if (existing) {
       const { data: updated, error: updateError } = await db.database
         .from("users")
-        .update({ name })
+        .update({ name, approved: true })
         .eq("id", existing.id)
         .select("id, email, name, image")
         .single();
@@ -88,7 +88,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ user: updated });
     }
 
-    const user = await createUser({ email, name });
+    const user = await createUser({ email, name, approved: true });
     return NextResponse.json({ user: { ...user, image: null, id: user.id } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Auth seed failed";

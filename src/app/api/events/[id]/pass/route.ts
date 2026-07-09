@@ -1,12 +1,31 @@
 /**
  * POST /api/events/[id]/pass — hide event from the viewer's feed (cross-device).
  *
- * Requires sign-in (Clerk → InsForge User). Anonymous users should use
+ * Requires an approved (past-waitlist) viewer. Anonymous users should use
  * client sessionStorage via FeedApp fallback.
  */
 import { NextResponse } from "next/server";
-import { resolveViewerUserId } from "@/lib/auth-user";
+import {
+  requireApprovedViewerUserId,
+  WAITLIST_PENDING_MESSAGE,
+} from "@/lib/auth-user";
 import { passEvent, unpassEvent } from "@/lib/events-service";
+
+function gateResponse(message: string) {
+  if (message === WAITLIST_PENDING_MESSAGE) {
+    return NextResponse.json(
+      { error: message, code: "WAITLIST_PENDING" },
+      { status: 403 },
+    );
+  }
+  if (/sign in required/i.test(message)) {
+    return NextResponse.json(
+      { error: message, code: "AUTH_REQUIRED" },
+      { status: 401 },
+    );
+  }
+  return null;
+}
 
 export async function POST(
   request: Request,
@@ -14,20 +33,13 @@ export async function POST(
 ) {
   try {
     const { id } = await context.params;
-    const userId = await resolveViewerUserId(request);
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Sign in required to sync passes", code: "AUTH_REQUIRED" },
-        { status: 401 },
-      );
-    }
+    const userId = await requireApprovedViewerUserId(request);
 
     await passEvent(id, userId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Pass failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return gateResponse(message) ?? NextResponse.json({ error: message }, { status: 400 });
   }
 }
 
@@ -37,19 +49,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params;
-    const userId = await resolveViewerUserId(request);
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Sign in required to undo pass", code: "AUTH_REQUIRED" },
-        { status: 401 },
-      );
-    }
+    const userId = await requireApprovedViewerUserId(request);
 
     await unpassEvent(id, userId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unpass failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return gateResponse(message) ?? NextResponse.json({ error: message }, { status: 400 });
   }
 }
