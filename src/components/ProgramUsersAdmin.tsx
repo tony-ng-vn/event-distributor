@@ -1,7 +1,7 @@
 /**
- * Admin roster: everyone in the program, with status badges and an admin
- * promote/demote toggle. Approving pending sign-ups stays on the separate
- * /admin/waitlist page -- this view is read-only except for the admin flag.
+ * Admin roster: everyone in the program, with status badges, an approve action
+ * for pending sign-ups, and an admin promote/demote toggle. The same approve
+ * endpoint also backs the standalone /admin/waitlist page.
  */
 "use client";
 
@@ -34,13 +34,17 @@ export function ProgramUsersAdmin({
   loading,
   viewerUserId,
   pendingToggleId,
+  pendingApproveId,
   onToggleAdmin,
+  onApprove,
 }: {
   users: ProgramUserView[] | null;
   loading: boolean;
   viewerUserId: string | null;
   pendingToggleId: string | null;
+  pendingApproveId: string | null;
   onToggleAdmin: (user: ProgramUserView) => void;
+  onApprove: (user: ProgramUserView) => void;
 }) {
   if (loading) {
     return <p className="text-sm text-muted">Loading users...</p>;
@@ -102,20 +106,33 @@ export function ProgramUsersAdmin({
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => onToggleAdmin(user)}
-              className="btn-secondary whitespace-nowrap disabled:opacity-60"
-              title={isSelf ? "You can't change your own admin status" : undefined}
-              disabled={isSelf || pendingToggleId === user.id}
-              data-testid={`toggle-admin-${user.id}`}
-            >
-              {pendingToggleId === user.id
-                ? "Saving..."
-                : user.isAdmin
-                  ? "Remove admin"
-                  : "Make admin"}
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              {!user.approved && (
+                <button
+                  type="button"
+                  onClick={() => onApprove(user)}
+                  className="btn-primary whitespace-nowrap disabled:opacity-60"
+                  disabled={pendingApproveId === user.id}
+                  data-testid={`approve-user-${user.id}`}
+                >
+                  {pendingApproveId === user.id ? "Approving..." : "Approve"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => onToggleAdmin(user)}
+                className="btn-secondary whitespace-nowrap disabled:opacity-60"
+                title={isSelf ? "You can't change your own admin status" : undefined}
+                disabled={isSelf || pendingToggleId === user.id}
+                data-testid={`toggle-admin-${user.id}`}
+              >
+                {pendingToggleId === user.id
+                  ? "Saving..."
+                  : user.isAdmin
+                    ? "Remove admin"
+                    : "Make admin"}
+              </button>
+            </div>
           </li>
         );
       })}
