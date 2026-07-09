@@ -1302,10 +1302,16 @@ git commit -m "feat(feed): wire the Users view into the Admin tab"
 
 - [ ] **Step 1: Add the changelog entry**
 
-At the top of `CHANGELOG.md`, above the `## v0.1.1` entry, insert:
+Check the version heading currently at the top of `CHANGELOG.md` and the
+`version` field in `package.json` before writing this entry — other work has
+landed release entries on this repo concurrently, so the "previous version"
+may no longer be v0.1.1 by the time this task runs. Insert the new entry
+above whatever the current top entry is, and bump the version one minor
+above whatever `package.json` currently has (e.g. if `package.json` says
+`0.2.0`, the new entry is `## v0.3.0`).
 
 ```markdown
-## v0.2.0
+## v<NEXT>
 
 2026-07-08
 
@@ -1323,23 +1329,14 @@ At the top of `CHANGELOG.md`, above the `## v0.1.1` entry, insert:
 
 - [ ] **Step 2: Bump the version**
 
-In `package.json`, change:
-
-```json
-  "version": "0.1.1",
-```
-
-to:
-
-```json
-  "version": "0.2.0",
-```
+In `package.json`, bump the `version` field to the same `<NEXT>` value used
+in the changelog heading above.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add CHANGELOG.md package.json
-git commit -m "chore: release v0.2.0"
+git commit -m "chore: release v<NEXT>"
 ```
 
 ---
