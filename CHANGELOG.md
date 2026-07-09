@@ -5,6 +5,19 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.2.0
+
+2026-07-08
+
+**Auth**
+
+- The app is now invite-only. The signed-out landing page leads with joining the waitlist: signing up saves your spot, and until an admin approves you the app shows a "you're on the list" screen with no events, attendees, or member names. The gate is enforced server-side, so it holds even against direct API calls.
+- Everyone already using the app was let in automatically, so no one's feed went dark.
+- Once approved, members sign back in with the same account and go straight to the feed -- no second signup.
+- Admins get a Waitlist page (linked from Settings) to see who is waiting and approve people one tap.
+
+---
+
 ## v0.1.1
 
 2026-07-08
@@ -38,10 +51,6 @@ Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGE
 ---
 
 ## 2026-07-08
-
-The app is now invite-only. New sign-ups land on a "you're on the list" screen and see no events until they are approved, so putting the app in front of a wider audience no longer exposes the group's plans to strangers. Everyone already using it was let in automatically.
-
-Admins get a Waitlist page (linked from Settings) to see who is waiting and approve people one tap.
 
 The Your events tab now uses the exact same event card as the main Feed, so the two match: same linked title, same actions, and no more "View on Luma" link (the Feed had already dropped it).
 
