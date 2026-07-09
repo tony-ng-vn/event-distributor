@@ -16,6 +16,18 @@ export function isAdminEmail(email: string): boolean {
   return getAdminEmails().includes(email.trim().toLowerCase());
 }
 
+/**
+ * Merges the env allowlist with the persisted flag for Clerk sync writes.
+ * The allowlist only ever grants admin -- it never revokes a flag that was
+ * set some other way (e.g. a manual promotion from the admin Users tab).
+ */
+export function resolveAdminFlag(
+  email: string,
+  existingIsAdmin: boolean,
+): boolean {
+  return isAdminEmail(email) || existingIsAdmin;
+}
+
 /** Returns true when the user has platform admin privileges. */
 export async function isUserAdmin(userId: string): Promise<boolean> {
   const db = getInsforgeAdmin();

@@ -5,7 +5,7 @@
  * records can link event_id + user_id.
  */
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { isAdminEmail, isUserAdmin } from "@/lib/admin";
+import { isAdminEmail, isUserAdmin, resolveAdminFlag } from "@/lib/admin";
 import { isEmailPreapproved, isUserApproved } from "@/lib/access-service";
 import { getInsforgeAdmin } from "@/lib/db";
 import { newId } from "@/lib/ids";
@@ -38,7 +38,6 @@ async function syncClerkUser() {
 
   const clerkName = clerkUser.fullName ?? clerkUser.firstName ?? null;
   const image = clerkUser.imageUrl ?? null;
-  const isAdmin = isAdminEmail(email);
   // Admins and anyone on the preapproval list skip the waitlist automatically;
   // this also lets the owner grant access to a pending user by adding their
   // email to APPROVED_EMAILS -- they clear the gate on their next sign-in.
@@ -55,6 +54,10 @@ async function syncClerkUser() {
 
   if (existing) {
     const name = clerkName ?? existing.name;
+    // ADMIN_EMAILS only ever grants admin here; a manual promotion (or
+    // demotion of a non-allowlisted admin) made via the admin Users tab
+    // persists across future syncs instead of being silently reverted.
+    const isAdmin = resolveAdminFlag(email, existing.is_admin === true);
     // Approval only ever moves false -> true (preapproval); admin approvals
     // write the column directly, so never downgrade here.
     const approved = existing.approved === true || preapproved;
@@ -90,7 +93,7 @@ async function syncClerkUser() {
         email,
         name: clerkName,
         image,
-        is_admin: isAdmin,
+        is_admin: isAdminEmail(email),
         approved: preapproved,
       },
     ])
