@@ -74,3 +74,6 @@ next-env.d.ts
 .roo
 .trae
 .windsurf
+
+# Separate teaching/course material, not part of the app
+teaching/

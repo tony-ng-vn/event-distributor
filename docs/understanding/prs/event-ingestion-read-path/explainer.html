@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How the app reads a Luma (or any) event link</title>
+  <style>
+    :root { --bg:#faf9f7; --surface:#fff; --text:#1a1a1a; --muted:#5c5c5c; --accent:#2563eb; --accent-soft:#eff6ff; --border:#e5e2dc; --ok:#15803d; --ok-bg:#f0fdf4; --bad:#b91c1c; --bad-bg:#fef2f2; --callout:#fffbeb; --callout-border:#fcd34d; --radius:10px; --font:Georgia,serif; --mono:ui-monospace,Menlo,monospace; }
+    *{box-sizing:border-box} body{margin:0;font-family:var(--font);font-size:1.0625rem;line-height:1.65;color:var(--text);background:var(--bg);padding:max(1.25rem,env(safe-area-inset-top)) max(1.25rem,env(safe-area-inset-right)) max(4rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left))}
+    .layout{display:grid;max-width:44rem;margin:0 auto;padding:1.25rem 1.25rem 4rem}
+    @media(min-width:900px){.layout{grid-template-columns:11rem 1fr;gap:2.5rem;max-width:56rem;padding-top:2rem} nav.toc{position:sticky;top:1.5rem;align-self:start}}
+    nav.toc{font-size:.8125rem;margin-bottom:1.5rem} nav.toc strong{display:block;font-size:.6875rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.5rem}
+    nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:.2rem 0} nav.toc a:hover{color:var(--accent)}
+    header.hero{margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+    header.hero h1{font-size:1.75rem;font-weight:600;letter-spacing:-.02em;margin:0 0 .75rem} .meta{font-size:.875rem;color:var(--muted)}
+    section{margin-bottom:2.5rem} h2{font-size:1.35rem;font-weight:600;margin:0 0 1rem} h3{font-size:1.05rem;font-weight:600;margin:1.5rem 0 .5rem}
+    p{margin:0 0 1rem} details.deep-bg{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:1rem}
+    details.deep-bg summary{cursor:pointer;font-weight:600;color:var(--muted)} .figure{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin:1.25rem 0}
+    .flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;font-size:.875rem} .flow .box{background:var(--accent-soft);border:1px solid #bfdbfe;border-radius:6px;padding:.4rem .65rem;font-family:var(--mono);font-size:.75rem}
+    .flow .arrow{color:var(--muted)} pre{font-family:var(--mono);background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:var(--radius);font-size:.8125rem;white-space:pre-wrap;margin:1rem 0}
+    .code-step{margin:1.5rem 0} .code-step .step-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);font-weight:600;margin-bottom:.35rem}
+    .quiz-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.125rem;margin-bottom:1rem}
+    .quiz-item p.question{font-weight:600;margin-bottom:.75rem} .quiz-options{display:flex;flex-direction:column;gap:.5rem}
+    .quiz-options button{text-align:left;font-family:inherit;font-size:.9375rem;padding:.75rem .85rem;min-height:44px;border:1px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+    .quiz-options button:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)} .quiz-options button:disabled{cursor:default}
+    .quiz-options button.correct{border-color:var(--ok);background:var(--ok-bg)} .quiz-options button.incorrect{border-color:var(--bad);background:var(--bad-bg)}
+    .quiz-feedback{margin-top:.75rem;font-size:.9375rem;display:none} .quiz-feedback.visible{display:block}
+    .quiz-score{margin-top:1.5rem;padding:1rem;background:var(--accent-soft);border-radius:var(--radius);font-weight:600;display:none} .quiz-score.visible{display:block}
+    .series-link{font-size:.875rem;color:var(--accent)}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc"><strong>Contents</strong>
+      <a href="#glance">At a glance</a><a href="#background">Background</a><a href="#intuition">Intuition</a><a href="#code">Code</a><a href="#quiz">Quiz</a>
+    </nav>
+    <main>
+      <header class="hero">
+        <h1>How the app reads a Luma (or any) event link</h1>
+        <p class="meta">Subsystem explainer - event ingestion read path (code as on main). Traces commits 78bad2f, d72ecde, 064fcc2.<br>Generated 2026-07-08. Read <a href="#intuition">Intuition</a> first. <a class="series-link" href="../../README.md">Reading order →</a></p>
+      </header>
+      <section id="glance"><h2>At a glance</h2><p>When you paste an event URL, the app fetches that public web page server-side and lifts the event's title, date, location, host, and cover image out of the page's own machine-readable metadata (JSON-LD, then Open Graph tags) - no Luma or Partiful private API is involved.</p></section>
+      <section id="background"><h2>Background</h2>
+        <details class="deep-bg"><summary>Deep background (skippable)</summary><p>Two web standards do all the heavy lifting here. <strong>JSON-LD</strong> (JavaScript Object Notation for Linked Data) is a block of JSON a site embeds in a <code>&lt;script type="application/ld+json"&gt;</code> tag to describe its content in a machine-readable way; when it follows the <em>schema.org/Event</em> shape it hands us <code>name</code>, <code>startDate</code>, <code>location</code>, <code>organizer</code> and more, already structured. <strong>Open Graph</strong> (the <code>og:title</code>, <code>og:image</code> ... <code>&lt;meta&gt;</code> tags you see in link previews) is the weaker fallback: it always gives a title and image but has no real notion of a date or a venue. Luma and Partiful both emit these tags for their own SEO and link-preview cards, which is the entire reason this app can read them without any platform integration.</p></details>
+        <h3>What mattered before</h3><p>The whole read path lives in one file, <code>src/lib/luma.ts</code> (the name is legacy - it parses any event page, not just Luma). It is called by <code>ingestLumaEvent</code> in <code>src/lib/events-service.ts</code>, which is reached from the POST route <code>src/app/api/events/ingest/route.ts</code> when the "Share an event" modal submits a URL. Nothing here scrapes attendee lists - RSVP/accept counts are an in-app concept, stored in our own <code>accepts</code> table, never read from the source site.</p>
+      </section>
+      <section id="intuition"><h2>Intuition</h2><p><strong>Goal:</strong> Paste an event URL, get back a clean, structured event we can store and show, and reject anything that is not really an event page.</p>
+        <div class="figure"><div class="flow"><span class="box">paste URL</span><span class="arrow">-&gt;</span><span class="box">guard + normalize</span><span class="arrow">-&gt;</span><span class="box">fetch HTML</span><span class="arrow">-&gt;</span><span class="box">JSON-LD / OG parse</span><span class="arrow">-&gt;</span><span class="box">validity gate</span><span class="arrow">-&gt;</span><span class="box">Postgres row</span></div></div>
+        <p><strong>Read this first, it corrects a common misconception:</strong> there is no "Partiful reader" and no "Luma reader" in this codebase. There is one generic reader. Per <code>docs/adr/0001</code> the MVP is Luma-only, and the single platform-specific line of code is <code>isLumaUrl()</code>, used purely to strip a trailing " | Luma" from titles. A Partiful link is not handled by a dedicated parser - it would flow through the exact same generic JSON-LD/Open-Graph scrape as any other site, and that path is not covered by tests. So "the site can read Partiful" really means "Partiful pages happen to expose standard event metadata that our generic reader can pick up." The mental model: we act like a link-preview bot. We fetch the page a human would see, read the structured hints the page publishes about itself, and prefer the richest hint available - JSON-LD first because it carries real dates and a venue, Open Graph second because it only reliably carries a title and an image, and hardcoded defaults last so the pipeline never crashes on a thin page.</p>
+      </section>
+      <section id="code"><h2>Code walkthrough</h2>
+        <div class="code-step">
+          <div class="step-label">Step 1 — Guard and normalize the URL before touching the network</div>
+          <p>Before any fetch, <code>isEventSourceUrl</code> enforces https-only and blocks localhost and private IP ranges. This is an <strong>SSRF guard</strong> (server-side request forgery: stopping a user from tricking our server into fetching internal addresses like <code>169.254.169.254</code> or <code>192.168.x.x</code>). Then <code>normalizeSourceUrl</code> strips the query string, hash, <code>www.</code>, and trailing slash so the same event pasted two slightly different ways deduplicates to one row.</p>
+          <pre>// src/lib/luma.ts:46
+export function isEventSourceUrl(urlString: string): boolean {
+  const url = new URL(urlString.trim());
+  if (url.protocol !== &quot;https:&quot;) return false;
+  const host = url.hostname.toLowerCase();
+  if (BLOCKED_HOSTS.has(host)) return false;   // localhost, 127.0.0.1, ...
+  if (host.endsWith(&quot;.local&quot;)) return false;
+  if (isPrivateIpv4(host)) return false;        // 10./172.16-31./192.168./169.254.
+  return true;
+}</pre>
+        </div>
+        <div class="code-step">
+          <div class="step-label">Step 2 — Fetch the page HTML server-side</div>
+          <p><code>fetchEventMetadata</code> does a plain server-side <code>fetch</code> of the URL with our own User-Agent - no headless browser, no oEmbed, no platform API. It reads the raw HTML as text and hands it to the parser. (Setting <code>LUMA_FETCH_MODE=mock</code> short-circuits this with fake data so tests and offline dev never hit the network.)</p>
+          <pre>// src/lib/luma.ts:390
+const response = await fetch(sourceUrl, {
+  headers: { &quot;User-Agent&quot;: &quot;EventDistributor/1.0 ...&quot;, Accept: &quot;text/html&quot; },
+  next: { revalidate: 0 },
+});
+if (!response.ok) throw new Error(`Could not fetch event page (${response.status})`);
+const html = await response.text();
+assertRealEventPage(html, sourceUrl);   // &lt;- the validity gate, see step 5
+return parseEventHtml(html, sourceUrl);</pre>
+        </div>
+        <div class="code-step">
+          <div class="step-label">Step 3 — Prefer JSON-LD schema.org Event (the rich source)</div>
+          <p><code>parseJsonLdEvent</code> regex-matches every <code>&lt;script type="application/ld+json"&gt;</code> block, <code>JSON.parse</code>s it, and picks the object whose <code>@type</code> is <code>"Event"</code> (or one nested inside an <code>@graph</code> array). From that single object it reads the real fields: title, description, start/end dates, location name/address, an optional meeting URL, the organizer's name, and the cover image. Note this is <strong>regex over raw HTML, not a DOM parser</strong> - fast and dependency-free, but brittle if a platform changes its markup.</p>
+          <pre>// src/lib/luma.ts:191
+const event =
+  data[&quot;@type&quot;] === &quot;Event&quot;
+    ? data
+    : (data[&quot;@graph&quot;] as Record&lt;string, unknown&gt;[])?.find(
+        (item) =&gt; item[&quot;@type&quot;] === &quot;Event&quot;,
+      );
+// ...
+return {
+  title: String(event.name ?? &quot;&quot;),
+  startAt: event.startDate ? new Date(String(event.startDate)) : undefined,
+  location: locationStr,
+  hostName: organizer?.name ? String(organizer.name) : null,
+  // ...
+};</pre>
+        </div>
+        <div class="code-step">
+          <div class="step-label">Step 4 — Fall back to Open Graph, then to defaults</div>
+          <p><code>parseEventHtml</code> is the ladder. For each field it takes the JSON-LD value if present, else an Open Graph / Twitter meta tag via <code>getMetaContent</code>, else a hardcoded default (title "Untitled Event", start = 7 days out). <code>getMetaContent</code> tries the tag in both attribute orders (<code>property</code> before <code>content</code> and vice versa). This is why a page with only OG tags still yields a usable title and image even though it has no trustworthy date.</p>
+          <pre>// src/lib/luma.ts:274
+const title =
+  jsonLd?.title ||
+  getMetaContent(html, &quot;og:title&quot;) ||
+  getMetaContent(html, &quot;twitter:title&quot;) ||
+  defaultTitle;
+// isLumaUrl() is the ONLY platform-specific branch, and it is cosmetic:
+const cleanedTitle = isLumaUrl(sourceUrl)
+  ? title.replace(/\s*[|\-]\s*Luma\s*$/i, &quot;&quot;).trim()
+  : title.trim();</pre>
+        </div>
+        <div class="code-step">
+          <div class="step-label">Step 5 — Reject pages that are not real events</div>
+          <p><code>assertRealEventPage</code> is the safety net that stops someone pasting a random homepage and getting a garbage event. <code>isValidEventPage</code> accepts the page only if it has genuine JSON-LD Event signals (a title AND a valid start date) OR strong Open Graph signals (a non-placeholder title - it rejects titles like "Luma", "Not Found", or "404"). Anything else throws "This URL does not appear to be a valid event page."</p>
+          <pre>// src/lib/luma.ts:377
+export function isValidEventPage(html: string, sourceUrl: string): boolean {
+  if (hasJsonLdEventSignals(html)) return true;        // title + valid startDate
+  return hasStrongOpenGraphSignals(html, sourceUrl);   // real, non-placeholder title
+}</pre>
+        </div>
+        <div class="code-step">
+          <div class="step-label">Step 6 — Normalize into one shape and persist</div>
+          <p>The parser returns a <code>LumaMetadata</code> object (again, legacy name for a generic event). <code>ingestLumaEvent</code> checks the events table for an existing row with the same normalized URL (the <code>luma_url</code> column is <code>unique</code>), throws "already in the feed" if found, otherwise inserts one row mapping each field to a snake_case column. <strong>Trap for future readers:</strong> the type <code>LumaMetadata</code>, the column <code>luma_url</code>, and the field <code>lumaUrl</code> all hold ANY event URL, not only Luma ones.</p>
+          <pre>// src/lib/events-service.ts:258
+const normalized = normalizeSourceUrl(lumaUrl);
+const { data: existing } = await db.database
+  .from(&quot;events&quot;).select(&quot;id&quot;).eq(&quot;luma_url&quot;, normalized).maybeSingle();
+if (existing) throw new Error(&quot;This event is already in the feed&quot;);
+const metadata = await fetchEventMetadata(normalized);
+await db.database.from(&quot;events&quot;).insert([{
+  luma_url: normalized, title: metadata.title,
+  start_at: metadata.startAt.toISOString(), location: metadata.location,
+  host_name: metadata.hostName, /* ... */
+}]);</pre>
+        </div>
+      </section>
+      <section id="quiz"><h2>Quiz</h2><p>Five questions — click an answer for feedback.</p>
+        <div id="quiz-root">
+          <div class="quiz-item" data-correct="1">
+            <p class="question">1. Where does the app primarily get an event's title, date, and location from?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Luma's and Partiful's official REST APIs</button>
+              <button type="button" data-index="1">The page's own JSON-LD schema.org Event block, falling back to Open Graph meta tags</button>
+              <button type="button" data-index="2">A headless browser that renders the page and reads the DOM</button>
+              <button type="button" data-index="3">The URL path and query string</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">Wrong - no platform API is called. The app only fetches the public HTML the page serves.</div>
+            <div class="quiz-feedback" data-feedback="1">Correct - parseJsonLdEvent reads the JSON-LD Event first, and parseEventHtml falls back to og:/twitter: tags per field.</div>
+            <div class="quiz-feedback" data-feedback="2">Wrong - there is no headless browser. It is a plain fetch plus regex over the HTML string.</div>
+            <div class="quiz-feedback" data-feedback="3">Wrong - the URL is only guarded and normalized; the data comes from the page body.</div>
+          </div>
+          <div class="quiz-item" data-correct="3">
+            <p class="question">2. How much Partiful-specific code is in the ingestion path?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">A dedicated Partiful parser mirroring the Luma one</button>
+              <button type="button" data-index="1">A Partiful API client with an auth token</button>
+              <button type="button" data-index="2">A Partiful branch inside parseJsonLdEvent</button>
+              <button type="button" data-index="3">None - a Partiful link flows through the same generic JSON-LD/Open-Graph reader as any site</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">Wrong - there is no Partiful parser. The ADR scopes the MVP to Luma only.</div>
+            <div class="quiz-feedback" data-feedback="1">Wrong - no platform API clients exist here at all.</div>
+            <div class="quiz-feedback" data-feedback="2">Wrong - parseJsonLdEvent is entirely platform-agnostic.</div>
+            <div class="quiz-feedback" data-feedback="3">Correct - Partiful &quot;works&quot; only because its pages expose standard event metadata; that path is generic and untested.</div>
+          </div>
+          <div class="quiz-item" data-correct="2">
+            <p class="question">3. What is isLumaUrl() actually used for in the read path?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Deciding whether to call the Luma API</button>
+              <button type="button" data-index="1">Blocking non-Luma URLs from being ingested</button>
+              <button type="button" data-index="2">Cosmetic title cleanup (stripping a trailing &quot; | Luma&quot;) and picking a default title string</button>
+              <button type="button" data-index="3">Choosing a different HTTP User-Agent</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">Wrong - no Luma API is ever called.</div>
+            <div class="quiz-feedback" data-feedback="1">Wrong - isEventSourceUrl accepts any public https host; non-Luma URLs are allowed.</div>
+            <div class="quiz-feedback" data-feedback="2">Correct - it is the only platform branch and it only tidies the title.</div>
+            <div class="quiz-feedback" data-feedback="3">Wrong - the User-Agent is the same for every URL.</div>
+          </div>
+          <div class="quiz-item" data-correct="0">
+            <p class="question">4. What does assertRealEventPage prevent?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Saving a random non-event page (like a homepage or a 404) as a bogus event</button>
+              <button type="button" data-index="1">Fetching URLs that point at internal/private IP addresses</button>
+              <button type="button" data-index="2">Two users adding the same event twice</button>
+              <button type="button" data-index="3">Storing an event whose date is in the past</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">Correct - it requires real JSON-LD Event signals or a strong, non-placeholder Open Graph title before accepting the page.</div>
+            <div class="quiz-feedback" data-feedback="1">Wrong - that is isEventSourceUrl (the SSRF guard), a separate earlier check.</div>
+            <div class="quiz-feedback" data-feedback="2">Wrong - deduplication is the unique luma_url check in ingestLumaEvent.</div>
+            <div class="quiz-feedback" data-feedback="3">Wrong - there is no past-date rejection in the read path.</div>
+          </div>
+          <div class="quiz-item" data-correct="2">
+            <p class="question">5. The database column is named luma_url. What does it actually hold?</p>
+            <div class="quiz-options">
+              <button type="button" data-index="0">Only lu.ma and luma.com URLs; other hosts are rejected</button>
+              <button type="button" data-index="1">The Luma internal event ID, not a URL</button>
+              <button type="button" data-index="2">Any normalized https event URL - the name is legacy, not a constraint</button>
+              <button type="button" data-index="3">A shortened redirect link generated by the app</button>
+            </div>
+            <div class="quiz-feedback" data-feedback="0">Wrong - the ingest path accepts any public https event URL.</div>
+            <div class="quiz-feedback" data-feedback="1">Wrong - it stores the full normalized URL string.</div>
+            <div class="quiz-feedback" data-feedback="2">Correct - LumaMetadata, luma_url, and lumaUrl are all legacy names that hold any event URL.</div>
+            <div class="quiz-feedback" data-feedback="3">Wrong - the app stores the source URL as-is after normalization; it does not shorten it.</div>
+          </div>
+          <div class="quiz-score" id="quiz-score" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    (function(){const items=document.querySelectorAll(".quiz-item");const answered=new Set();
+    items.forEach(function(item,qIndex){const correct=Number(item.dataset.correct);const buttons=item.querySelectorAll(".quiz-options button");const feedbacks=item.querySelectorAll(".quiz-feedback");
+    buttons.forEach(function(btn){btn.addEventListener("click",function(){if(answered.has(qIndex))return;answered.add(qIndex);const chosen=Number(btn.dataset.index);
+    buttons.forEach(function(b){b.disabled=true;const idx=Number(b.dataset.index);if(idx===correct)b.classList.add("correct");else if(idx===chosen)b.classList.add("incorrect");});
+    feedbacks.forEach(function(fb){if(Number(fb.dataset.feedback)===chosen)fb.classList.add("visible");});
+    if(answered.size===items.length){let score=0;items.forEach(function(it){const corr=Number(it.dataset.correct);
+    it.querySelectorAll(".quiz-options button").forEach(function(b){if(b.classList.contains("correct")&&Number(b.dataset.index)===corr)score++;});});
+    const el=document.getElementById("quiz-score");el.textContent="You got "+score+" / "+items.length+".";el.classList.add("visible");}});});});})();
+  </script>
+  <script src="/_assets/understanding-reader.js" data-mode="explainer" data-thread-id=""></script>
+</body>
+</html>
