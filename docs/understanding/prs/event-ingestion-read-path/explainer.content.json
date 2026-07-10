@@ -1,0 +1,125 @@
+{
+  "title": "How the app reads a Luma (or any) event link",
+  "meta": "Subsystem explainer - event ingestion read path (code as on main). Traces commits 78bad2f, d72ecde, 064fcc2.",
+  "seriesLink": "../../README.md",
+  "glance": "When you paste an event URL, the app fetches that public web page server-side and lifts the event's title, date, location, host, and cover image out of the page's own machine-readable metadata (JSON-LD, then Open Graph tags) - no Luma or Partiful private API is involved.",
+  "backgroundDeep": "Two web standards do all the heavy lifting here. <strong>JSON-LD</strong> (JavaScript Object Notation for Linked Data) is a block of JSON a site embeds in a <code>&lt;script type=\"application/ld+json\"&gt;</code> tag to describe its content in a machine-readable way; when it follows the <em>schema.org/Event</em> shape it hands us <code>name</code>, <code>startDate</code>, <code>location</code>, <code>organizer</code> and more, already structured. <strong>Open Graph</strong> (the <code>og:title</code>, <code>og:image</code> ... <code>&lt;meta&gt;</code> tags you see in link previews) is the weaker fallback: it always gives a title and image but has no real notion of a date or a venue. Luma and Partiful both emit these tags for their own SEO and link-preview cards, which is the entire reason this app can read them without any platform integration.",
+  "backgroundNarrow": "The whole read path lives in one file, <code>src/lib/luma.ts</code> (the name is legacy - it parses any event page, not just Luma). It is called by <code>ingestLumaEvent</code> in <code>src/lib/events-service.ts</code>, which is reached from the POST route <code>src/app/api/events/ingest/route.ts</code> when the \"Share an event\" modal submits a URL. Nothing here scrapes attendee lists - RSVP/accept counts are an in-app concept, stored in our own <code>accepts</code> table, never read from the source site.",
+  "goal": "Paste an event URL, get back a clean, structured event we can store and show, and reject anything that is not really an event page.",
+  "figure": "<span class=\"box\">paste URL</span><span class=\"arrow\">-&gt;</span><span class=\"box\">guard + normalize</span><span class=\"arrow\">-&gt;</span><span class=\"box\">fetch HTML</span><span class=\"arrow\">-&gt;</span><span class=\"box\">JSON-LD / OG parse</span><span class=\"arrow\">-&gt;</span><span class=\"box\">validity gate</span><span class=\"arrow\">-&gt;</span><span class=\"box\">Postgres row</span>",
+  "intuition": "<strong>Read this first, it corrects a common misconception:</strong> there is no \"Partiful reader\" and no \"Luma reader\" in this codebase. There is one generic reader. Per <code>docs/adr/0001</code> the MVP is Luma-only, and the single platform-specific line of code is <code>isLumaUrl()</code>, used purely to strip a trailing \" | Luma\" from titles. A Partiful link is not handled by a dedicated parser - it would flow through the exact same generic JSON-LD/Open-Graph scrape as any other site, and that path is not covered by tests. So \"the site can read Partiful\" really means \"Partiful pages happen to expose standard event metadata that our generic reader can pick up.\" The mental model: we act like a link-preview bot. We fetch the page a human would see, read the structured hints the page publishes about itself, and prefer the richest hint available - JSON-LD first because it carries real dates and a venue, Open Graph second because it only reliably carries a title and an image, and hardcoded defaults last so the pipeline never crashes on a thin page.",
+  "steps": [
+    {
+      "label": "Guard and normalize the URL before touching the network",
+      "body": "Before any fetch, <code>isEventSourceUrl</code> enforces https-only and blocks localhost and private IP ranges. This is an <strong>SSRF guard</strong> (server-side request forgery: stopping a user from tricking our server into fetching internal addresses like <code>169.254.169.254</code> or <code>192.168.x.x</code>). Then <code>normalizeSourceUrl</code> strips the query string, hash, <code>www.</code>, and trailing slash so the same event pasted two slightly different ways deduplicates to one row.",
+      "pre": "// src/lib/luma.ts:46\nexport function isEventSourceUrl(urlString: string): boolean {\n  const url = new URL(urlString.trim());\n  if (url.protocol !== \"https:\") return false;\n  const host = url.hostname.toLowerCase();\n  if (BLOCKED_HOSTS.has(host)) return false;   // localhost, 127.0.0.1, ...\n  if (host.endsWith(\".local\")) return false;\n  if (isPrivateIpv4(host)) return false;        // 10./172.16-31./192.168./169.254.\n  return true;\n}"
+    },
+    {
+      "label": "Fetch the page HTML server-side",
+      "body": "<code>fetchEventMetadata</code> does a plain server-side <code>fetch</code> of the URL with our own User-Agent - no headless browser, no oEmbed, no platform API. It reads the raw HTML as text and hands it to the parser. (Setting <code>LUMA_FETCH_MODE=mock</code> short-circuits this with fake data so tests and offline dev never hit the network.)",
+      "pre": "// src/lib/luma.ts:390\nconst response = await fetch(sourceUrl, {\n  headers: { \"User-Agent\": \"EventDistributor/1.0 ...\", Accept: \"text/html\" },\n  next: { revalidate: 0 },\n});\nif (!response.ok) throw new Error(`Could not fetch event page (${response.status})`);\nconst html = await response.text();\nassertRealEventPage(html, sourceUrl);   // <- the validity gate, see step 5\nreturn parseEventHtml(html, sourceUrl);"
+    },
+    {
+      "label": "Prefer JSON-LD schema.org Event (the rich source)",
+      "body": "<code>parseJsonLdEvent</code> regex-matches every <code>&lt;script type=\"application/ld+json\"&gt;</code> block, <code>JSON.parse</code>s it, and picks the object whose <code>@type</code> is <code>\"Event\"</code> (or one nested inside an <code>@graph</code> array). From that single object it reads the real fields: title, description, start/end dates, location name/address, an optional meeting URL, the organizer's name, and the cover image. Note this is <strong>regex over raw HTML, not a DOM parser</strong> - fast and dependency-free, but brittle if a platform changes its markup.",
+      "pre": "// src/lib/luma.ts:191\nconst event =\n  data[\"@type\"] === \"Event\"\n    ? data\n    : (data[\"@graph\"] as Record<string, unknown>[])?.find(\n        (item) => item[\"@type\"] === \"Event\",\n      );\n// ...\nreturn {\n  title: String(event.name ?? \"\"),\n  startAt: event.startDate ? new Date(String(event.startDate)) : undefined,\n  location: locationStr,\n  hostName: organizer?.name ? String(organizer.name) : null,\n  // ...\n};"
+    },
+    {
+      "label": "Fall back to Open Graph, then to defaults",
+      "body": "<code>parseEventHtml</code> is the ladder. For each field it takes the JSON-LD value if present, else an Open Graph / Twitter meta tag via <code>getMetaContent</code>, else a hardcoded default (title \"Untitled Event\", start = 7 days out). <code>getMetaContent</code> tries the tag in both attribute orders (<code>property</code> before <code>content</code> and vice versa). This is why a page with only OG tags still yields a usable title and image even though it has no trustworthy date.",
+      "pre": "// src/lib/luma.ts:274\nconst title =\n  jsonLd?.title ||\n  getMetaContent(html, \"og:title\") ||\n  getMetaContent(html, \"twitter:title\") ||\n  defaultTitle;\n// isLumaUrl() is the ONLY platform-specific branch, and it is cosmetic:\nconst cleanedTitle = isLumaUrl(sourceUrl)\n  ? title.replace(/\\s*[|\\-]\\s*Luma\\s*$/i, \"\").trim()\n  : title.trim();"
+    },
+    {
+      "label": "Reject pages that are not real events",
+      "body": "<code>assertRealEventPage</code> is the safety net that stops someone pasting a random homepage and getting a garbage event. <code>isValidEventPage</code> accepts the page only if it has genuine JSON-LD Event signals (a title AND a valid start date) OR strong Open Graph signals (a non-placeholder title - it rejects titles like \"Luma\", \"Not Found\", or \"404\"). Anything else throws \"This URL does not appear to be a valid event page.\"",
+      "pre": "// src/lib/luma.ts:377\nexport function isValidEventPage(html: string, sourceUrl: string): boolean {\n  if (hasJsonLdEventSignals(html)) return true;        // title + valid startDate\n  return hasStrongOpenGraphSignals(html, sourceUrl);   // real, non-placeholder title\n}"
+    },
+    {
+      "label": "Normalize into one shape and persist",
+      "body": "The parser returns a <code>LumaMetadata</code> object (again, legacy name for a generic event). <code>ingestLumaEvent</code> checks the events table for an existing row with the same normalized URL (the <code>luma_url</code> column is <code>unique</code>), throws \"already in the feed\" if found, otherwise inserts one row mapping each field to a snake_case column. <strong>Trap for future readers:</strong> the type <code>LumaMetadata</code>, the column <code>luma_url</code>, and the field <code>lumaUrl</code> all hold ANY event URL, not only Luma ones.",
+      "pre": "// src/lib/events-service.ts:258\nconst normalized = normalizeSourceUrl(lumaUrl);\nconst { data: existing } = await db.database\n  .from(\"events\").select(\"id\").eq(\"luma_url\", normalized).maybeSingle();\nif (existing) throw new Error(\"This event is already in the feed\");\nconst metadata = await fetchEventMetadata(normalized);\nawait db.database.from(\"events\").insert([{\n  luma_url: normalized, title: metadata.title,\n  start_at: metadata.startAt.toISOString(), location: metadata.location,\n  host_name: metadata.hostName, /* ... */\n}]);"
+    }
+  ],
+  "quiz": [
+    {
+      "q": "Where does the app primarily get an event's title, date, and location from?",
+      "correct": 1,
+      "options": [
+        "Luma's and Partiful's official REST APIs",
+        "The page's own JSON-LD schema.org Event block, falling back to Open Graph meta tags",
+        "A headless browser that renders the page and reads the DOM",
+        "The URL path and query string"
+      ],
+      "feedback": [
+        "Wrong - no platform API is called. The app only fetches the public HTML the page serves.",
+        "Correct - parseJsonLdEvent reads the JSON-LD Event first, and parseEventHtml falls back to og:/twitter: tags per field.",
+        "Wrong - there is no headless browser. It is a plain fetch plus regex over the HTML string.",
+        "Wrong - the URL is only guarded and normalized; the data comes from the page body."
+      ]
+    },
+    {
+      "q": "How much Partiful-specific code is in the ingestion path?",
+      "correct": 3,
+      "options": [
+        "A dedicated Partiful parser mirroring the Luma one",
+        "A Partiful API client with an auth token",
+        "A Partiful branch inside parseJsonLdEvent",
+        "None - a Partiful link flows through the same generic JSON-LD/Open-Graph reader as any site"
+      ],
+      "feedback": [
+        "Wrong - there is no Partiful parser. The ADR scopes the MVP to Luma only.",
+        "Wrong - no platform API clients exist here at all.",
+        "Wrong - parseJsonLdEvent is entirely platform-agnostic.",
+        "Correct - Partiful \"works\" only because its pages expose standard event metadata; that path is generic and untested."
+      ]
+    },
+    {
+      "q": "What is isLumaUrl() actually used for in the read path?",
+      "correct": 2,
+      "options": [
+        "Deciding whether to call the Luma API",
+        "Blocking non-Luma URLs from being ingested",
+        "Cosmetic title cleanup (stripping a trailing \" | Luma\") and picking a default title string",
+        "Choosing a different HTTP User-Agent"
+      ],
+      "feedback": [
+        "Wrong - no Luma API is ever called.",
+        "Wrong - isEventSourceUrl accepts any public https host; non-Luma URLs are allowed.",
+        "Correct - it is the only platform branch and it only tidies the title.",
+        "Wrong - the User-Agent is the same for every URL."
+      ]
+    },
+    {
+      "q": "What does assertRealEventPage prevent?",
+      "correct": 0,
+      "options": [
+        "Saving a random non-event page (like a homepage or a 404) as a bogus event",
+        "Fetching URLs that point at internal/private IP addresses",
+        "Two users adding the same event twice",
+        "Storing an event whose date is in the past"
+      ],
+      "feedback": [
+        "Correct - it requires real JSON-LD Event signals or a strong, non-placeholder Open Graph title before accepting the page.",
+        "Wrong - that is isEventSourceUrl (the SSRF guard), a separate earlier check.",
+        "Wrong - deduplication is the unique luma_url check in ingestLumaEvent.",
+        "Wrong - there is no past-date rejection in the read path."
+      ]
+    },
+    {
+      "q": "The database column is named luma_url. What does it actually hold?",
+      "correct": 2,
+      "options": [
+        "Only lu.ma and luma.com URLs; other hosts are rejected",
+        "The Luma internal event ID, not a URL",
+        "Any normalized https event URL - the name is legacy, not a constraint",
+        "A shortened redirect link generated by the app"
+      ],
+      "feedback": [
+        "Wrong - the ingest path accepts any public https event URL.",
+        "Wrong - it stores the full normalized URL string.",
+        "Correct - LumaMetadata, luma_url, and lumaUrl are all legacy names that hold any event URL.",
+        "Wrong - the app stores the source URL as-is after normalization; it does not shorten it."
+      ]
+    }
+  ]
+}
