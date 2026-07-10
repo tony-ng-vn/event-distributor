@@ -14,8 +14,10 @@ import {
   passEvent,
   previewLumaIngest,
   resetDatabase,
+  starEvent,
   unacceptEvent,
   unpassEvent,
+  unstarEvent,
 } from "@/lib/events-service";
 import * as luma from "@/lib/event-page";
 
@@ -198,6 +200,76 @@ describe("events service", () => {
     const anonFeed = await listFeedEvents();
     expect(anonFeed).toHaveLength(1);
     expect(anonFeed[0]?.viewerPassed).toBe(false);
+  });
+
+  it("starEvent records a personal star with viewerStarred true", async () => {
+    const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
+    const user = await createUser({
+      email: "starrer@example.com",
+      name: "Starrer User",
+    });
+
+    const starred = await starEvent(event.id, user.id);
+    expect(starred.viewerStarred).toBe(true);
+
+    const feed = await listFeedEvents(user.id);
+    expect(feed[0]?.viewerStarred).toBe(true);
+  });
+
+  it("unstarEvent removes the personal star", async () => {
+    const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
+    const user = await createUser({
+      email: "starrer@example.com",
+      name: "Starrer User",
+    });
+
+    await starEvent(event.id, user.id);
+    const unstarred = await unstarEvent(event.id, user.id);
+    expect(unstarred.viewerStarred).toBe(false);
+
+    const feed = await listFeedEvents(user.id);
+    expect(feed[0]?.viewerStarred).toBe(false);
+  });
+
+  it("starEvent is idempotent (double star keeps a single row)", async () => {
+    const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
+    const user = await createUser({ email: "starrer@example.com" });
+
+    await starEvent(event.id, user.id);
+    const second = await starEvent(event.id, user.id);
+    expect(second.viewerStarred).toBe(true);
+
+    const db = getInsforgeAdmin();
+    const { data } = await db.database
+      .from("stars")
+      .select("id")
+      .eq("event_id", event.id)
+      .eq("user_id", user.id);
+    expect(data).toHaveLength(1);
+  });
+
+  it("keeps viewerStarred private to the user who starred", async () => {
+    const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
+    const starrer = await createUser({ email: "starrer@example.com" });
+    const other = await createUser({ email: "other@example.com" });
+
+    await starEvent(event.id, starrer.id);
+
+    expect((await listFeedEvents(starrer.id))[0]?.viewerStarred).toBe(true);
+    expect((await listFeedEvents(other.id))[0]?.viewerStarred).toBe(false);
+    expect((await listFeedEvents())[0]?.viewerStarred).toBe(false);
+  });
+
+  it("leaves accept/pass state untouched when starring", async () => {
+    const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
+    const user = await createUser({ email: "starrer@example.com" });
+
+    await acceptEvent(event.id, user.id);
+    const starred = await starEvent(event.id, user.id);
+
+    expect(starred.viewerStarred).toBe(true);
+    expect(starred.viewerAccepted).toBe(true);
+    expect(starred.viewerPassed).toBe(false);
   });
 
   it("includes creator on feed events when added_by_user_id is set", async () => {

@@ -36,6 +36,8 @@ export type FeedEvent = {
   viewerAccepted: boolean;
   /** True when the signed-in viewer has passed on this event. */
   viewerPassed: boolean;
+  /** True when the signed-in viewer has starred this event (personal pin). */
+  viewerStarred: boolean;
   /** User who ingested the event into the shared feed, if known. */
   addedBy: {
     id: string;

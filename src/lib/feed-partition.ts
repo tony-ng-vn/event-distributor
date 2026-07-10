@@ -15,7 +15,17 @@ export type FeedPartitionInput = {
   passedIds: string[];
   selectedDate?: Date | null;
   filter?: FeedFilter;
+  /** Optimistic per-event star overrides; falls back to event.viewerStarred. */
+  starState?: Record<string, boolean | undefined>;
 };
+
+/** A personal pin: local optimistic state wins over the server flag. */
+export function isStarredEvent(
+  event: FeedEvent,
+  starState: Record<string, boolean | undefined>,
+): boolean {
+  return starState[event.id] ?? event.viewerStarred;
+}
 
 export function isPastFeedEvent(
   event: FeedEvent,
@@ -62,12 +72,22 @@ export function partitionFeedEvents({
   passedIds,
   selectedDate = null,
   filter = "all",
+  starState = {},
 }: FeedPartitionInput) {
+  const starredEvents: FeedEvent[] = [];
   const newEvents: FeedEvent[] = [];
   const pastEvents: FeedEvent[] = [];
 
   for (const event of events) {
     if (!matchesDateFilter(event, selectedDate)) continue;
+
+    // A starred event is lifted into its own pinned section (no duplicate) and
+    // stays there regardless of the pending/accepted pill -- a personal pin
+    // should always be visible at the top. Star wins even over "passed".
+    if (isStarredEvent(event, starState)) {
+      starredEvents.push(event);
+      continue;
+    }
 
     const isPast = isPastFeedEvent(event, cardState, passedIds);
     if (!matchesFilterPill(event, filter, cardState, isPast)) {
@@ -78,5 +98,5 @@ export function partitionFeedEvents({
     else newEvents.push(event);
   }
 
-  return { newEvents, pastEvents };
+  return { starredEvents, newEvents, pastEvents };
 }

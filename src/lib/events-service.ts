@@ -43,6 +43,13 @@ type InsforgePassRow = {
   users: InsforgeUser | InsforgeUser[] | null;
 };
 
+// Stars are private: we only ever need user_id to derive the viewer's own
+// boolean, so we do not embed the nested user object (keeps the payload small).
+type InsforgeStarRow = {
+  id: string;
+  user_id: string;
+};
+
 type InsforgeEventRow = {
   id: string;
   luma_url: string;
@@ -59,6 +66,7 @@ type InsforgeEventRow = {
   created_at: string;
   accepts: InsforgeAcceptRow[] | null;
   passes: InsforgePassRow[] | null;
+  stars: InsforgeStarRow[] | null;
   added_by_user: InsforgeUser | InsforgeUser[] | null;
 };
 
@@ -127,12 +135,15 @@ function serializeEvent(
     viewerPassed: viewerUserId
       ? passAttendees.some((a) => a.id === viewerUserId)
       : false,
+    viewerStarred: viewerUserId
+      ? (event.stars ?? []).some((s) => s.user_id === viewerUserId)
+      : false,
     addedBy: serializeCreator(event.added_by_user),
   };
 }
 
 const eventSelect =
-  "*, added_by_user:users!added_by_user_id(id, name, image, email), accepts(id, accepted_at, users(id, name, image)), passes(id, passed_at, users(id, name, image))";
+  "*, added_by_user:users!added_by_user_id(id, name, image, email), accepts(id, accepted_at, users(id, name, image)), passes(id, passed_at, users(id, name, image)), stars(id, user_id)";
 
 function sortFeedEventRows(events: InsforgeEventRow[]) {
   const now = Date.now();
@@ -384,6 +395,52 @@ export async function unpassEvent(eventId: string, userId: string) {
   if (deleteError) throw new Error(deleteError.message);
 }
 
+/** POST /api/events/[id]/star — pin the event to the viewer's personal Starred
+ *  section. Idempotent; orthogonal to accept/pass (does not touch either). */
+export async function starEvent(eventId: string, userId: string) {
+  const db = getInsforgeAdmin();
+
+  await assertEventAndUserExist(eventId, userId);
+
+  const { data: existing, error: existingError } = await db.database
+    .from("stars")
+    .select("id")
+    .eq("event_id", eventId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingError) throw new Error(existingError.message);
+
+  if (!existing) {
+    const { error: insertError } = await db.database.from("stars").insert([
+      {
+        id: newId(),
+        event_id: eventId,
+        user_id: userId,
+      },
+    ]);
+
+    if (insertError) throw new Error(insertError.message);
+  }
+
+  return reloadSerializedEvent(eventId, userId);
+}
+
+/** DELETE star — remove the personal pin. No-op if not starred. */
+export async function unstarEvent(eventId: string, userId: string) {
+  const db = getInsforgeAdmin();
+
+  const { error: deleteError } = await db.database
+    .from("stars")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("user_id", userId);
+
+  if (deleteError) throw new Error(deleteError.message);
+
+  return reloadSerializedEvent(eventId, userId);
+}
+
 export type DeleteEventResult = {
   title: string | null;
   deleted: boolean;
@@ -433,6 +490,12 @@ export async function resetDatabase() {
   assertDestructiveWritesAllowed("resetDatabase");
 
   const db = getInsforgeAdmin();
+  const { error: starsError } = await db.database
+    .from("stars")
+    .delete()
+    .gte("starred_at", "1970-01-01T00:00:00Z");
+  if (starsError) throw new Error(starsError.message);
+
   const { error: passesError } = await db.database
     .from("passes")
     .delete()

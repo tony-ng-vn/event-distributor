@@ -26,6 +26,7 @@ function makeEvent(overrides: Partial<FeedEvent> = {}): FeedEvent {
     passAttendees: [],
     viewerAccepted: false,
     viewerPassed: false,
+    viewerStarred: false,
     addedBy: null,
     ...overrides,
   };
@@ -117,5 +118,53 @@ describe("feed partition", () => {
 
     expect(newEvents).toHaveLength(0);
     expect(pastEvents.map((event) => event.id)).toEqual(["going"]);
+  });
+
+  it("lifts starred events into their own section, out of new/past", () => {
+    const starred = makeEvent({ id: "starred", viewerStarred: true });
+    const fresh = makeEvent({ id: "fresh" });
+
+    const { starredEvents, newEvents, pastEvents } = partitionFeedEvents({
+      events: [starred, fresh],
+      cardState: {},
+      passedIds: [],
+    });
+
+    expect(starredEvents.map((event) => event.id)).toEqual(["starred"]);
+    expect(newEvents.map((event) => event.id)).toEqual(["fresh"]);
+    expect(pastEvents).toHaveLength(0);
+  });
+
+  it("lets local starState override the server viewerStarred flag", () => {
+    const serverStarred = makeEvent({ id: "was-starred", viewerStarred: true });
+    const localStar = makeEvent({ id: "now-starred" });
+
+    const { starredEvents, newEvents } = partitionFeedEvents({
+      events: [serverStarred, localStar],
+      cardState: {},
+      passedIds: [],
+      // Optimistic: unstar one locally, star the other locally.
+      starState: { "was-starred": false, "now-starred": true },
+    });
+
+    expect(starredEvents.map((event) => event.id)).toEqual(["now-starred"]);
+    expect(newEvents.map((event) => event.id)).toEqual(["was-starred"]);
+  });
+
+  it("keeps a starred event pinned even when it is also passed", () => {
+    const starredAndPassed = makeEvent({
+      id: "pinned",
+      viewerStarred: true,
+      viewerPassed: true,
+    });
+
+    const { starredEvents, pastEvents } = partitionFeedEvents({
+      events: [starredAndPassed],
+      cardState: {},
+      passedIds: [],
+    });
+
+    expect(starredEvents.map((event) => event.id)).toEqual(["pinned"]);
+    expect(pastEvents).toHaveLength(0);
   });
 });

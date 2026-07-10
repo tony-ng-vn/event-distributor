@@ -34,6 +34,7 @@ function makeEvent(id: string, viewerAccepted: boolean): FeedEvent {
     passAttendees: [],
     viewerAccepted,
     viewerPassed: false,
+    viewerStarred: false,
     addedBy: null,
   };
 }

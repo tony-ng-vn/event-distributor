@@ -53,6 +53,8 @@ export function FeedApp() {
   const [activeTab, setActiveTab] = useState<MobileTab>("feed");
   const [passedIds, setPassedIds] = useState<string[]>([]);
   const [cardState, setCardState] = useState<CardState>({});
+  // Optimistic per-event star overrides; cleared after a server sync confirms.
+  const [starState, setStarState] = useState<Record<string, boolean>>({});
   const [ingestOpen, setIngestOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [detailEvent, setDetailEvent] = useState<FeedEvent | null>(null);
@@ -228,8 +230,14 @@ export function FeedApp() {
     }
   }
 
-  /** Partition feed into New vs Past; apply calendar date filter and filter pills. */
-  const { newEvents, pastEvents } = useMemo(
+  /** Effective star = optimistic local override, falling back to the server flag. */
+  const isStarred = useCallback(
+    (event: FeedEvent) => starState[event.id] ?? event.viewerStarred,
+    [starState],
+  );
+
+  /** Partition feed into Starred / New / Past; apply date filter and filter pills. */
+  const { starredEvents, newEvents, pastEvents } = useMemo(
     () =>
       partitionFeedEvents({
         events,
@@ -237,11 +245,13 @@ export function FeedApp() {
         passedIds,
         selectedDate,
         filter,
+        starState,
       }),
-    [events, passedIds, cardState, selectedDate, filter],
+    [events, passedIds, cardState, selectedDate, filter, starState],
   );
 
-  const visibleEventCount = newEvents.length + pastEvents.length;
+  const visibleEventCount =
+    starredEvents.length + newEvents.length + pastEvents.length;
 
   const acceptedEvents = useMemo(
     () =>
@@ -392,6 +402,47 @@ export function FeedApp() {
     }
   }
 
+  /** Toggle the viewer's personal star; optimistic, reconciled from the server. */
+  async function handleToggleStar(eventId: string) {
+    const wasStarred =
+      starState[eventId] ??
+      events.find((event) => event.id === eventId)?.viewerStarred ??
+      false;
+    const next = !wasStarred;
+
+    setStarState((prev) => ({ ...prev, [eventId]: next }));
+
+    try {
+      const response = await fetch(
+        `/api/events/${encodeURIComponent(eventId)}/star`,
+        { method: next ? "POST" : "DELETE", cache: "no-store" },
+      );
+
+      if (response.status === 401) {
+        setStarState((prev) => ({ ...prev, [eventId]: wasStarred }));
+        setConnectOpen(true);
+        return;
+      }
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error ?? "Star failed");
+      }
+
+      setToast(next ? "Starred · Pinned to the top" : "Star removed");
+      await syncEventsFromServer(detailEvent?.id === eventId ? eventId : null);
+      // Drop the override now that the server flag is authoritative.
+      setStarState((prev) => {
+        const nextState = { ...prev };
+        delete nextState[eventId];
+        return nextState;
+      });
+    } catch (err) {
+      setStarState((prev) => ({ ...prev, [eventId]: wasStarred }));
+      setToast(err instanceof Error ? err.message : "Star failed");
+    }
+  }
+
   /** DELETE event — admin only; removes from shared feed for everyone. */
   async function handleDelete(eventId: string) {
     if (pendingDeleteIds[eventId]) return;
@@ -524,6 +575,8 @@ export function FeedApp() {
             status={cardState[event.id] ?? "pending"}
             isAdmin={viewerIsAdmin}
             isExiting={Boolean(exitingEventIds[event.id])}
+            starred={isStarred(event)}
+            onStar={() => handleToggleStar(event.id)}
             onAccept={() =>
               void runInterested(event, { accept: performAccept })
             }
@@ -560,6 +613,8 @@ export function FeedApp() {
             status="accepted"
             isAdmin={viewerIsAdmin}
             isExiting={Boolean(exitingEventIds[event.id])}
+            starred={isStarred(event)}
+            onStar={() => handleToggleStar(event.id)}
             onAccept={() =>
               void runInterested(event, { accept: performAccept })
             }
@@ -640,6 +695,15 @@ export function FeedApp() {
         </div>
       ) : (
         <div className="space-y-6">
+          {starredEvents.length > 0 && (
+            <section data-testid="feed-starred-events">
+              <h2 className="mb-3 text-[0.6875rem] font-medium uppercase tracking-wider text-muted">
+                Starred
+              </h2>
+              {renderFeedCards(starredEvents)}
+            </section>
+          )}
+
           {newEvents.length > 0 && (
             <section data-testid="feed-new-events">
               <h2 className="mb-3 text-[0.6875rem] font-medium uppercase tracking-wider text-muted">
