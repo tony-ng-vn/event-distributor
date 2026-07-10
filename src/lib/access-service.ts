@@ -90,6 +90,31 @@ export async function approveUser(
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Admin action: remove a pending user from the waitlist by hard-deleting their
+ * row. Scoped to `approved = false` so this path can never delete an approved
+ * member, which also makes it an idempotent no-op for already-gone or
+ * already-approved users.
+ */
+export async function deleteWaitlistUser(
+  adminUserId: string,
+  userId: string,
+): Promise<void> {
+  const admin = await isUserAdmin(adminUserId);
+  if (!admin) {
+    throw new Error("Admin privileges required to remove users");
+  }
+
+  const db = getInsforgeAdmin();
+  const { error } = await db.database
+    .from("users")
+    .delete()
+    .eq("id", userId)
+    .eq("approved", false);
+
+  if (error) throw new Error(error.message);
+}
+
 export type ProgramUser = {
   id: string;
   email: string;

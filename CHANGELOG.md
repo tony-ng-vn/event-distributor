@@ -5,6 +5,16 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.5.0
+
+2026-07-09
+
+**Auth**
+
+- Admins reviewing the waitlist can now remove someone, not just approve them. Each pending person gets a "Remove" button next to "Approve" that takes a confirming second tap before it deletes the account, so a stray click never drops anyone by accident. Removal only ever applies to people still waiting, so an approved member can never be deleted through this screen.
+
+---
+
 ## v0.4.2
 
 2026-07-09

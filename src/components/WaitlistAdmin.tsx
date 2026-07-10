@@ -32,6 +32,10 @@ export function WaitlistAdmin() {
   const [users, setUsers] = useState<WaitlistUser[]>([]);
   const [state, setState] = useState<LoadState>("loading");
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  // Remove is a hard delete, so it arms a confirm on the first tap and only
+  // fires on the second. confirmingId holds the single armed row.
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -61,7 +65,15 @@ export function WaitlistAdmin() {
     return () => clearTimeout(timer);
   }, [toast]);
 
+  // A stray first tap should not leave a live delete armed on the row.
+  useEffect(() => {
+    if (!confirmingId) return;
+    const timer = setTimeout(() => setConfirmingId(null), 3000);
+    return () => clearTimeout(timer);
+  }, [confirmingId]);
+
   async function approve(user: WaitlistUser) {
+    setConfirmingId(null);
     setApprovingId(user.id);
     try {
       const response = await fetch("/api/admin/waitlist/approve", {
@@ -77,6 +89,32 @@ export function WaitlistAdmin() {
       setToast(err instanceof Error ? err.message : "Approval failed");
     } finally {
       setApprovingId(null);
+    }
+  }
+
+  async function remove(user: WaitlistUser) {
+    // First tap arms the confirm (replacing any other row's), second tap fires.
+    if (confirmingId !== user.id) {
+      setConfirmingId(user.id);
+      return;
+    }
+
+    setConfirmingId(null);
+    setRemovingId(user.id);
+    try {
+      const response = await fetch("/api/admin/waitlist", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? "Removal failed");
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      setToast(`${user.name ?? user.email} removed`);
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Removal failed");
+    } finally {
+      setRemovingId(null);
     }
   }
 
@@ -132,14 +170,29 @@ export function WaitlistAdmin() {
                   : ""}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => void approve(user)}
-              disabled={approvingId === user.id}
-              className="btn-primary whitespace-nowrap disabled:opacity-60"
-            >
-              {approvingId === user.id ? "Approving..." : "Approve"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void remove(user)}
+                disabled={removingId === user.id}
+                className="btn-delete whitespace-nowrap disabled:opacity-60"
+                data-testid="waitlist-remove"
+              >
+                {removingId === user.id
+                  ? "Removing..."
+                  : confirmingId === user.id
+                    ? "Confirm remove?"
+                    : "Remove"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void approve(user)}
+                disabled={approvingId === user.id}
+                className="btn-primary whitespace-nowrap disabled:opacity-60"
+              >
+                {approvingId === user.id ? "Approving..." : "Approve"}
+              </button>
+            </div>
           </li>
         ))}
       </ul>
