@@ -271,4 +271,36 @@ test.describe("shared Luma feed", () => {
     await page.getByTestId("tab-feed").click();
     await expect(aside.getByTestId("calendar-event-dot")).toHaveCount(1);
   });
+
+  test("star pins an event to the Starred section and unstar restores it", async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    const seed = await request.post("/api/e2e/seed", {
+      headers: { "x-e2e-secret": E2E_SECRET },
+    });
+    const seedBody = await seed.json();
+    const eventId = seedBody.event.id as string;
+
+    await waitForFeed(page, request);
+    await expect(page.getByTestId("feed-new-events")).toBeVisible();
+    await expect(page.getByTestId("feed-starred-events")).toBeHidden();
+
+    // Click the star toggle; the event is lifted into the Starred section.
+    await page.getByTestId(`star-button-${eventId}`).click();
+    await expect(page.getByTestId("feed-starred-events")).toBeVisible();
+    await expect(
+      page
+        .getByTestId("feed-starred-events")
+        .getByRole("heading", { name: "AI Builders Meetup" }),
+    ).toBeVisible();
+    await expect(page.getByTestId("feed-new-events")).toBeHidden();
+
+    // Unstar restores it to the New section.
+    await page.getByTestId(`star-button-${eventId}`).click();
+    await expect(page.getByTestId("feed-starred-events")).toBeHidden();
+    await expect(page.getByTestId("feed-new-events")).toBeVisible();
+  });
 });
