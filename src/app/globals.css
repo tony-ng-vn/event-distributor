@@ -7,6 +7,12 @@
  * under prefers-color-scheme for the brief window before that script runs /
  * for user agents with JS disabled. The explicit attribute always wins so an
  * explicit light choice is not clobbered by a dark OS preference.
+ *
+ * Contrast rule: anything filled with bg-foreground (a dark fill in light
+ * mode, a light fill in dark mode) must pair with text-background rather
+ * than a hardcoded text-white/text-black -- --background is always the
+ * inverse of --foreground in this palette, so the fill and its text stay
+ * legible in both themes automatically.
  */
 @import "tailwindcss";
 
@@ -162,7 +168,7 @@ body {
   }
 
   .btn-primary {
-    @apply rounded-full bg-foreground px-4 py-2 text-sm font-medium text-white active:scale-[0.97];
+    @apply rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background active:scale-[0.97];
     transition:
       transform var(--motion-duration) var(--motion-ease),
       box-shadow var(--motion-duration) var(--motion-ease),
@@ -193,7 +199,7 @@ body {
   }
 
   .btn-accept {
-    @apply border border-transparent bg-foreground text-white;
+    @apply border border-transparent bg-foreground text-background;
   }
 
   .btn-pass,
@@ -219,7 +225,7 @@ body {
   }
 
   .filter-pill-active {
-    @apply bg-foreground text-white;
+    @apply bg-foreground text-background;
   }
 
   .filter-pill-inactive {
