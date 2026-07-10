@@ -5,6 +5,28 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.6.0
+
+2026-07-10
+
+**Feed**
+
+- You can now star an event to pin it to the top of your feed. Hover any event card (or tap on mobile) and a star appears in the corner; click it and that event jumps into a new "Starred" section above everything else, so the handful of events you care about most are always the first thing you see. Starring is personal -- your stars only change your own feed and are invisible to everyone else. Click the star again to unpin it.
+
+**Events API**
+
+- Added a per-user star record behind the feed, alongside the existing "interested" and "passed" records. Starring an event is independent of marking interest or passing, so you can star something regardless of whether you have responded to it, and only you ever see which events you have starred.
+
+**Infrastructure**
+
+- New `stars` database table (one row per person per starred event) with the same per-user access rules as the existing pass records.
+
+**Docs**
+
+- Added the design spec for personal starred events, including the note that a separate admin "feature this for everyone" pin is a planned follow-up.
+
+---
+
 ## v0.5.0
 
 2026-07-09
