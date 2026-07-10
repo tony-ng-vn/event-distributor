@@ -9,6 +9,7 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { acceptEvent, createUser, ingestLumaEvent, resetDatabase } from "@/lib/events-service";
 import {
   approveUser,
+  deleteWaitlistUser,
   isUserApproved,
   listProgramUsers,
   listWaitlistUsers,
@@ -90,6 +91,68 @@ describe("access service (waitlist gate)", () => {
 
     await approveUser(admin.id, member.id);
     expect(await isUserApproved(member.id)).toBe(true);
+  });
+
+  it("lets an admin remove a pending user and blocks non-admins", async () => {
+    const admin = await createUser({
+      email: "admin@example.com",
+      name: "Admin",
+      isAdmin: true,
+      approved: true,
+    });
+    const regular = await createUser({
+      email: "regular@example.com",
+      name: "Regular",
+      approved: true,
+    });
+    const pending = await createUser({
+      email: "pending@example.com",
+      name: "Pending",
+    });
+
+    await expect(deleteWaitlistUser(regular.id, pending.id)).rejects.toThrow(
+      /admin/i,
+    );
+    expect((await listWaitlistUsers()).map((u) => u.id)).toContain(pending.id);
+
+    await deleteWaitlistUser(admin.id, pending.id);
+    expect((await listWaitlistUsers()).map((u) => u.id)).not.toContain(
+      pending.id,
+    );
+  });
+
+  it("never removes an approved member (guard scopes deletes to pending)", async () => {
+    const admin = await createUser({
+      email: "admin@example.com",
+      name: "Admin",
+      isAdmin: true,
+      approved: true,
+    });
+    const member = await createUser({
+      email: "member@example.com",
+      name: "Member",
+      approved: true,
+    });
+
+    await deleteWaitlistUser(admin.id, member.id);
+    expect(await isUserApproved(member.id)).toBe(true);
+  });
+
+  it("removes only the targeted pending user, leaving the rest waiting", async () => {
+    const admin = await createUser({
+      email: "admin@example.com",
+      name: "Admin",
+      isAdmin: true,
+      approved: true,
+    });
+    const keep = await createUser({ email: "keep@example.com", name: "Keep" });
+    const drop = await createUser({ email: "drop@example.com", name: "Drop" });
+
+    await deleteWaitlistUser(admin.id, drop.id);
+
+    const remaining = (await listWaitlistUsers()).map((u) => u.id);
+    expect(remaining).toContain(keep.id);
+    expect(remaining).not.toContain(drop.id);
   });
 });
 
