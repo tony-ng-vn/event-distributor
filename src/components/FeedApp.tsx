@@ -74,6 +74,7 @@ export function FeedApp() {
   const [pendingApproveId, setPendingApproveId] = useState<string | null>(null);
   const [exitingEventIds, setExitingEventIds] = useState<Record<string, true>>({});
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Record<string, true>>({});
+  const [pendingStarIds, setPendingStarIds] = useState<Record<string, true>>({});
 
   /** Load shared feed from API; merge server viewerAccepted into cardState. */
   const loadFeed = useCallback(async (options?: { silent?: boolean }): Promise<
@@ -402,14 +403,19 @@ export function FeedApp() {
     }
   }
 
-  /** Toggle the viewer's personal star; optimistic, reconciled from the server. */
+  /** Toggle the viewer's personal star; optimistic, reconciled from the server.
+   *  Guards re-entry per event (like handleDelete) so overlapping toggles can't
+   *  race -- the post-sync override cleanup below assumes no newer toggle landed. */
   async function handleToggleStar(eventId: string) {
+    if (pendingStarIds[eventId]) return;
+
     const wasStarred =
       starState[eventId] ??
       events.find((event) => event.id === eventId)?.viewerStarred ??
       false;
     const next = !wasStarred;
 
+    setPendingStarIds((prev) => ({ ...prev, [eventId]: true }));
     setStarState((prev) => ({ ...prev, [eventId]: next }));
 
     try {
@@ -440,6 +446,12 @@ export function FeedApp() {
     } catch (err) {
       setStarState((prev) => ({ ...prev, [eventId]: wasStarred }));
       setToast(err instanceof Error ? err.message : "Star failed");
+    } finally {
+      setPendingStarIds((prev) => {
+        const nextState = { ...prev };
+        delete nextState[eventId];
+        return nextState;
+      });
     }
   }
 
