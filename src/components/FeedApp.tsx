@@ -171,6 +171,36 @@ export function FeedApp() {
     setPassedIds(getPassedEventIds());
   }, [loadFeed, isLoaded, isSignedIn]);
 
+  // Opportunistic Luma calendar sync: on open, pull new RSVPs when the member's
+  // feed is stale, then silently refresh if anything landed. Runs after the
+  // feed renders and swallows all errors, so it never blocks or breaks the feed
+  // (this is how we avoid depending on cron, throttled on the Hobby plan).
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/calendar/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ force: false }),
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          outcome?: { added?: number };
+        };
+        if (!cancelled && (data.outcome?.added ?? 0) > 0) {
+          loadFeed({ silent: true });
+        }
+      } catch {
+        // Best-effort background enrichment; never disrupt the feed.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoaded, isSignedIn, loadFeed]);
+
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(null), 4000);
