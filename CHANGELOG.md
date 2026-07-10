@@ -5,6 +5,25 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.4.0
+
+2026-07-09
+
+**Events API**
+
+- You can connect your Luma calendar to Event Radar. Every event you RSVP to on Luma (or host) now flows into the shared feed on its own, so nobody has to paste links to add events. Connect it once in Settings.
+- Syncing is safe to run repeatedly: an event already in the feed is skipped, not duplicated, and a Luma feed that is briefly unreachable is reported without breaking anything.
+
+**Feed**
+
+- When you open the app, Event Radar quietly checks your connected Luma calendar for anything new and slips new events into the feed without a reload. It only checks when your last sync is stale, so opening the app often costs nothing extra.
+
+**Infrastructure**
+
+- Added storage for each member's Luma calendar link. The link is treated as a private credential: it is only ever read on the server and never sent back to the browser.
+
+---
+
 ## v0.3.1
 
 2026-07-09

@@ -5,6 +5,7 @@
  */
 import Link from "next/link";
 import { AdminWaitlistLink } from "@/components/AdminWaitlistLink";
+import { CalendarSyncSettings } from "@/components/CalendarSyncSettings";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -32,6 +33,7 @@ export default function SettingsPage() {
       <main className="mx-auto w-full max-w-lg flex-1 space-y-6 px-4 py-8">
         <ThemeToggle />
         <NotificationSettings />
+        <CalendarSyncSettings />
         <AdminWaitlistLink />
       </main>
     </div>
