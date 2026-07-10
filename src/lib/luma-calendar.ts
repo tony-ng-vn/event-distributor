@@ -17,9 +17,21 @@ export type LumaSyncResult = {
   failed: number;
   /** Events left unchecked this run because the per-run cap was hit. */
   remaining?: number;
+  /** Events dropped because they already happened (not ingested). */
+  skippedPast?: number;
   /** Set only when the feed itself could not be fetched. */
   error?: string;
 };
+
+/** One event parsed from an iCal feed: its canonical URL and start/end (ms). */
+export type LumaIcalEvent = {
+  url: string;
+  startsAt: number | null;
+  endsAt: number | null;
+};
+
+/** Keep an event until this long after it ends, to absorb iCal timezone fuzz. */
+const PAST_GRACE_MS = 6 * 60 * 60 * 1000;
 
 /**
  * Cap new ingests per run. Each new event triggers a live lu.ma scrape, and a
@@ -33,6 +45,8 @@ const MAX_NEW_EVENTS_PER_SYNC = 20;
 type SyncDeps = {
   fetchText?: (url: string) => Promise<string>;
   ingest?: (url: string, userId: string) => Promise<unknown>;
+  /** Injectable clock for deterministic past-event filtering in tests. */
+  now?: number;
 };
 
 /** From a sync's point of view "already in the feed" is success, not an error. */
@@ -62,49 +76,93 @@ const NON_EVENT_SEGMENTS = new Set([
 ]);
 
 /**
- * Extract canonical lu.ma event-page URLs from an iCal document.
+ * Canonicalize a raw lu.ma link, or null if it is not an event page.
  *
  * Real Luma feeds do not use a URL: property -- the event link sits inside
  * DESCRIPTION, carries a ?pk= personal key, and shares the block with join/
- * check-in decoy links. So we scan every (unfolded) line for lu.ma links, drop
- * the non-event ones, and strip the query/hash to get a canonical, secret-free
- * URL that also dedupes cleanly. Only lu.ma hosts survive, so a tampered feed
- * cannot smuggle arbitrary URLs into ingest.
+ * check-in decoy links. So we drop the non-event paths and strip the query/hash
+ * to get a canonical, secret-free URL that also dedupes cleanly.
  */
-export function parseLumaIcalUrls(icsText: string): string[] {
+function canonicalizeLumaUrl(raw: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (!isLumaUrl(parsed.toString())) return null;
+
+  const firstSegment = (parsed.pathname.split("/")[1] ?? "").toLowerCase();
+  if (!firstSegment || NON_EVENT_SEGMENTS.has(firstSegment)) return null;
+
+  // Drop ?pk= (a per-user secret) and any hash; the public event page needs
+  // neither, and keeping them would leak the key and defeat dedup.
+  parsed.search = "";
+  parsed.hash = "";
+  return parsed.toString().replace(/\/$/, "");
+}
+
+/** Read a single iCal property value (handles ;params like TZID / VALUE=DATE). */
+function matchIcalProp(block: string, name: string): string | null {
+  const re = new RegExp(`^${name}(?:;[^:\\r\\n]*)?:(.+)$`, "im");
+  const match = re.exec(block);
+  return match ? match[1].trim() : null;
+}
+
+/**
+ * Parse an iCal date/date-time to epoch ms. Handles `YYYYMMDDTHHMMSSZ`,
+ * floating/`TZID` `YYYYMMDDTHHMMSS`, and all-day `YYYYMMDD`. Non-UTC forms are
+ * read as UTC -- an approximation that is fine for past/future filtering, which
+ * only cares about the day, not the exact minute.
+ */
+function parseIcalDate(raw: string | null): number | null {
+  if (!raw) return null;
+  const m = /(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?/.exec(raw.trim());
+  if (!m) return null;
+  const [, y, mo, d, h, mi, s] = m;
+  return Date.UTC(+y, +mo - 1, +d, +(h ?? 0), +(mi ?? 0), +(s ?? 0));
+}
+
+/**
+ * Parse an iCal document into one entry per event, each with its canonical URL
+ * and start/end. Splitting on VEVENT keeps every URL paired with its own dates
+ * (needed to drop events that already happened). Globally de-duplicated.
+ */
+export function parseLumaIcalEvents(icsText: string): LumaIcalEvent[] {
   const unfolded = icsText.replace(/\r?\n[ \t]/g, "");
-  const urls: string[] = [];
+  const events: LumaIcalEvent[] = [];
   const seen = new Set<string>();
 
-  const add = (raw: string) => {
-    let parsed: URL;
-    try {
-      parsed = new URL(raw);
-    } catch {
-      return;
+  for (const chunk of unfolded.split(/BEGIN:VEVENT/i).slice(1)) {
+    const block = chunk.split(/END:VEVENT/i)[0] ?? "";
+    const startsAt = parseIcalDate(matchIcalProp(block, "DTSTART"));
+    const endsAt = parseIcalDate(matchIcalProp(block, "DTEND"));
+
+    for (const line of block.split(/\r?\n/)) {
+      const matches = line.match(LUMA_URL_PATTERN);
+      if (!matches) continue;
+      for (const raw of matches) {
+        const url = canonicalizeLumaUrl(raw);
+        if (!url || seen.has(url)) continue;
+        seen.add(url);
+        events.push({ url, startsAt, endsAt });
+      }
     }
-    if (!isLumaUrl(parsed.toString())) return;
-
-    const firstSegment = (parsed.pathname.split("/")[1] ?? "").toLowerCase();
-    if (!firstSegment || NON_EVENT_SEGMENTS.has(firstSegment)) return;
-
-    // Drop ?pk= (a per-user secret) and any hash: the public event page needs
-    // neither, and keeping them would leak the key and defeat dedup.
-    parsed.search = "";
-    parsed.hash = "";
-    const canonical = parsed.toString().replace(/\/$/, "");
-
-    if (seen.has(canonical)) return;
-    seen.add(canonical);
-    urls.push(canonical);
-  };
-
-  for (const line of unfolded.split(/\r?\n/)) {
-    const matches = line.match(LUMA_URL_PATTERN);
-    if (matches) matches.forEach(add);
   }
 
-  return urls;
+  return events;
+}
+
+/** Canonical lu.ma event-page URLs from an iCal document, in feed order. */
+export function parseLumaIcalUrls(icsText: string): string[] {
+  return parseLumaIcalEvents(icsText).map((event) => event.url);
+}
+
+/** Whether an event has already ended (past the grace window) as of `now`. */
+function hasEnded(event: LumaIcalEvent, now: number): boolean {
+  const end = event.endsAt ?? event.startsAt;
+  if (end === null) return false; // unknown date -> keep, never silently drop
+  return end < now - PAST_GRACE_MS;
 }
 
 /**
@@ -165,6 +223,7 @@ export async function syncLumaCalendar(
 ): Promise<LumaSyncResult> {
   const fetchText = deps.fetchText ?? defaultFetchText;
   const ingest = deps.ingest ?? ingestLumaEvent;
+  const now = deps.now ?? Date.now();
 
   let icsText: string;
   try {
@@ -174,14 +233,20 @@ export async function syncLumaCalendar(
     return { added: 0, skipped: 0, failed: 0, error: message };
   }
 
-  const urls = parseLumaIcalUrls(icsText);
+  // Drop events that already happened -- the shared feed is for planning ahead,
+  // not a history of past RSVPs (a real feed is mostly old events).
+  const events = parseLumaIcalEvents(icsText);
+  const upcoming = events.filter((event) => !hasEnded(event, now));
+  const skippedPast = events.length - upcoming.length;
+  const urls = upcoming.map((event) => event.url);
+
   let added = 0;
   let skipped = 0;
   let failed = 0;
 
   for (let i = 0; i < urls.length; i += 1) {
     if (added >= MAX_NEW_EVENTS_PER_SYNC) {
-      return { added, skipped, failed, remaining: urls.length - i };
+      return { added, skipped, failed, skippedPast, remaining: urls.length - i };
     }
     try {
       await ingest(urls[i], userId);
@@ -193,5 +258,5 @@ export async function syncLumaCalendar(
     }
   }
 
-  return { added, skipped, failed };
+  return { added, skipped, failed, skippedPast };
 }

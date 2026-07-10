@@ -18,6 +18,7 @@ type SyncOutcome = {
   skipped?: number;
   failed?: number;
   remaining?: number;
+  skippedPast?: number;
   error?: string;
 };
 
@@ -81,6 +82,7 @@ export function CalendarSyncSettings() {
   // left, showing a live count. Bounded requests, unbounded drain.
   async function drainSync() {
     let total = 0;
+    let pastSkipped = 0;
     // Safety cap: 30 passes x 20 events. Far above any real calendar.
     for (let pass = 0; pass < 30; pass += 1) {
       const outcome = await runSync(true);
@@ -89,12 +91,16 @@ export function CalendarSyncSettings() {
         return;
       }
       total += outcome?.added ?? 0;
+      // Past-event count is the same on every pass; capture it once.
+      if (pass === 0) pastSkipped = outcome?.skippedPast ?? 0;
       const remaining = outcome?.remaining ?? 0;
       if (remaining <= 0) {
+        const past =
+          pastSkipped > 0 ? ` Skipped ${pastSkipped} past event${pastSkipped === 1 ? "" : "s"}.` : "";
         setNotice(
           total > 0
-            ? `Done -- added ${total} event${total === 1 ? "" : "s"} to the feed.`
-            : "You're up to date -- no new events.",
+            ? `Done -- added ${total} event${total === 1 ? "" : "s"} to the feed.${past}`
+            : `You're up to date -- no new upcoming events.${past}`,
         );
         return;
       }

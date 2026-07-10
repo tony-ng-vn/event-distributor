@@ -8,6 +8,7 @@
 import { describe, it, expect } from "vitest";
 import {
   isLumaIcalUrl,
+  parseLumaIcalEvents,
   parseLumaIcalUrls,
   syncLumaCalendar,
 } from "@/lib/luma-calendar";
@@ -96,6 +97,81 @@ describe("parseLumaIcalUrls", () => {
   it("de-duplicates repeated URLs within one feed", () => {
     const ics = `BEGIN:VEVENT\nURL:https://lu.ma/dupe\nEND:VEVENT\nBEGIN:VEVENT\nURL:https://lu.ma/dupe\nEND:VEVENT`;
     expect(parseLumaIcalUrls(ics)).toEqual(["https://lu.ma/dupe"]);
+  });
+});
+
+describe("parseLumaIcalEvents (URL + dates per event)", () => {
+  it("pairs each event URL with its parsed start/end", () => {
+    const ics = [
+      "BEGIN:VEVENT",
+      "DTSTART:20260801T190000Z",
+      "DTEND:20260801T210000Z",
+      "URL:https://lu.ma/future-evt",
+      "END:VEVENT",
+    ].join("\r\n");
+
+    expect(parseLumaIcalEvents(ics)).toEqual([
+      {
+        url: "https://lu.ma/future-evt",
+        startsAt: Date.UTC(2026, 7, 1, 19, 0, 0),
+        endsAt: Date.UTC(2026, 7, 1, 21, 0, 0),
+      },
+    ]);
+  });
+
+  it("parses all-day (VALUE=DATE) and TZID start forms", () => {
+    const allDay = "BEGIN:VEVENT\r\nDTSTART;VALUE=DATE:20260801\r\nURL:https://lu.ma/allday\r\nEND:VEVENT";
+    expect(parseLumaIcalEvents(allDay)[0].startsAt).toBe(Date.UTC(2026, 7, 1));
+
+    const tzid =
+      "BEGIN:VEVENT\r\nDTSTART;TZID=America/New_York:20260801T190000\r\nURL:https://lu.ma/tz\r\nEND:VEVENT";
+    expect(parseLumaIcalEvents(tzid)[0].startsAt).toBe(
+      Date.UTC(2026, 7, 1, 19, 0, 0),
+    );
+  });
+});
+
+describe("syncLumaCalendar past-event filter", () => {
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "BEGIN:VEVENT",
+    "DTEND:20240105T020025Z",
+    "URL:https://lu.ma/old-event",
+    "END:VEVENT",
+    "BEGIN:VEVENT",
+    "DTEND:20260801T210000Z",
+    "URL:https://lu.ma/future-event",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  it("does not ingest events that already ended", async () => {
+    const ingested: string[] = [];
+    const result = await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9), // 2026-07-09
+      fetchText: async () => ics,
+      ingest: async (url) => {
+        ingested.push(url);
+      },
+    });
+
+    expect(ingested).toEqual(["https://lu.ma/future-event"]);
+    expect(result).toMatchObject({ added: 1, skippedPast: 1 });
+  });
+
+  it("keeps an event still within the end-time grace window", async () => {
+    const ingested: string[] = [];
+    // Event ended 1 hour ago; grace is 6h, so it should still sync.
+    const endedRecently = "BEGIN:VEVENT\r\nDTEND:20260709T170000Z\r\nURL:https://lu.ma/just-ended\r\nEND:VEVENT";
+    await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9, 18, 0, 0), // 1h after the 17:00Z end
+      fetchText: async () => endedRecently,
+      ingest: async (url) => {
+        ingested.push(url);
+      },
+    });
+
+    expect(ingested).toEqual(["https://lu.ma/just-ended"]);
   });
 });
 
