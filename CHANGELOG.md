@@ -5,6 +5,16 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.4.1
+
+2026-07-09
+
+**Feed**
+
+- Connecting a Luma calendar (or hitting "Sync now") now pulls in your whole backlog automatically, showing a live "X added, Y to go" count, instead of adding only the first 20 events and leaving the rest for you to fetch by hand. Events are still pulled in safe batches under the hood, so the first connect for someone with a long Luma history no longer stops after one batch.
+
+---
+
 ## v0.4.0
 
 2026-07-09

@@ -76,6 +76,33 @@ export function CalendarSyncSettings() {
     return data.outcome;
   }
 
+  // Drain the whole backlog. Each call ingests a capped batch (the server keeps
+  // one request within the serverless time budget); we loop until nothing is
+  // left, showing a live count. Bounded requests, unbounded drain.
+  async function drainSync() {
+    let total = 0;
+    // Safety cap: 30 passes x 20 events. Far above any real calendar.
+    for (let pass = 0; pass < 30; pass += 1) {
+      const outcome = await runSync(true);
+      if (outcome?.error) {
+        setNotice(`Could not reach Luma: ${outcome.error}`);
+        return;
+      }
+      total += outcome?.added ?? 0;
+      const remaining = outcome?.remaining ?? 0;
+      if (remaining <= 0) {
+        setNotice(
+          total > 0
+            ? `Done -- added ${total} event${total === 1 ? "" : "s"} to the feed.`
+            : "You're up to date -- no new events.",
+        );
+        return;
+      }
+      setNotice(`Syncing your calendar... ${total} added, ${remaining} to go.`);
+    }
+    setNotice(`Added ${total} events. Open the app again later to finish the rest.`);
+  }
+
   async function connect() {
     if (!icalUrl.trim()) return;
     setBusy(true);
@@ -92,9 +119,8 @@ export function CalendarSyncSettings() {
       if (data.connection) setConnection(data.connection);
       setIcalUrl("");
 
-      // Pull the calendar immediately so the member sees events without waiting.
-      const outcome = await runSync(true);
-      setNotice(summarize(outcome));
+      // Pull the whole calendar so the member sees everything, not just batch 1.
+      await drainSync();
       await refreshConnection();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not connect");
@@ -108,8 +134,7 @@ export function CalendarSyncSettings() {
     setError(null);
     setNotice(null);
     try {
-      const outcome = await runSync(true);
-      setNotice(summarize(outcome));
+      await drainSync();
       await refreshConnection();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sync failed");
@@ -227,19 +252,4 @@ export function CalendarSyncSettings() {
       {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
     </div>
   );
-}
-
-function summarize(outcome: SyncOutcome | undefined): string {
-  if (!outcome) return "Synced.";
-  if (outcome.status === "not-connected") return "No calendar connected.";
-  if (outcome.error) return `Could not reach Luma: ${outcome.error}`;
-  const added = outcome.added ?? 0;
-  const remaining = outcome.remaining ?? 0;
-  const more = remaining > 0 ? ` ${remaining} more will sync shortly.` : "";
-  if (added === 0) {
-    return remaining > 0
-      ? `Syncing your calendar...${more}`
-      : "You're up to date -- no new events.";
-  }
-  return `Added ${added} new event${added === 1 ? "" : "s"} to the feed.${more}`;
 }
