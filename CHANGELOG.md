@@ -5,6 +5,16 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.4.2
+
+2026-07-09
+
+**Events API**
+
+- Luma calendar sync now skips events that have already happened, so connecting a calendar with a long history no longer floods the shared feed with last year's meetups. Only upcoming events (and ones still within a few hours of ending) are added, and the sync reports how many past events it skipped.
+
+---
+
 ## v0.4.1
 
 2026-07-09
