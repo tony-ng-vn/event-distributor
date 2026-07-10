@@ -207,6 +207,38 @@ body {
     @apply border border-border-strong bg-surface text-foreground-secondary;
   }
 
+  /* Personal star toggle. Revealed on hover/focus on desktop; always shown on
+     touch and when starred. Amber when active. */
+  .btn-star {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted shadow-sm active:scale-[0.9];
+    transition:
+      opacity var(--motion-duration) var(--motion-ease),
+      transform var(--motion-duration) var(--motion-ease),
+      color var(--motion-duration) var(--motion-ease),
+      border-color var(--motion-duration) var(--motion-ease);
+  }
+
+  .btn-star-on {
+    @apply border-amber-400 text-amber-500;
+  }
+
+  @media (hover: hover) {
+    .btn-star {
+      opacity: 0;
+    }
+
+    /* group is on the card article; reveal on card hover, own focus, or starred. */
+    .group:hover .btn-star,
+    .btn-star:focus-visible,
+    .btn-star-on {
+      opacity: 1;
+    }
+
+    .btn-star:hover {
+      @apply border-amber-400 text-amber-500;
+    }
+  }
+
   .input-field {
     @apply w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground transition placeholder:text-muted focus:border-border-strong focus:outline-none focus:ring-2 focus:ring-neutral-200;
   }

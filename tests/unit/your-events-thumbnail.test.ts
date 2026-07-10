@@ -32,6 +32,7 @@ function makeEvent(overrides: Partial<FeedEvent>): FeedEvent {
     passAttendees: [],
     viewerAccepted: true,
     viewerPassed: false,
+    viewerStarred: false,
     addedBy: null,
     ...overrides,
   };

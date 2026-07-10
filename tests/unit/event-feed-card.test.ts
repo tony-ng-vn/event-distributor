@@ -24,6 +24,7 @@ const EVENT: FeedEvent = {
   passAttendees: [],
   viewerAccepted: false,
   viewerPassed: false,
+  viewerStarred: false,
   addedBy: null,
 };
 
@@ -55,5 +56,18 @@ describe("EventFeedCard", () => {
     const markup = render({ status: "accepted" });
     expect(markup).toContain('data-testid="unaccept-button"');
     expect(markup).toContain("Remove interest");
+  });
+
+  it("renders an unpressed star toggle labelled to star the event", () => {
+    const markup = render({ starred: false, onStar: () => undefined });
+    expect(markup).toContain('data-testid="star-button-chai-night"');
+    expect(markup).toContain('aria-pressed="false"');
+    expect(markup).toContain('aria-label="Star Chai Night"');
+  });
+
+  it("renders a pressed star toggle labelled to unstar when already starred", () => {
+    const markup = render({ starred: true, onStar: () => undefined });
+    expect(markup).toContain('aria-pressed="true"');
+    expect(markup).toContain('aria-label="Unstar Chai Night"');
   });
 });

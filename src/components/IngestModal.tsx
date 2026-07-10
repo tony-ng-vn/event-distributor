@@ -55,6 +55,7 @@ export function IngestModal({
         passAttendees: [],
         viewerAccepted: false,
         viewerPassed: false,
+        viewerStarred: false,
         addedBy: null,
       });
     } catch (err) {
