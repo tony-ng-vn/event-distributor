@@ -31,7 +31,9 @@ npm run db:migrate
 # or: npx @insforge/cli db migrations up --all
 ```
 
-Tables: `users`, `events`, `accepts` (see `migrations/20260701174826_create-event-radar-schema.sql`).
+Tables: `users`, `events`, `accepts`, and later migrations for passes, stars, notification prefs, approval, Luma calendar URL, ingest token, and **event type columns** (`primary_type`, `type_source`, etc. in `migrations/20260711200000_add-event-type-columns.sql`).
+
+**Before enabling type filters in production:** run `npm run db:migrate` so type columns exist. Until that migration is applied, ingest still works but classification updates no-op and every card stays effectively untyped. Set `EVENT_TYPE_CLASSIFIER` (`rules` recommended; `insforge` for LLM; `off` to leave untyped until backfill).
 
 Get keys from the linked project:
 

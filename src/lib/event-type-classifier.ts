@@ -237,12 +237,18 @@ export function parseModelClassification(
   const rationale =
     typeof record.rationale === "string" ? record.rationale.slice(0, 500) : null;
 
-  if (confidence !== null && confidence < minConfidence) {
+  // Missing or invalid confidence is treated as soft-fail — do not trust the
+  // model primary without a score.
+  if (confidence === null || confidence < minConfidence) {
     return {
       primaryType: "other",
       secondaryTypes: [],
       confidence,
-      rationale: rationale ?? "Below confidence threshold",
+      rationale:
+        rationale ??
+        (confidence === null
+          ? "Missing model confidence"
+          : "Below confidence threshold"),
       source: "fallback",
     };
   }
@@ -254,6 +260,14 @@ export function parseModelClassification(
     rationale,
     source: "model",
   };
+}
+
+/** Human labels win unless an explicit force flag is passed. */
+export function shouldSkipExistingTypeSource(
+  typeSource: string | null | undefined,
+  force = false,
+): boolean {
+  return typeSource === "human" && !force;
 }
 
 export async function classifyEventInput(
@@ -337,7 +351,7 @@ export async function persistEventClassification(
   if (!existing) return false;
 
   const source = (existing as { type_source?: string }).type_source;
-  if (source === "human" && !options.force) {
+  if (shouldSkipExistingTypeSource(source, options.force)) {
     return false;
   }
 
@@ -387,7 +401,7 @@ export async function classifyAndPersistEvent(
     type_source: string;
   };
 
-  if (row.type_source === "human") return null;
+  if (shouldSkipExistingTypeSource(row.type_source)) return null;
 
   const result = await classifyEventInput(
     {

@@ -5,6 +5,7 @@ import {
   classifyWithRules,
   parseModelClassification,
   resolveClassifierMode,
+  shouldSkipExistingTypeSource,
 } from "@/lib/event-type-classifier";
 import {
   matchesEventTypeFilter,
@@ -118,6 +119,24 @@ describe("event-type-classifier", () => {
     );
     expect(low.primaryType).toBe("other");
     expect(low.source).toBe("fallback");
+
+    const missing = parseModelClassification(
+      {
+        primary_type: "builders",
+        secondary_types: [],
+        rationale: "no score",
+      },
+      0.55,
+    );
+    expect(missing.primaryType).toBe("other");
+    expect(missing.source).toBe("fallback");
+  });
+
+  it("skips overwriting human type sources unless forced", () => {
+    expect(shouldSkipExistingTypeSource("human")).toBe(true);
+    expect(shouldSkipExistingTypeSource("human", true)).toBe(false);
+    expect(shouldSkipExistingTypeSource("rules")).toBe(false);
+    expect(shouldSkipExistingTypeSource("untyped")).toBe(false);
   });
 
   it("rejects invalid model primary_type", () => {

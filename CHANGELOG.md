@@ -21,7 +21,7 @@ Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGE
 
 **Infrastructure**
 
-- Migration adds type columns and indexes; `EVENT_TYPE_CLASSIFIER` selects off / mock / rules / InsForge AI.
+- Migration adds type columns and indexes; **apply with `npm run db:migrate` before/at deploy** or classification cannot persist. `EVENT_TYPE_CLASSIFIER` selects off / mock / rules / InsForge AI.
 
 **Docs**
 
