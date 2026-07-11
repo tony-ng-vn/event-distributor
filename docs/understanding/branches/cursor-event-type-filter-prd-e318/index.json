@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-07-11T20:29:15.668Z",
+  "branch": "cursor/event-type-filter-prd-e318",
+  "branchSlug": "cursor-event-type-filter-prd-e318",
+  "base": "main",
+  "commitCount": 3,
+  "pendingExplainers": [],
+  "entries": [
+    {
+      "sequence": 1,
+      "sha": "33353f3",
+      "fullSha": "33353f3f3409cce4ca4edd96d7cef75d9c1c3de8",
+      "summary": "docs(research): sample SF event corpus for type classification",
+      "tier": "light",
+      "tierSuggested": "full",
+      "tierReason": "420 lines, 3 file(s)",
+      "linesChanged": 420,
+      "filesChanged": 3,
+      "explainerDir": "2026-07-11-33353f3-docs-research-sample-sf-event-corpus-for-type-cl",
+      "explainerPath": "../commits/2026-07-11-33353f3-docs-research-sample-sf-event-corpus-for-type-cl/explainer.md",
+      "explainerFormat": "md",
+      "needsExplainer": false
+    },
+    {
+      "sequence": 2,
+      "sha": "56fde7c",
+      "fullSha": "56fde7c0dca65f3a4fc56640ecbeec4b88dd67c4",
+      "summary": "docs(prd): event type filter and classifier",
+      "tier": "light",
+      "tierSuggested": "full",
+      "tierReason": "144 lines, 1 file(s)",
+      "linesChanged": 144,
+      "filesChanged": 1,
+      "explainerDir": "2026-07-11-56fde7c-docs-prd-event-type-filter-and-classifier",
+      "explainerPath": "../commits/2026-07-11-56fde7c-docs-prd-event-type-filter-and-classifier/explainer.md",
+      "explainerFormat": "md",
+      "needsExplainer": false
+    },
+    {
+      "sequence": 3,
+      "sha": "9cf0d60",
+      "fullSha": "9cf0d60f58844cf7084704f34bfdac267aa117b6",
+      "summary": "docs(prd): tighten event-type classifier contract",
+      "tier": "light",
+      "tierSuggested": "full",
+      "tierReason": "132 lines, 3 file(s)",
+      "linesChanged": 132,
+      "filesChanged": 3,
+      "explainerDir": "2026-07-11-9cf0d60-docs-prd-tighten-event-type-classifier-contract",
+      "explainerPath": "../commits/2026-07-11-9cf0d60-docs-prd-tighten-event-type-classifier-contract/explainer.md",
+      "explainerFormat": "md",
+      "needsExplainer": false
+    }
+  ]
+}
