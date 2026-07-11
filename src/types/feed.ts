@@ -5,6 +5,14 @@
  * FeedFilter and MobileTab control FeedApp tabs and filter pills.
  */
 
+import type {
+  EventTypeFilter,
+  EventTypeId,
+  EventTypeSource,
+} from "@/lib/event-type-taxonomy";
+
+export type { EventTypeFilter, EventTypeId, EventTypeSource };
+
 /** One event card in the feed — dates are ISO strings for JSON transport. */
 export type FeedEvent = {
   id: string;
@@ -20,6 +28,11 @@ export type FeedEvent = {
   hostName: string | null;
   hostAvatarUrl: string | null;
   createdAt: string;
+  /** Closed taxonomy primary type (always set; default other until classified). */
+  primaryType: EventTypeId;
+  secondaryTypes: EventTypeId[];
+  /** How primaryType was assigned — untyped means still classifying. */
+  typeSource: EventTypeSource;
   acceptCount: number;
   attendees: {
     id: string;

@@ -11,6 +11,14 @@
 import { isUserAdmin } from "@/lib/admin";
 import { assertDestructiveWritesAllowed } from "@/lib/db-safety";
 import { getInsforgeAdmin } from "@/lib/db";
+import { setEventTypeHuman } from "@/lib/event-type-classifier";
+import { scheduleEventTypeClassification } from "@/lib/event-type-schedule";
+import {
+  isEventTypeId,
+  isEventTypeSource,
+  type EventTypeId,
+  type EventTypeSource,
+} from "@/lib/event-type-taxonomy";
 import { newId } from "@/lib/ids";
 import { scheduleEventIngestedNotification } from "@/lib/notifications/notify";
 import {
@@ -64,11 +72,29 @@ type InsforgeEventRow = {
   host_name: string | null;
   host_avatar_url: string | null;
   created_at: string;
+  primary_type?: string | null;
+  secondary_types?: string[] | null;
+  type_source?: string | null;
   accepts: InsforgeAcceptRow[] | null;
   passes: InsforgePassRow[] | null;
   stars: InsforgeStarRow[] | null;
   added_by_user: InsforgeUser | InsforgeUser[] | null;
 };
+
+function serializePrimaryType(value: string | null | undefined): EventTypeId {
+  return isEventTypeId(value) ? value : "other";
+}
+
+function serializeTypeSource(value: string | null | undefined): EventTypeSource {
+  return isEventTypeSource(value) ? value : "untyped";
+}
+
+function serializeSecondaryTypes(
+  values: string[] | null | undefined,
+): EventTypeId[] {
+  if (!Array.isArray(values)) return [];
+  return values.filter((value): value is EventTypeId => isEventTypeId(value));
+}
 
 function normalizeUser(
   users: InsforgeUser | InsforgeUser[] | null | undefined,
@@ -125,6 +151,9 @@ function serializeEvent(
     hostName: event.host_name,
     hostAvatarUrl: event.host_avatar_url,
     createdAt: event.created_at,
+    primaryType: serializePrimaryType(event.primary_type),
+    secondaryTypes: serializeSecondaryTypes(event.secondary_types),
+    typeSource: serializeTypeSource(event.type_source),
     acceptCount: attendees.length,
     attendees,
     passCount: passAttendees.length,
@@ -265,6 +294,9 @@ export async function ingestLumaEvent(lumaUrl: string, addedByUserId?: string) {
       ? { id: serialized.addedBy.id, name: serialized.addedBy.name }
       : null,
   });
+
+  // Type classify async — insert stays fast for calendar sync batches.
+  scheduleEventTypeClassification(serialized.id);
 
   return serialized;
 }
@@ -445,6 +477,24 @@ export type DeleteEventResult = {
   title: string | null;
   deleted: boolean;
 };
+
+/** PATCH type — admin sets primary_type with type_source=human. */
+export async function setEventPrimaryType(
+  eventId: string,
+  userId: string,
+  primaryType: EventTypeId,
+): Promise<FeedEvent> {
+  const admin = await isUserAdmin(userId);
+  if (!admin) {
+    throw new Error("Admin privileges required to change event type");
+  }
+  if (!isEventTypeId(primaryType)) {
+    throw new Error("Invalid primary type");
+  }
+
+  await setEventTypeHuman(eventId, primaryType, userId);
+  return reloadSerializedEvent(eventId, userId);
+}
 
 /** DELETE /api/events/[id] — remove event from shared feed (admin only). */
 export async function deleteEvent(

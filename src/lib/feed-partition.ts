@@ -5,6 +5,10 @@
  * Past — viewer has accepted or passed (still visible in feed, not hidden).
  */
 import { isSameDay } from "@/lib/dates";
+import {
+  matchesEventTypeFilter,
+  type EventTypeFilter,
+} from "@/lib/event-type-taxonomy";
 import type { FeedEvent, FeedFilter } from "@/types/feed";
 
 export type CardStatus = "pending" | "accepted" | "passed" | "accepting";
@@ -15,6 +19,8 @@ export type FeedPartitionInput = {
   passedIds: string[];
   selectedDate?: Date | null;
   filter?: FeedFilter;
+  /** Closed taxonomy type filter (All types or one id). */
+  typeFilter?: EventTypeFilter;
   /** Optimistic per-event star overrides; falls back to event.viewerStarred. */
   starState?: Record<string, boolean | undefined>;
 };
@@ -72,6 +78,7 @@ export function partitionFeedEvents({
   passedIds,
   selectedDate = null,
   filter = "all",
+  typeFilter = "all",
   starState = {},
 }: FeedPartitionInput) {
   const starredEvents: FeedEvent[] = [];
@@ -80,6 +87,12 @@ export function partitionFeedEvents({
 
   for (const event of events) {
     if (!matchesDateFilter(event, selectedDate)) continue;
+
+    if (
+      !matchesEventTypeFilter(event.primaryType, event.typeSource, typeFilter)
+    ) {
+      continue;
+    }
 
     // A starred event is lifted into its own pinned section (no duplicate) and
     // stays there regardless of the pending/accepted pill -- a personal pin
