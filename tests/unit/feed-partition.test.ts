@@ -27,6 +27,9 @@ function makeEvent(overrides: Partial<FeedEvent> = {}): FeedEvent {
     viewerAccepted: false,
     viewerPassed: false,
     viewerStarred: false,
+    primaryType: "other",
+    secondaryTypes: [],
+    typeSource: "untyped",
     addedBy: null,
     ...overrides,
   };
@@ -118,6 +121,40 @@ describe("feed partition", () => {
 
     expect(newEvents).toHaveLength(0);
     expect(pastEvents.map((event) => event.id)).toEqual(["going"]);
+  });
+
+  it("type filter keeps matching primaries and excludes untyped from Other", () => {
+    const social = makeEvent({
+      id: "social",
+      primaryType: "social",
+      typeSource: "rules",
+    });
+    const untypedOther = makeEvent({
+      id: "untyped",
+      primaryType: "other",
+      typeSource: "untyped",
+    });
+    const fallbackOther = makeEvent({
+      id: "fallback",
+      primaryType: "other",
+      typeSource: "fallback",
+    });
+
+    const socialOnly = partitionFeedEvents({
+      events: [social, untypedOther, fallbackOther],
+      cardState: {},
+      passedIds: [],
+      typeFilter: "social",
+    });
+    expect(socialOnly.newEvents.map((e) => e.id)).toEqual(["social"]);
+
+    const otherOnly = partitionFeedEvents({
+      events: [social, untypedOther, fallbackOther],
+      cardState: {},
+      passedIds: [],
+      typeFilter: "other",
+    });
+    expect(otherOnly.newEvents.map((e) => e.id)).toEqual(["fallback"]);
   });
 
   it("lifts starred events into their own section, out of new/past", () => {

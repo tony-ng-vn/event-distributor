@@ -35,6 +35,9 @@ function makeEvent(id: string, viewerAccepted: boolean): FeedEvent {
     viewerAccepted,
     viewerPassed: false,
     viewerStarred: false,
+    primaryType: "other",
+    secondaryTypes: [],
+    typeSource: "untyped",
     addedBy: null,
   };
 }

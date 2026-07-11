@@ -33,6 +33,9 @@ function makeEvent(overrides: Partial<FeedEvent>): FeedEvent {
     viewerAccepted: true,
     viewerPassed: false,
     viewerStarred: false,
+    primaryType: "other",
+    secondaryTypes: [],
+    typeSource: "untyped",
     addedBy: null,
     ...overrides,
   };
