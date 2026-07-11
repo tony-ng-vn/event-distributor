@@ -8,6 +8,7 @@ import { formatDateTime } from "@/lib/dates";
 import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { EventTitleLink } from "@/components/EventTitleLink";
+import { EventTypeLabel } from "@/components/EventTypeLabel";
 import { RemoveInterestAction } from "@/components/RemoveInterestAction";
 import type { FeedEvent } from "@/types/feed";
 
@@ -72,6 +73,12 @@ export function EventDetailSheet({
               size="detail"
             />
             <p className="mt-2 text-sm text-muted">{formatDateTime(event.startAt)}</p>
+            <div className="mt-2">
+              <EventTypeLabel
+                primaryType={event.primaryType}
+                typeSource={event.typeSource}
+              />
+            </div>
           </div>
 
           {event.hostName && (

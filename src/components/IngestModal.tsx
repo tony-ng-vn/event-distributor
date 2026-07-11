@@ -56,6 +56,9 @@ export function IngestModal({
         viewerAccepted: false,
         viewerPassed: false,
         viewerStarred: false,
+        primaryType: "other",
+        secondaryTypes: [],
+        typeSource: "untyped",
         addedBy: null,
       });
     } catch (err) {
