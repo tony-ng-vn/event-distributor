@@ -5,6 +5,16 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.6.1
+
+2026-07-10
+
+**Infrastructure**
+
+- Restored the production star-record table and its event relationship, so the personal Starred section can load again instead of failing with a schema-cache error.
+
+---
+
 ## v0.6.0
 
 2026-07-10
