@@ -1,4 +1,4 @@
-# PR roll-up: event type filter + classifier PRD
+# PR roll-up: event type filter + classifier
 
 **Branch:** `cursor/event-type-filter-prd-e318` · **Base:** `main`  
 **Generated:** 2026-07-11  
@@ -8,38 +8,41 @@
 
 ## At a glance
 
-Docs-only PR. Research shows keyword typing fails on playful SF Luma titles; the PRD proposes a six-type taxonomy, async LLM classification with soft failure, and feed type filters. Production DB was not dumped here (missing credentials) — use `scripts/dump-event-type-corpus.mjs` locally before implementation.
+Ships research, PRD, and implementation for filtering the shared feed by event type. Events classify asynchronously after ingest (rules by default; optional InsForge AI). Friends get type pills; admins can override and backfill.
 
 ---
 
 ## How to read
 
-1. Research notes + proxy corpus (`33353f3`)
-2. PRD (`56fde7c`)
-3. Contract tightening after review (`9cf0d60`)
+1. Research + PRD (first three docs commits)
+2. Taxonomy / classifier / migration (`b56a8fc`)
+3. API serialization + admin routes (`912b4fc`)
+4. Feed UI (`6ccb67f`)
+5. Tests + changelog (`7c6899d`)
+6. Confidence / deploy harden (`ade42c3`)
 
 Reading order: [`../../branches/cursor-event-type-filter-prd-e318/reading-order.md`](../../branches/cursor-event-type-filter-prd-e318/reading-order.md)
 
 ---
 
-## Decisions locked in the docs
+## Decisions locked in
 
-- Closed types: social, builders, talks, sports, arts, other  
-- Insert first → async classify → never block calendar sync  
-- `untyped` excluded from Other  
-- `type_source`: untyped | model | rules | fallback | human  
-- Not ready-for-agent until human confirms taxonomy + labels a prod sample  
+- Closed types: social, builders, talks, sports, arts, other
+- Insert first → async classify → never block calendar sync
+- Other excludes `untyped`
+- Human overrides are sticky
+- Apply migration at deploy (`npm run db:migrate`)
 
 ---
 
 ## Quiz (2 questions)
 
-### 1. Is this PR an implementation of type filters?
+### 1. Does ingest wait for the LLM?
 
-- [ ] Yes, feed pills ship here — <details><summary>Reveal</summary>❌ Docs/PRD only.</details>
-- [ ] No — research + requirements for a later agent — <details><summary>Reveal</summary>✅</details>
+- [ ] Yes — <details><summary>Reveal</summary>❌ Async via after().</details>
+- [ ] No — classify is fire-and-forget — <details><summary>Reveal</summary>✅</details>
 
-### 2. What blocks marking #46 ready-for-agent?
+### 2. What must happen before production type filters work?
 
-- [ ] Nothing — <details><summary>Reveal</summary>❌ Need taxonomy confirmation + prod corpus spot-check.</details>
-- [ ] Human taxonomy OK + local prod dump labeled — <details><summary>Reveal</summary>✅ Stated in the PRD further notes.</details>
+- [ ] Nothing — <details><summary>Reveal</summary>❌</details>
+- [ ] Apply the type-columns migration (and set EVENT_TYPE_CLASSIFIER) — <details><summary>Reveal</summary>✅</details>
