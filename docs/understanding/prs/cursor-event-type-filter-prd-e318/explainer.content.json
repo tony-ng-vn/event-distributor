@@ -1,0 +1,109 @@
+{
+  "title": "PRD: event type filter + classifier",
+  "meta": "PR #47 · branch cursor/event-type-filter-prd-e318 · issue #46 · docs only",
+  "seriesLink": "../../branches/cursor-event-type-filter-prd-e318/reading-order.md",
+  "glance": "Research + PRD for filtering the shared feed by event type. Keyword rules fail on playful SF Luma titles; recommend async LLM classification into a small closed taxonomy, then type filter pills.",
+  "backgroundDeep": "Event Radar stores Luma-scraped events (title, description, location, host, is_online) with no category field. Feed filters today are response-state only (all/pending/accepted).",
+  "backgroundNarrow": "This branch adds docs under docs/prd/ plus a read-only dump script. Production InsForge could not be queried in the cloud agent (missing API key), so research used a public Luma SF discover proxy corpus.",
+  "goal": "Give humans a clear, implementable plan: taxonomy, classifier contract, and filter UX — without shipping app code yet.",
+  "figure": "<span class=\"box\">Ingest</span><span class=\"arrow\">→</span><span class=\"box\">async classify</span><span class=\"arrow\">→</span><span class=\"box\">primary_type</span><span class=\"arrow\">→</span><span class=\"box\">feed pills</span>",
+  "intuition": "Insert first so calendar sync never waits on a model. Untyped rows stay under All; Other means we tried and could not type it.",
+  "steps": [
+    {
+      "label": "Research corpus",
+      "body": "Proxy SF titles show multi-intent events (e.g. paddle + AI branding). Keyword maps mis-label the interesting middle."
+    },
+    {
+      "label": "PRD taxonomy",
+      "body": "Closed set: social, builders, talks, sports, arts, other. LLM at classify-time with soft fallback; admin override."
+    },
+    {
+      "label": "Contract tightening",
+      "body": "type_source enum, async post-ingest, Other excludes untyped — so a future agent can implement without guessing."
+    }
+  ],
+  "quiz": [
+    {
+      "q": "Does this PR ship feed type filters in the app?",
+      "correct": 1,
+      "options": [
+        "Yes — pills are live",
+        "No — research and PRD only",
+        "Only for admins",
+        "Only on mobile"
+      ],
+      "feedback": [
+        "❌ No runtime UI changes.",
+        "✅ Docs prepare a later implementation issue.",
+        "❌",
+        "❌"
+      ]
+    },
+    {
+      "q": "Why async classification?",
+      "correct": 1,
+      "options": [
+        "LLMs are illegal at ingest time",
+        "Calendar sync can ingest many events; waiting on the model risks timeouts",
+        "Postgres cannot store text types",
+        "Clerk requires it"
+      ],
+      "feedback": [
+        "❌",
+        "✅ Insert first, classify after.",
+        "❌",
+        "❌"
+      ]
+    },
+    {
+      "q": "Should untyped events appear under Other?",
+      "correct": 1,
+      "options": [
+        "Yes",
+        "No — Other is for classified-as-other / fallback",
+        "Only after 24 hours",
+        "Only if description is empty"
+      ],
+      "feedback": [
+        "❌ Conflates pending with uncategorizable.",
+        "✅ Untyped stays in All until typed.",
+        "❌",
+        "❌"
+      ]
+    },
+    {
+      "q": "What should you run locally before implementation?",
+      "correct": 1,
+      "options": [
+        "Nothing",
+        "scripts/dump-event-type-corpus.mjs with .env.local, then spot-label ~30 titles",
+        "Delete production events",
+        "Force-push main"
+      ],
+      "feedback": [
+        "❌",
+        "✅ Prod sample was missing from the cloud run.",
+        "❌ Destructive and forbidden.",
+        "❌"
+      ]
+    },
+    {
+      "q": "Proposed v1 taxonomy ids?",
+      "correct": 1,
+      "options": [
+        "Free-form tags",
+        "social, builders, talks, sports, arts, other",
+        "luma-official-only",
+        "pending, accepted"
+      ],
+      "feedback": [
+        "❌ Out of scope for v1.",
+        "✅ Closed friend-facing set.",
+        "❌",
+        "❌ Those are response-state filters already."
+      ]
+    }
+  ],
+  "microWorld": "Optional later: a tiny playground that shows title → predicted type for the proxy corpus.",
+  "footer": "Issue #46 · PR #47 · understanding generated 2026-07-11"
+}
