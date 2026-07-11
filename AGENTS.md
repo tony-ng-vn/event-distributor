@@ -58,5 +58,6 @@ Key patterns:
 - Database inserts take an array: `insert([{ ... }])`.
 - Reference users with `auth.users(id)`; use `auth.uid()` in RLS policies.
 - For storage uploads, persist both the returned `url` and `key`.
-- **Database safety:** agents and tests must never run destructive helpers against production (`yy57ijjh`). Develop and test against the dev project, and require `INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true` (integration tests) plus a non-production `INSFORGE_URL` before any reset helper runs (enforced in `src/lib/db-safety.ts`).
+- **Database safety:** agents and tests must never run destructive helpers against production (`yy57ijjh`). Do not create or maintain a permanent dev project; use a short-lived InsForge branch only when integration testing requires one. Reset helpers require `INSFORGE_PRODUCTION_URL`, `INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true`, and an `INSFORGE_URL` that exactly matches `INSFORGE_DESTRUCTIVE_TEST_URL` (enforced in `src/lib/db-safety.ts`).
+- **Destructive operations:** agents must not run `insforge projects delete`, `insforge branch delete`, or raw destructive SQL (`DELETE`, `TRUNCATE`, `DROP`, or destructive `ALTER`) unless the user explicitly requests that exact operation and target. Do not bypass the runtime guard by changing safety environment variables.
 <!-- INSFORGE:END -->

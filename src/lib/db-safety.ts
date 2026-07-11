@@ -1,9 +1,8 @@
 /**
  * Guards destructive InsForge operations so tests and agents cannot wipe production.
  *
- * Production is identified by INSFORGE_PRODUCTION_URL. Agents and test harnesses
- * may only run destructive helpers when INSFORGE_URL points elsewhere AND
- * INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true.
+ * Destructive helpers fail closed. They require a configured production URL,
+ * an explicit opt-in, and an exact match to a separately allowlisted test URL.
  */
 
 export function normalizeInsforgeUrl(url: string): string {
@@ -21,6 +20,11 @@ function resolveProductionInsforgeUrl(): string | null {
   return url ? normalizeInsforgeUrl(url) : null;
 }
 
+function resolveDestructiveTestInsforgeUrl(): string | null {
+  const url = process.env.INSFORGE_DESTRUCTIVE_TEST_URL;
+  return url ? normalizeInsforgeUrl(url) : null;
+}
+
 export function isProductionInsforgeDatabase(): boolean {
   const current = resolveInsforgeBaseUrl();
   const production = resolveProductionInsforgeUrl();
@@ -30,17 +34,37 @@ export function isProductionInsforgeDatabase(): boolean {
 
 export function assertDestructiveWritesAllowed(context: string): void {
   const current = resolveInsforgeBaseUrl();
+  const production = resolveProductionInsforgeUrl();
 
-  if (isProductionInsforgeDatabase()) {
+  if (!current) {
+    throw new Error(
+      `Blocked ${context}: INSFORGE_URL (or NEXT_PUBLIC_INSFORGE_URL) is required.`,
+    );
+  }
+
+  if (!production) {
+    throw new Error(
+      `Blocked ${context}: INSFORGE_PRODUCTION_URL must be configured so destructive helpers can fail closed.`,
+    );
+  }
+
+  if (current === production) {
     throw new Error(
       `Blocked ${context}: destructive writes are not allowed against the production InsForge database (${current}). ` +
-        "Use an InsForge branch or separate dev project for tests. See AGENTS.md (Database safety).",
+        "Use a temporary InsForge branch for tests. See AGENTS.md (Database safety).",
     );
   }
 
   if (process.env.INSFORGE_ALLOW_DESTRUCTIVE_WRITES !== "true") {
     throw new Error(
-      `Blocked ${context}: set INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true only when INSFORGE_URL points at a dedicated test/dev InsForge project — never production.`,
+      `Blocked ${context}: set INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true only when INSFORGE_URL points at an explicitly allowlisted temporary InsForge branch — never production.`,
+    );
+  }
+
+  const testTarget = resolveDestructiveTestInsforgeUrl();
+  if (!testTarget || current !== testTarget) {
+    throw new Error(
+      `Blocked ${context}: INSFORGE_URL must exactly match INSFORGE_DESTRUCTIVE_TEST_URL before destructive helpers can run.`,
     );
   }
 }

@@ -10,6 +10,7 @@ const ENV_KEYS = [
   "NEXT_PUBLIC_INSFORGE_URL",
   "INSFORGE_PRODUCTION_URL",
   "INSFORGE_ALLOW_DESTRUCTIVE_WRITES",
+  "INSFORGE_DESTRUCTIVE_TEST_URL",
 ] as const;
 
 function saveEnv() {
@@ -37,6 +38,7 @@ describe("db-safety", () => {
     delete process.env.NEXT_PUBLIC_INSFORGE_URL;
     delete process.env.INSFORGE_PRODUCTION_URL;
     delete process.env.INSFORGE_ALLOW_DESTRUCTIVE_WRITES;
+    delete process.env.INSFORGE_DESTRUCTIVE_TEST_URL;
   });
 
   it("normalizes InsForge URLs for comparison", () => {
@@ -58,6 +60,8 @@ describe("db-safety", () => {
     process.env.INSFORGE_PRODUCTION_URL =
       "https://yy57ijjh.us-east.insforge.app";
     process.env.INSFORGE_ALLOW_DESTRUCTIVE_WRITES = "true";
+    process.env.INSFORGE_DESTRUCTIVE_TEST_URL =
+      "https://dev-branch.us-east.insforge.app";
 
     expect(() =>
       assertDestructiveWritesAllowed("resetDatabase"),
@@ -82,6 +86,30 @@ describe("db-safety", () => {
 
     expect(() => assertDestructiveWritesAllowed("resetDatabase")).toThrow(
       /INSFORGE_ALLOW_DESTRUCTIVE_WRITES=true/i,
+    );
+  });
+
+  it("blocks destructive writes when production is not configured", () => {
+    process.env.INSFORGE_URL = "https://dev-branch.us-east.insforge.app";
+    process.env.INSFORGE_ALLOW_DESTRUCTIVE_WRITES = "true";
+    process.env.INSFORGE_DESTRUCTIVE_TEST_URL =
+      "https://dev-branch.us-east.insforge.app";
+
+    expect(() => assertDestructiveWritesAllowed("resetDatabase")).toThrow(
+      /INSFORGE_PRODUCTION_URL/i,
+    );
+  });
+
+  it("blocks destructive writes unless the active database is explicitly allowlisted", () => {
+    process.env.INSFORGE_URL = "https://dev-branch.us-east.insforge.app";
+    process.env.INSFORGE_PRODUCTION_URL =
+      "https://yy57ijjh.us-east.insforge.app";
+    process.env.INSFORGE_ALLOW_DESTRUCTIVE_WRITES = "true";
+    process.env.INSFORGE_DESTRUCTIVE_TEST_URL =
+      "https://another-dev-branch.us-east.insforge.app";
+
+    expect(() => assertDestructiveWritesAllowed("resetDatabase")).toThrow(
+      /INSFORGE_DESTRUCTIVE_TEST_URL/i,
     );
   });
 });

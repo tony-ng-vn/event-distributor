@@ -6,7 +6,6 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   assertIntegrationTestsAllowed,
-  normalizeInsforgeUrl,
 } from "@/lib/db-safety";
 
 process.env.LUMA_FETCH_MODE = "mock";
@@ -23,10 +22,6 @@ function loadLinkedInsforgeProject() {
   process.env.INSFORGE_URL ??= project.oss_host;
   process.env.INSFORGE_API_KEY ??= project.api_key;
   process.env.NEXT_PUBLIC_INSFORGE_URL ??= project.oss_host;
-
-  if (!process.env.INSFORGE_PRODUCTION_URL && project.oss_host) {
-    process.env.INSFORGE_PRODUCTION_URL = normalizeInsforgeUrl(project.oss_host);
-  }
 }
 
 beforeAll(() => {
