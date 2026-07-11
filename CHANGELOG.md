@@ -5,6 +5,16 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.6.3
+
+2026-07-10
+
+**Infrastructure**
+
+- Release checks now ignore generated files in local agent worktrees, so a clean production build is evaluated from the application source instead of unrelated build artifacts.
+
+---
+
 ## v0.6.2
 
 2026-07-10
