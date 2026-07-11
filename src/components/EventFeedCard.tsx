@@ -12,6 +12,7 @@ import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { EventThumbnail } from "@/components/EventThumbnail";
 import { EventTitleLink } from "@/components/EventTitleLink";
+import { EventTypeLabel } from "@/components/EventTypeLabel";
 import { RemoveInterestAction } from "@/components/RemoveInterestAction";
 import type { CardStatus } from "@/lib/feed-partition";
 import type { FeedEvent } from "@/types/feed";
@@ -128,6 +129,12 @@ export function EventFeedCard({
               {formatDateTime(event.startAt)}
             </p>
           </button>
+          <div className="mt-1">
+            <EventTypeLabel
+              primaryType={event.primaryType}
+              typeSource={event.typeSource}
+            />
+          </div>
           <EventTitleLink title={event.title} lumaUrl={event.lumaUrl} />
           <button
             type="button"

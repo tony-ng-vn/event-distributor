@@ -1,0 +1,63 @@
+{
+  "title": "Event type filter + classifier",
+  "meta": "PR #47 · branch cursor/event-type-filter-prd-e318 · issue #46 · v0.7.0",
+  "seriesLink": "../../branches/cursor-event-type-filter-prd-e318/reading-order.md",
+  "glance": "Friends can filter the shared feed by event type. Events classify asynchronously after ingest (rules by default; optional InsForge AI). Admins can override and backfill.",
+  "backgroundDeep": "Event Radar stored Luma metadata without categories. Feed filters were only response-state (all/pending/accepted).",
+  "backgroundNarrow": "This branch adds type columns, a classifier, feed type pills, card labels, admin override, and deploy/migrate notes.",
+  "goal": "Ship triage by event type without blocking calendar sync or inventing a fragile keyword-only system.",
+  "figure": "<span class=\"box\">Ingest</span><span class=\"arrow\">→</span><span class=\"box\">async classify</span><span class=\"arrow\">→</span><span class=\"box\">primary_type</span><span class=\"arrow\">→</span><span class=\"box\">feed pills</span>",
+  "intuition": "Insert first so sync stays fast. Untyped rows stay under All; Other means we tried and could not type it. Human overrides stick.",
+  "steps": [
+    {
+      "label": "Schema + classifier",
+      "body": "Migration adds primary_type/type_source. Classifier supports off/mock/rules/insforge with soft-fail."
+    },
+    {
+      "label": "API + ingest hook",
+      "body": "serializeEvent returns type fields; scheduleEventTypeClassification runs after insert; admin PATCH/backfill routes."
+    },
+    {
+      "label": "Feed UI",
+      "body": "Type filter pills compose with pending/accepted; cards show tag-pill labels; admin select overrides."
+    },
+    {
+      "label": "Harden + deploy",
+      "body": "Missing model confidence → fallback; migrate note in production docs; unit tests green."
+    }
+  ],
+  "quiz": [
+    {
+      "q": "Does ingest wait on classification?",
+      "correct": 1,
+      "options": ["Yes", "No — after() fire-and-forget", "Only for admins", "Only on Vercel"],
+      "feedback": ["❌", "✅", "❌", "❌"]
+    },
+    {
+      "q": "Other filter includes untyped?",
+      "correct": 1,
+      "options": ["Yes", "No", "Only social", "Only builders"],
+      "feedback": ["❌", "✅ Untyped stays in All.", "❌", "❌"]
+    },
+    {
+      "q": "Default EVENT_TYPE_CLASSIFIER?",
+      "correct": 1,
+      "options": ["insforge", "rules", "off", "mock"],
+      "feedback": ["❌ Optional upgrade.", "✅ Keyword path works without AI.", "❌ Tests use off.", "❌ Alias of rules."]
+    },
+    {
+      "q": "Before prod filters work you must?",
+      "correct": 1,
+      "options": ["Nothing", "Apply type migration (db:migrate)", "Delete all events", "Disable Clerk"],
+      "feedback": ["❌", "✅", "❌", "❌"]
+    },
+    {
+      "q": "Human override type_source?",
+      "correct": 1,
+      "options": ["model", "human", "untyped", "fallback"],
+      "feedback": ["❌", "✅ Sticky against backfill.", "❌", "❌"]
+    }
+  ],
+  "microWorld": "Optional: playground mapping title → predicted type for the proxy corpus.",
+  "footer": "Issue #46 · PR #47 · understanding generated 2026-07-11"
+}

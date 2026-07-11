@@ -19,6 +19,7 @@ import {
   unpassEvent,
   unstarEvent,
 } from "@/lib/events-service";
+import { classifyAndPersistEvent } from "@/lib/event-type-classifier";
 import * as luma from "@/lib/event-page";
 
 describe("events service", () => {
@@ -31,10 +32,25 @@ describe("events service", () => {
     expect(event.title).toBeTruthy();
     expect(event.coverImageUrl).toMatch(/^https:\/\/images\.lumacdn\.com\//);
     expect(event.lumaUrl).toBe("https://lu.ma/demo-ai-meetup");
+    expect(event.primaryType).toBe("other");
+    expect(event.typeSource).toBe("untyped");
 
     const feed = await listFeedEvents();
     expect(feed).toHaveLength(1);
     expect(feed[0]?.id).toBe(event.id);
+  });
+
+  it("classifies an ingested event with rules without blocking ingest", async () => {
+    const event = await ingestLumaEvent("https://lu.ma/demo-ai-meetup");
+    expect(event.typeSource).toBe("untyped");
+
+    const result = await classifyAndPersistEvent(event.id, { mode: "rules" });
+    expect(result?.primaryType).toBe("builders");
+    expect(result?.source).toBe("rules");
+
+    const feed = await listFeedEvents();
+    expect(feed[0]?.primaryType).toBe("builders");
+    expect(feed[0]?.typeSource).toBe("rules");
   });
 
   it("rejects duplicate Luma URLs", async () => {

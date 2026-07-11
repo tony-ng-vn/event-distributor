@@ -1,0 +1,5 @@
+{
+  "sha": "56fde7c",
+  "tier": "light",
+  "tierOverrideReason": "PRD documentation; product decisions, no runtime code"
+}

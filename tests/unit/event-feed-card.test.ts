@@ -25,6 +25,9 @@ const EVENT: FeedEvent = {
   viewerAccepted: false,
   viewerPassed: false,
   viewerStarred: false,
+  primaryType: "social",
+  secondaryTypes: [],
+  typeSource: "rules",
   addedBy: null,
 };
 
@@ -69,5 +72,11 @@ describe("EventFeedCard", () => {
     const markup = render({ starred: true, onStar: () => undefined });
     expect(markup).toContain('aria-pressed="true"');
     expect(markup).toContain('aria-label="Unstar Chai Night"');
+  });
+
+  it("shows a type label when the event is classified", () => {
+    const markup = render({ status: "pending" });
+    expect(markup).toContain('data-testid="event-type-label"');
+    expect(markup).toContain("Social");
   });
 });

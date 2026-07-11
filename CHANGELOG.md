@@ -5,7 +5,29 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
-## v0.6.3
+## v0.7.0
+
+2026-07-11
+
+**Feed**
+
+- Added event-type filter pills (Social, Builders / AI, Talks, Sports, Arts, Other) that compose with pending/accepted and calendar day filters.
+- Event cards and the detail sheet show a subtle type label once an event is classified (hidden while still untyped).
+
+**Events API**
+
+- Events now store a closed primary type plus type source (untyped / model / rules / fallback / human).
+- New events classify asynchronously after ingest so calendar sync stays fast; admins can override type and backfill untyped rows.
+
+**Infrastructure**
+
+- Migration adds type columns and indexes; **apply with `npm run db:migrate` before/at deploy** or classification cannot persist. `EVENT_TYPE_CLASSIFIER` selects off / mock / rules / InsForge AI.
+
+**Docs**
+
+- PRD and research notes for event-type filtering (#46).
+
+---
 
 2026-07-10
 

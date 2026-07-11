@@ -7,18 +7,27 @@ import { formatDateTime } from "@/lib/dates";
 import { getAttendeeInitials } from "@/lib/attendees";
 import { EventAttendeeSections } from "@/components/EventAttendeeSections";
 import { LumaEventLink } from "@/components/LumaEventLink";
+import {
+  EVENT_TYPE_IDS,
+  eventTypeLabel,
+  type EventTypeId,
+} from "@/lib/event-type-taxonomy";
 import type { FeedEvent } from "@/types/feed";
 
 export function AdminEventCard({
   event,
   onDelete,
   onOpen,
+  onTypeChange,
   isExiting = false,
+  typeUpdating = false,
 }: {
   event: FeedEvent;
   onDelete: () => void;
   onOpen: () => void;
+  onTypeChange?: (primaryType: EventTypeId) => void;
   isExiting?: boolean;
+  typeUpdating?: boolean;
 }) {
   const creator = event.addedBy;
   const creatorLabel = creator?.name?.trim() || creator?.email || "Unknown user";
@@ -100,6 +109,32 @@ export function AdminEventCard({
                 : event.location || "Location TBD"}
           </p>
         </button>
+
+        {onTypeChange ? (
+          <label className="block text-sm text-muted">
+            <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide">
+              Event type
+            </span>
+            <select
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
+              value={event.primaryType}
+              disabled={typeUpdating}
+              data-testid="admin-event-type-select"
+              onChange={(e) => {
+                onTypeChange(e.target.value as EventTypeId);
+              }}
+            >
+              {EVENT_TYPE_IDS.map((id) => (
+                <option key={id} value={id}>
+                  {eventTypeLabel(id)}
+                  {event.typeSource === "untyped" && id === event.primaryType
+                    ? " (pending)"
+                    : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
 
         <LumaEventLink lumaUrl={event.lumaUrl} fullWidth />
       </div>

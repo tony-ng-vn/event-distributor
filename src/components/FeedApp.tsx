@@ -33,6 +33,12 @@ import { FeedSummary } from "@/components/FeedSummary";
 import { IngestModal } from "@/components/IngestModal";
 import { FeedbackModal } from "@/components/FeedbackModal";
 import type { FeedEvent, FeedFilter, MobileTab } from "@/types/feed";
+import {
+  EVENT_TYPE_IDS,
+  eventTypeFilterLabel,
+  type EventTypeFilter,
+  type EventTypeId,
+} from "@/lib/event-type-taxonomy";
 
 type CardState = Record<string, CardStatus>;
 
@@ -50,6 +56,7 @@ export function FeedApp() {
   const [error, setError] = useState<string | null>(null);
   const [waitlisted, setWaitlisted] = useState(false);
   const [filter, setFilter] = useState<FeedFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<EventTypeFilter>("all");
   const [activeTab, setActiveTab] = useState<MobileTab>("feed");
   const [passedIds, setPassedIds] = useState<string[]>([]);
   const [cardState, setCardState] = useState<CardState>({});
@@ -246,9 +253,10 @@ export function FeedApp() {
         passedIds,
         selectedDate,
         filter,
+        typeFilter,
         starState,
       }),
-    [events, passedIds, cardState, selectedDate, filter, starState],
+    [events, passedIds, cardState, selectedDate, filter, typeFilter, starState],
   );
 
   const visibleEventCount =
@@ -641,6 +649,44 @@ export function FeedApp() {
     );
   }
 
+  /** PATCH event type — admin override (type_source=human). */
+  async function handleTypeChange(eventId: string, primaryType: EventTypeId) {
+    try {
+      const response = await fetch(
+        `/api/events/${encodeURIComponent(eventId)}/type`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ primaryType }),
+          cache: "no-store",
+        },
+      );
+      const data = (await response.json()) as {
+        error?: string;
+        event?: FeedEvent;
+      };
+      if (response.status === 401) {
+        setConnectOpen(true);
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(data.error ?? "Type update failed");
+      }
+      if (data.event) {
+        setEvents((prev) =>
+          prev.map((event) => (event.id === eventId ? data.event! : event)),
+        );
+        if (detailEvent?.id === eventId) setDetailEvent(data.event);
+      } else {
+        await syncEventsFromServer(
+          detailEvent?.id === eventId ? eventId : null,
+        );
+      }
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Type update failed");
+    }
+  }
+
   const feedContent = (
     <div className="space-y-4">
       {!loading && events.length > 0 && <FeedSummary events={events} />}
@@ -658,19 +704,42 @@ export function FeedApp() {
             </p>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {(["all", "pending", "accepted"] as FeedFilter[]).map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setFilter(value)}
-              className={`filter-pill ${
-                filter === value ? "filter-pill-active" : "filter-pill-inactive"
-              }`}
-            >
-              {value}
-            </button>
-          ))}
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
+            {(["all", "pending", "accepted"] as FeedFilter[]).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilter(value)}
+                className={`filter-pill ${
+                  filter === value ? "filter-pill-active" : "filter-pill-inactive"
+                }`}
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+          <div
+            className="flex flex-wrap justify-end gap-2"
+            data-testid="event-type-filters"
+          >
+            {(
+              ["all", ...EVENT_TYPE_IDS] as EventTypeFilter[]
+            ).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTypeFilter(value)}
+                className={`filter-pill ${
+                  typeFilter === value
+                    ? "filter-pill-active"
+                    : "filter-pill-inactive"
+                }`}
+              >
+                {eventTypeFilterLabel(value)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -756,6 +825,9 @@ export function FeedApp() {
           isExiting={Boolean(exitingEventIds[event.id])}
           onDelete={() => handleDelete(event.id)}
           onOpen={() => setDetailEvent(event)}
+          onTypeChange={(primaryType) =>
+            void handleTypeChange(event.id, primaryType)
+          }
         />
       ))}
     </div>
