@@ -8,6 +8,9 @@
  * Usage:
  *   node --env-file=.env.local scripts/dump-event-type-corpus.mjs
  *   node --env-file=.env.local scripts/dump-event-type-corpus.mjs --out docs/prd/research/prod-events-corpus.json
+ *   node --env-file=.env.local scripts/dump-event-type-corpus.mjs --limit 50
+ *
+ * Prefer committing a redacted title+label table, not full descriptions, if privacy matters.
  */
 
 import { createAdminClient } from "@insforge/sdk";
@@ -23,6 +26,13 @@ function argValue(flag, fallback) {
 const outPath = resolve(
   argValue("--out", "docs/prd/research/prod-events-corpus.json"),
 );
+const limitRaw = argValue("--limit", "");
+const limit = limitRaw ? Number(limitRaw) : null;
+
+if (limitRaw && (!Number.isFinite(limit) || limit <= 0)) {
+  console.error("--limit must be a positive number");
+  process.exit(1);
+}
 
 const baseUrl = process.env.INSFORGE_URL ?? process.env.NEXT_PUBLIC_INSFORGE_URL;
 const apiKey = process.env.INSFORGE_API_KEY;
@@ -40,12 +50,18 @@ const productionUrl =
 
 const db = createAdminClient({ baseUrl, apiKey });
 
-const { data, error } = await db.database
+let query = db.database
   .from("events")
   .select(
     "id, title, description, location, is_online, host_name, start_at, end_at, luma_url, created_at",
   )
   .order("start_at", { ascending: false });
+
+if (limit) {
+  query = query.limit(limit);
+}
+
+const { data, error } = await query;
 
 if (error) {
   console.error("Query failed:", error.message);

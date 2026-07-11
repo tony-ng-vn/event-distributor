@@ -92,6 +92,10 @@ A quick regex pass over title/location/host produced multi-hit / unclear cases:
 
 Rough bucket prevalence in this 20-event proxy (multi-label allowed): ~half AI/builders-skewed, with a long tail of sports, museum, cafe cowork, poker, watch parties, research dinners.
 
+**Corpus limitation:** all 20 ItemList entries had **empty descriptions**. Proxy analysis is title/location/host only; prod rows with scraped descriptions should be preferred for prompt eval.
+
+**Related:** GitHub issue [#46](https://github.com/tony-ng-vn/event-distributor/issues/46), PRD [`../event-type-filter-and-classifier.md`](../event-type-filter-and-classifier.md).
+
 ---
 
 ## 3. What “type” should mean for Event Radar
@@ -139,26 +143,28 @@ Filter UX: selecting a type means `primary_type = X` **or** (optional later) `X 
 ### Recommended pipeline
 
 ```
-ingest metadata (title, description, location, host, is_online)
+ingest metadata → INSERT event (primary_type=other, type_source=untyped)
         │
         ▼
- heuristic pre-label (optional; confidence hints)
+ async classify (never block calendar sync / ingest HTTP)
         │
+        ├─ heuristic hints (optional; into prompt only)
         ▼
  LLM classify → { primary, secondary[], confidence, rationale }
         │
         ▼
- if confidence < threshold → primary = other, flag needs_review
+ if confidence < threshold or model off → type_source=fallback|rules, primary=other as needed
         │
         ▼
- persist on events row; expose in GET /api/events
+ persist; expose in GET /api/events
         │
         ▼
- Feed filter pills (client) + optional server query filter later
+ Feed filter pills: Other excludes type_source=untyped
 ```
 
-**Backfill:** one-shot job over existing rows after column lands (same classifier).  
-**Corrections:** admin (or later any approved user) can override `primary_type`; store `type_source = model|rules|human`.
+**Backfill:** one-shot job over rows with `type_source = untyped` after columns land.  
+**Corrections:** admin override sets `type_source = human`; model must not overwrite.  
+**Aligned `type_source` enum:** `untyped` | `model` | `rules` | `fallback` | `human` (same as PRD).
 
 ### Why not wait for “perfect” taxonomy
 
