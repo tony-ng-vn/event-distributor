@@ -9,18 +9,9 @@
 
 import { useEffect, useState } from "react";
 import { SignInButton, useUser } from "@clerk/nextjs";
+import { useCalendarSync } from "@/hooks/useCalendarSync";
 
 type Connection = { connected: boolean; syncedAt: string | null };
-
-type SyncOutcome = {
-  status: "not-connected" | "fresh" | "synced";
-  added?: number;
-  skipped?: number;
-  failed?: number;
-  remaining?: number;
-  skippedPast?: number;
-  error?: string;
-};
 
 function formatSynced(syncedAt: string | null): string {
   if (!syncedAt) return "not yet";
@@ -36,7 +27,7 @@ export function CalendarSyncSettings() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const { syncing, status, sync, resetStatus } = useCalendarSync();
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -66,54 +57,11 @@ export function CalendarSyncSettings() {
     };
   }, [isLoaded, isSignedIn]);
 
-  async function runSync(force: boolean) {
-    const response = await fetch("/api/calendar/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ force }),
-    });
-    const data = (await response.json()) as { outcome?: SyncOutcome; error?: string };
-    if (!response.ok) throw new Error(data.error ?? "Sync failed");
-    return data.outcome;
-  }
-
-  // Drain the whole backlog. Each call ingests a capped batch (the server keeps
-  // one request within the serverless time budget); we loop until nothing is
-  // left, showing a live count. Bounded requests, unbounded drain.
-  async function drainSync() {
-    let total = 0;
-    let pastSkipped = 0;
-    // Safety cap: 30 passes x 20 events. Far above any real calendar.
-    for (let pass = 0; pass < 30; pass += 1) {
-      const outcome = await runSync(true);
-      if (outcome?.error) {
-        setNotice(`Could not reach Luma: ${outcome.error}`);
-        return;
-      }
-      total += outcome?.added ?? 0;
-      // Past-event count is the same on every pass; capture it once.
-      if (pass === 0) pastSkipped = outcome?.skippedPast ?? 0;
-      const remaining = outcome?.remaining ?? 0;
-      if (remaining <= 0) {
-        const past =
-          pastSkipped > 0 ? ` Skipped ${pastSkipped} past event${pastSkipped === 1 ? "" : "s"}.` : "";
-        setNotice(
-          total > 0
-            ? `Done -- added ${total} event${total === 1 ? "" : "s"} to the feed.${past}`
-            : `You're up to date -- no new upcoming events.${past}`,
-        );
-        return;
-      }
-      setNotice(`Syncing your calendar... ${total} added, ${remaining} to go.`);
-    }
-    setNotice(`Added ${total} events. Open the app again later to finish the rest.`);
-  }
-
   async function connect() {
     if (!icalUrl.trim()) return;
     setBusy(true);
     setError(null);
-    setNotice(null);
+    resetStatus();
     try {
       const response = await fetch("/api/calendar", {
         method: "POST",
@@ -126,7 +74,7 @@ export function CalendarSyncSettings() {
       setIcalUrl("");
 
       // Pull the whole calendar so the member sees everything, not just batch 1.
-      await drainSync();
+      await sync();
       await refreshConnection();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not connect");
@@ -136,23 +84,20 @@ export function CalendarSyncSettings() {
   }
 
   async function syncNow() {
-    setBusy(true);
     setError(null);
-    setNotice(null);
+    resetStatus();
     try {
-      await drainSync();
+      await sync();
       await refreshConnection();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sync failed");
-    } finally {
-      setBusy(false);
     }
   }
 
   async function disconnect() {
     setBusy(true);
     setError(null);
-    setNotice(null);
+    resetStatus();
     try {
       const response = await fetch("/api/calendar", { method: "DELETE" });
       if (!response.ok) throw new Error("Could not disconnect");
@@ -214,15 +159,16 @@ export function CalendarSyncSettings() {
               type="button"
               className="btn-primary px-5 py-2.5"
               onClick={syncNow}
-              disabled={busy}
+              disabled={busy || syncing}
+              aria-busy={syncing}
             >
-              {busy ? "Syncing..." : "Sync now"}
+              {syncing ? "Syncing..." : "Sync now"}
             </button>
             <button
               type="button"
               className="btn-secondary px-5 py-2.5"
               onClick={disconnect}
-              disabled={busy}
+              disabled={busy || syncing}
             >
               Disconnect
             </button>
@@ -254,7 +200,11 @@ export function CalendarSyncSettings() {
         </div>
       )}
 
-      {notice ? <p className="mt-3 text-sm text-foreground">{notice}</p> : null}
+      {status ? (
+        <p className="mt-3 text-sm text-foreground" role="status" aria-live="polite">
+          {status}
+        </p>
+      ) : null}
       {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
     </div>
   );
