@@ -17,6 +17,7 @@ import { selectCalendarEvents } from "@/lib/calendar-events";
 import { partitionFeedEvents, type CardStatus } from "@/lib/feed-partition";
 import { runInterested } from "@/lib/interested-action";
 import { getPassedEventIds, passEvent } from "@/lib/pass-storage";
+import { useCalendarSync } from "@/hooks/useCalendarSync";
 import {
   AuthButton,
   SignInPromptModal,
@@ -44,6 +45,7 @@ function wait(ms: number) {
 
 export function FeedApp() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { syncing, sync } = useCalendarSync();
   // Server data
   const [events, setEvents] = useState<FeedEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,6 +211,21 @@ export function FeedApp() {
     const timer = setTimeout(() => setToast(null), 4000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  /** Front-page "Sync now": drain the member's Luma calendar, then refresh the
+   *  feed so anything new appears without leaving for Settings. */
+  async function handleSyncNow() {
+    if (syncing) return;
+    const summary = await sync();
+    await loadFeed({ silent: true });
+    if (summary.error) {
+      setToast("Could not reach your calendar. Try again in a moment.");
+    } else if (summary.added > 0) {
+      setToast(`Added ${summary.added} event${summary.added === 1 ? "" : "s"}`);
+    } else {
+      setToast("You're up to date");
+    }
+  }
 
   /** Drop one event from all client state after backend confirms removal. */
   function removeEventFromState(eventId: string) {
@@ -879,6 +896,16 @@ export function FeedApp() {
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
+              onClick={handleSyncNow}
+              disabled={syncing}
+              aria-busy={syncing}
+              className="btn-secondary inline-flex disabled:opacity-60"
+              data-testid="sync-now-button"
+            >
+              {syncing ? "Syncing..." : "Sync"}
+            </button>
+            <button
+              type="button"
               onClick={() => setIngestOpen(true)}
               className="btn-primary hidden sm:inline-flex"
               data-testid="add-luma-button"
@@ -1054,7 +1081,11 @@ export function FeedApp() {
       />
 
       {toast && (
-        <div className="fixed bottom-28 left-1/2 z-50 -translate-x-1/2 rounded-full bg-foreground px-4 py-2 text-sm text-background shadow-md lg:bottom-6">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-28 left-1/2 z-50 -translate-x-1/2 rounded-full bg-foreground px-4 py-2 text-sm text-background shadow-md lg:bottom-6"
+        >
           {toast}
         </div>
       )}
