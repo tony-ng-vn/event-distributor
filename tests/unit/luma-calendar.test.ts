@@ -220,6 +220,39 @@ describe("syncLumaCalendar past-event filter", () => {
 
     expect(ingested).toEqual(["https://lu.ma/no-date"]);
   });
+
+  it("keeps a just-started event that has no end time (assumed duration)", async () => {
+    const ingested: string[] = [];
+    // Started 10 minutes ago, no DTEND -> still within the assumed 3h window.
+    const startedNoEnd =
+      "BEGIN:VEVENT\r\nDTSTART:20260709T175000Z\r\nURL:https://lu.ma/started-no-end\r\nEND:VEVENT";
+    await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9, 18, 0, 0),
+      fetchText: async () => startedNoEnd,
+      ingest: async (url) => {
+        ingested.push(url);
+      },
+    });
+
+    expect(ingested).toEqual(["https://lu.ma/started-no-end"]);
+  });
+
+  it("drops a long-past event that has no end time (beyond assumed duration)", async () => {
+    const ingested: string[] = [];
+    // Started 4h ago, no DTEND -> past the assumed 3h window, treated as ended.
+    const longPastNoEnd =
+      "BEGIN:VEVENT\r\nDTSTART:20260709T140000Z\r\nURL:https://lu.ma/long-past-no-end\r\nEND:VEVENT";
+    const result = await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9, 18, 0, 0),
+      fetchText: async () => longPastNoEnd,
+      ingest: async (url) => {
+        ingested.push(url);
+      },
+    });
+
+    expect(ingested).toEqual([]);
+    expect(result).toMatchObject({ added: 0, skippedPast: 1 });
+  });
 });
 
 describe("isLumaIcalUrl (feed-fetch SSRF guard)", () => {

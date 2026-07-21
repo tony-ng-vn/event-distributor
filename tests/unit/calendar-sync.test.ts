@@ -55,6 +55,18 @@ describe("drainCalendarSync", () => {
     expect(statuses.at(-1)).toContain("Could not reach Luma");
   });
 
+  it("propagates a rejected batch request so callers can show an error", async () => {
+    // A non-ok HTTP response makes postCalendarSync throw (vs the graceful
+    // error-outcome above). The drain loop must not swallow it -- the caller's
+    // try/catch depends on the rejection surfacing.
+    const { onStatus } = collect();
+    await expect(
+      drainCalendarSync(async () => {
+        throw new Error("Sync failed");
+      }, onStatus),
+    ).rejects.toThrow("Sync failed");
+  });
+
   it("stops after the pass cap and flags reachedCap when a feed never drains", async () => {
     let calls = 0;
     const { onStatus } = collect();

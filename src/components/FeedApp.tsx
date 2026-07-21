@@ -216,7 +216,15 @@ export function FeedApp() {
    *  feed so anything new appears without leaving for Settings. */
   async function handleSyncNow() {
     if (syncing) return;
-    const summary = await sync();
+    let summary;
+    try {
+      summary = await sync();
+    } catch {
+      // A failed request (500/401/...) rejects rather than returning an error
+      // outcome; surface it instead of leaving a silent unhandled rejection.
+      setToast("Could not sync right now. Try again in a moment.");
+      return;
+    }
     await loadFeed({ silent: true });
     if (summary.error) {
       setToast("Could not reach your calendar. Try again in a moment.");

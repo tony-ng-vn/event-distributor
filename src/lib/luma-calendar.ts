@@ -157,14 +157,23 @@ export function parseLumaIcalUrls(icsText: string): string[] {
 }
 
 /**
+ * When an event has a start but no end time, assume it runs this long so a
+ * just-started event is still treated as live instead of vanishing at its
+ * start second. iCal feeds occasionally omit DTEND.
+ */
+const ASSUMED_EVENT_DURATION_MS = 3 * 60 * 60 * 1000;
+
+/**
  * Whether an event has already fully ended as of `now`. Sync ingests only what
  * is still ahead: upcoming and currently-live events (end >= now) are kept, and
  * only events whose end time is already in the past are dropped. No backfill.
  */
 function hasEnded(event: LumaIcalEvent, now: number): boolean {
-  const end = event.endsAt ?? event.startsAt;
-  if (end === null) return false; // unknown date -> keep, never silently drop
-  return end < now;
+  if (event.endsAt !== null) return event.endsAt < now;
+  if (event.startsAt === null) return false; // unknown date -> keep, never drop
+  // No end time: give the event an assumed duration so a live one is not cut
+  // off the instant it begins.
+  return event.startsAt + ASSUMED_EVENT_DURATION_MS < now;
 }
 
 /**

@@ -21,6 +21,11 @@ export function useCalendarSync() {
     setSyncing(true);
     try {
       return await drainCalendarSync(undefined, setStatus);
+    } catch (error) {
+      // Replace the stale in-progress count with a failure message so the UI
+      // never reads "Syncing... N to go" after the request already rejected.
+      setStatus("Sync failed. Try again in a moment.");
+      throw error;
     } finally {
       setSyncing(false);
     }
