@@ -268,6 +268,37 @@ body {
     @apply inline-flex items-center rounded-full border border-border bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-foreground-secondary;
   }
 
+  /* Compact "in progress" pill: red dot + label, styled to stand out against
+     the muted date text next to it. Self-contained colors read in both themes. */
+  .live-badge {
+    @apply inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold uppercase leading-none tracking-wide;
+    color: var(--status-pass-text);
+    background: var(--status-pass-bg);
+    border: 1px solid var(--status-pass-border);
+  }
+
+  .live-badge-dot {
+    @apply h-1.5 w-1.5 shrink-0 rounded-full;
+    background: currentColor;
+    animation: live-pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes live-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-badge-dot {
+      animation: none;
+    }
+  }
+
   .going-strip {
     @apply mx-4 mb-4 rounded-xl border border-border bg-background-subtle px-3.5 py-3;
     container-type: inline-size;

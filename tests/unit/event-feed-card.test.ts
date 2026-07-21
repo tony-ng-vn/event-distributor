@@ -70,4 +70,31 @@ describe("EventFeedCard", () => {
     expect(markup).toContain('aria-pressed="true"');
     expect(markup).toContain('aria-label="Unstar Chai Night"');
   });
+
+  it("shows a Live badge for an in-progress event", () => {
+    // Build the window around the wall clock so the badge is live whenever the
+    // test runs -- the boundary cases live in event-status.test.ts.
+    const now = Date.now();
+    const markup = render({
+      event: {
+        ...EVENT,
+        startAt: new Date(now - 60 * 60 * 1000).toISOString(),
+        endAt: new Date(now + 60 * 60 * 1000).toISOString(),
+      },
+    });
+    expect(markup).toContain('data-testid="live-badge-chai-night"');
+    expect(markup).toContain(">Live<");
+  });
+
+  it("does not show a Live badge for an upcoming event", () => {
+    const now = Date.now();
+    const markup = render({
+      event: {
+        ...EVENT,
+        startAt: new Date(now + 60 * 60 * 1000).toISOString(),
+        endAt: new Date(now + 2 * 60 * 60 * 1000).toISOString(),
+      },
+    });
+    expect(markup).not.toContain('data-testid="live-badge-chai-night"');
+  });
 });

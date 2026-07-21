@@ -13,6 +13,7 @@ import { EventResponseStatus } from "@/components/EventResponseStatus";
 import { EventThumbnail } from "@/components/EventThumbnail";
 import { EventTitleLink } from "@/components/EventTitleLink";
 import { RemoveInterestAction } from "@/components/RemoveInterestAction";
+import { isLiveEvent } from "@/lib/event-status";
 import type { CardStatus } from "@/lib/feed-partition";
 import type { FeedEvent } from "@/types/feed";
 
@@ -47,6 +48,7 @@ export function EventFeedCard({
 }) {
   const accepted = status === "accepted" || event.viewerAccepted;
   const passed = status === "passed" || event.viewerPassed;
+  const live = isLiveEvent(event);
   const subtitle = event.hostName
     ? `Hosted by ${event.hostName}`
     : event.isOnline
@@ -121,9 +123,18 @@ export function EventFeedCard({
           <button
             type="button"
             onClick={onOpen}
-            className="w-full text-left"
+            className="flex w-full items-center gap-2 text-left"
             aria-label={`Open details for ${event.title}`}
           >
+            {live && (
+              <span
+                className="live-badge"
+                data-testid={`live-badge-${event.id}`}
+              >
+                <span className="live-badge-dot" aria-hidden="true" />
+                Live
+              </span>
+            )}
             <p className="text-xs font-medium text-muted">
               {formatDateTime(event.startAt)}
             </p>
