@@ -5,6 +5,26 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
+## v0.8.0
+
+2026-07-20
+
+**Feed**
+
+- Once an event ends it disappears from the shared feed right away, matching how Luma retires finished events. You can still open it if you have the direct link.
+- Events that are happening right now show a small "Live" badge, so an event that has started but not yet ended stays visible and easy to spot.
+
+**Events API**
+
+- The feed now hides any event that has ended or been archived, while every other view (admin, leaderboard counts, ingest) keeps seeing all events so history and per-user event totals stay intact.
+- Added a daily housekeeping job that stamps ended events as archived. Archiving is reversible and preserves records, unlike deleting.
+
+**Infrastructure**
+
+- Added a daily scheduled task (Vercel cron) that runs the archive job around midnight US Pacific. It is protected by a shared secret so only the scheduler can trigger it.
+
+---
+
 ## v0.7.0
 
 2026-07-20

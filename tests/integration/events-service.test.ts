@@ -7,6 +7,7 @@ import { getInsforgeAdmin } from "@/lib/db";
 import { newId } from "@/lib/ids";
 import {
   acceptEvent,
+  archiveFinishedEvents,
   createUser,
   deleteEvent,
   ingestLumaEvent,
@@ -293,41 +294,121 @@ describe("events service", () => {
     expect(feed[0]?.addedBy?.name).toBe("Creator User");
   });
 
-  it("keeps events visible after their start date has passed", async () => {
+  async function insertEvent(overrides: {
+    title: string;
+    lumaUrl: string;
+    startAt: Date;
+    endAt: Date;
+    archivedAt?: Date | null;
+  }) {
     const db = getInsforgeAdmin();
-    const pastStart = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-    const pastEnd = new Date(pastStart.getTime() + 2 * 60 * 60 * 1000);
-
-    const { data: inserted, error } = await db.database
+    const { data, error } = await db.database
       .from("events")
       .insert([
         {
           id: newId(),
-          luma_url: "https://lu.ma/past-event-test",
-          title: "Past Community Meetup",
-          description: "An event from a few days ago",
+          luma_url: overrides.lumaUrl,
+          title: overrides.title,
+          description: "seeded",
           cover_image_url: null,
-          start_at: pastStart.toISOString(),
-          end_at: pastEnd.toISOString(),
+          start_at: overrides.startAt.toISOString(),
+          end_at: overrides.endAt.toISOString(),
           location: "San Francisco, CA",
           is_online: false,
           meeting_url: null,
           host_name: "Community Host",
           host_avatar_url: null,
           added_by_user_id: null,
+          archived_at: overrides.archivedAt?.toISOString() ?? null,
         },
       ])
       .select("id")
       .single();
 
     expect(error).toBeNull();
-    expect(inserted?.id).toBeTruthy();
+    expect(data?.id).toBeTruthy();
+    return data?.id as string;
+  }
+
+  it("keeps a live event visible after its start time has passed", async () => {
+    // Started an hour ago, ends in an hour -- in progress, so still in the feed.
+    const id = await insertEvent({
+      title: "Live Community Meetup",
+      lumaUrl: "https://lu.ma/live-event-test",
+      startAt: new Date(Date.now() - 60 * 60 * 1000),
+      endAt: new Date(Date.now() + 60 * 60 * 1000),
+    });
 
     const feed = await listFeedEvents();
-    expect(feed.some((event) => event.id === inserted?.id)).toBe(true);
-    expect(feed.some((event) => event.title === "Past Community Meetup")).toBe(
-      true,
-    );
+    expect(feed.some((event) => event.id === id)).toBe(true);
+  });
+
+  it("hides an event from the feed once it has ended (Luma-style disappear)", async () => {
+    const id = await insertEvent({
+      title: "Finished Community Meetup",
+      lumaUrl: "https://lu.ma/ended-event-test",
+      startAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+      endAt: new Date(Date.now() - 60 * 60 * 1000),
+    });
+
+    const feed = await listFeedEvents();
+    expect(feed.some((event) => event.id === id)).toBe(false);
+  });
+
+  it("hides an archived event even when it has not ended yet", async () => {
+    const id = await insertEvent({
+      title: "Archived Upcoming Meetup",
+      lumaUrl: "https://lu.ma/archived-event-test",
+      startAt: new Date(Date.now() + 60 * 60 * 1000),
+      endAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      archivedAt: new Date(),
+    });
+
+    const feed = await listFeedEvents();
+    expect(feed.some((event) => event.id === id)).toBe(false);
+  });
+
+  it("archiveFinishedEvents stamps only ended, un-archived rows", async () => {
+    const endedId = await insertEvent({
+      title: "Ended For Archive",
+      lumaUrl: "https://lu.ma/ended-for-archive",
+      startAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+      endAt: new Date(Date.now() - 60 * 60 * 1000),
+    });
+    const liveId = await insertEvent({
+      title: "Live Not Archived",
+      lumaUrl: "https://lu.ma/live-not-archived",
+      startAt: new Date(Date.now() - 60 * 60 * 1000),
+      endAt: new Date(Date.now() + 60 * 60 * 1000),
+    });
+
+    const count = await archiveFinishedEvents();
+    expect(count).toBeGreaterThanOrEqual(1);
+
+    const db = getInsforgeAdmin();
+    const { data: ended } = await db.database
+      .from("events")
+      .select("archived_at")
+      .eq("id", endedId)
+      .single();
+    expect(ended?.archived_at).toBeTruthy();
+
+    const { data: live } = await db.database
+      .from("events")
+      .select("archived_at")
+      .eq("id", liveId)
+      .single();
+    expect(live?.archived_at).toBeNull();
+
+    // Idempotent: a second run finds nothing new to archive from this batch.
+    const secondCount = await archiveFinishedEvents();
+    const { data: stillEnded } = await db.database
+      .from("events")
+      .select("archived_at")
+      .eq("id", endedId)
+      .single();
+    expect(stillEnded?.archived_at).toBe(ended?.archived_at);
+    expect(secondCount).toBeGreaterThanOrEqual(0);
   });
 
   it("listFeedEvents includes passed events with viewerPassed flag", async () => {

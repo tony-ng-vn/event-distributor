@@ -11,6 +11,7 @@
 import { isUserAdmin } from "@/lib/admin";
 import { assertDestructiveWritesAllowed } from "@/lib/db-safety";
 import { getInsforgeAdmin } from "@/lib/db";
+import { isFeedVisibleRow } from "@/lib/event-status";
 import { newId } from "@/lib/ids";
 import { scheduleEventIngestedNotification } from "@/lib/notifications/notify";
 import {
@@ -64,6 +65,9 @@ type InsforgeEventRow = {
   host_name: string | null;
   host_avatar_url: string | null;
   created_at: string;
+  // Set by the daily housekeeping job once an event has ended. Never sent to
+  // the client -- hidden rows are dropped before serialize.
+  archived_at: string | null;
   accepts: InsforgeAcceptRow[] | null;
   passes: InsforgePassRow[] | null;
   stars: InsforgeStarRow[] | null;
@@ -170,7 +174,16 @@ async function fetchAllEventRows() {
 
   if (error) throw new Error(error.message);
 
-  const events = sortFeedEventRows((data ?? []) as InsforgeEventRow[]);
+  // Read-time Luma rule: an ended or archived event vanishes from the shared
+  // feed immediately (still reachable via its external link). This is the only
+  // query filtered this way -- admin/leaderboard/ingest paths must keep seeing
+  // every row so event-count history stays intact.
+  const now = new Date();
+  const visible = ((data ?? []) as InsforgeEventRow[]).filter((row) =>
+    isFeedVisibleRow(row, now),
+  );
+
+  const events = sortFeedEventRows(visible);
 
   events.forEach((event) => {
     if (event.accepts) {
@@ -483,6 +496,32 @@ export async function deleteEvent(
   }
 
   return { title: null, deleted: false };
+}
+
+/**
+ * Daily housekeeping — stamp archived_at on every event that has already ended
+ * and is not already archived. Returns how many rows were archived.
+ *
+ * Safety: the update is scoped to `end_at < now AND archived_at IS NULL`, so it
+ * can only ever touch finished, un-archived rows -- that scoping is the guard,
+ * not a db-safety assertion (this job runs against production every night, so a
+ * destructive-write assertion would make it throw and never run). The
+ * archived_at IS NULL filter also makes re-runs idempotent.
+ */
+export async function archiveFinishedEvents(now: Date = new Date()): Promise<number> {
+  const db = getInsforgeAdmin();
+  const cutoff = now.toISOString();
+
+  const { data, error } = await db.database
+    .from("events")
+    .update({ archived_at: cutoff })
+    .lt("end_at", cutoff)
+    .is("archived_at", null)
+    .select("id");
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).length;
 }
 
 /** Wipes all data — used by tests only. */
