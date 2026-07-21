@@ -1,9 +1,10 @@
 /**
- * POST /api/cron/archive-finished -- daily housekeeping that stamps archived_at
+ * GET /api/cron/archive-finished -- daily housekeeping that stamps archived_at
  * on events whose end time has passed. Triggered by the Vercel cron (see
- * vercel.json).
+ * vercel.json). Vercel cron fires an HTTP GET, so the handler must be GET.
  *
- * Auth: a shared bearer token from CRON_SECRET.
+ * Auth: a shared bearer token from CRON_SECRET. Vercel automatically sends
+ * `Authorization: Bearer $CRON_SECRET` on cron requests when the env var is set.
  *   - CRON_SECRET unset            -> 503 (job not configured; fail closed)
  *   - Authorization header missing
  *     or mismatched                -> 401
@@ -15,7 +16,7 @@
 import { NextResponse } from "next/server";
 import { archiveFinishedEvents } from "@/lib/events-service";
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
     return NextResponse.json(
