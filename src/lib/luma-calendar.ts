@@ -30,8 +30,6 @@ export type LumaIcalEvent = {
   endsAt: number | null;
 };
 
-/** Keep an event until this long after it ends, to absorb iCal timezone fuzz. */
-const PAST_GRACE_MS = 6 * 60 * 60 * 1000;
 
 /**
  * Cap new ingests per run. Each new event triggers a live lu.ma scrape, and a
@@ -158,11 +156,15 @@ export function parseLumaIcalUrls(icsText: string): string[] {
   return parseLumaIcalEvents(icsText).map((event) => event.url);
 }
 
-/** Whether an event has already ended (past the grace window) as of `now`. */
+/**
+ * Whether an event has already fully ended as of `now`. Sync ingests only what
+ * is still ahead: upcoming and currently-live events (end >= now) are kept, and
+ * only events whose end time is already in the past are dropped. No backfill.
+ */
 function hasEnded(event: LumaIcalEvent, now: number): boolean {
   const end = event.endsAt ?? event.startsAt;
   if (end === null) return false; // unknown date -> keep, never silently drop
-  return end < now - PAST_GRACE_MS;
+  return end < now;
 }
 
 /**
