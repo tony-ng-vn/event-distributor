@@ -1,5 +1,5 @@
 ---
-description: Run the understanding skill bundle once per PR, not per commit
+description: Run the pr-explainers skill once per PR, not per commit
 alwaysApply: true
 ---
 
@@ -9,12 +9,14 @@ Teaching docs help humans review agent-written code. Generate them **once per pu
 
 ## When to run
 
-Run the **`understanding` skill bundle** (`.cursor/skills/understanding/SKILL.md`) **after**:
+Run the **`pr-explainers` skill** (global: `~/.agents/skills/pr-explainers/SKILL.md`, also `.cursor/skills/pr-explainers`) **after**:
 
 1. The feature passes the goal-method review loop (see `feature-goal-workflow.mdc`).
 2. The pull request is created or updated.
 
-Also run when a human explicitly asks to understand or review a branch.
+Also run when a human explicitly asks for the understanding layer, PR explainers, or a literate review of a branch.
+
+**Do not** run Understand Anything (`/understand`) for this — that is a different product (knowledge graph).
 
 ## When NOT to run
 

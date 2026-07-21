@@ -8,11 +8,11 @@ Long agent runs produce many commits. Raw `git diff` is hard to review. You need
 
 ## Solution
 
-One **`understanding` skill bundle** runs the full pipeline **once per pull request** (after the feature is production-ready):
+One **`pr-explainers` skill** runs the full pipeline **once per pull request** (after the feature is production-ready):
 
 | Step | What |
 |------|------|
-| Classify commits | `skip` · `light` · `full` per [commit policy](../../.cursor/skills/understanding/commit-policy.md) |
+| Classify commits | `skip` · `light` · `full` per [commit policy](../../.cursor/skills/pr-explainers/commit-policy.md) |
 | Write explainers | Literate diff + quiz for light/full only |
 | Reading order | Chronological table so many docs stay navigable |
 | Micro-worlds | Optional; propose → human picks → build |
@@ -37,7 +37,7 @@ Read **top → bottom** (oldest commit first). Skipped commits appear as `—` s
 
 ## Start here (agents)
 
-Read `.cursor/skills/understanding/SKILL.md` and run the **understanding task** checklist **after the PR exists**.
+Read `.cursor/skills/pr-explainers/SKILL.md` (or `~/.agents/skills/pr-explainers/SKILL.md`) and run the **pr-explainers** checklist **after the PR exists**.
 
 ```bash
 npm run understanding:index -- --branch "$(git branch --show-current)" --base main
@@ -82,7 +82,7 @@ Trivial commits: ≤15 lines, mechanical, or `[skip-understanding]` in message.
 | **continue** | Human finished reading → resume next work |
 | **pr** | **Default trigger** — full understanding pass when PR is ready |
 
-See `.cursor/skills/understanding/checkpoints.md`.
+See `.cursor/skills/pr-explainers/checkpoints.md`.
 
 ## PR description snippet
 

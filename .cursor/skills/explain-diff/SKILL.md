@@ -1,13 +1,13 @@
 ---
 name: explain-diff
 description: >-
-  Deprecated — use the understanding skill bundle instead
-  (.cursor/skills/understanding/SKILL.md). This stub remains for discoverability.
+  Deprecated — use the global pr-explainers skill instead
+  (~/.agents/skills/pr-explainers/SKILL.md). Stub for discoverability.
 ---
 
-# explain-diff → understanding
+# explain-diff → pr-explainers
 
-This module moved into the **understanding** skill bundle.
+Literate-diff module lives in the **pr-explainers** skill bundle.
 
-Use: `.cursor/skills/understanding/SKILL.md`  
-Literate diff details: `.cursor/skills/understanding/explain-diff.md`
+Use: `pr-explainers`  
+Details: `~/.agents/skills/pr-explainers/explain-diff.md` (or `.cursor/skills/pr-explainers/explain-diff.md`)

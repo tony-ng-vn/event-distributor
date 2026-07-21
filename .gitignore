@@ -65,6 +65,7 @@ next-env.d.ts
 .agent
 .agents
 .augment
+.entire
 .claude
 .cline
 .github/copilot*

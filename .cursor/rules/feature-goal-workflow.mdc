@@ -17,7 +17,7 @@ Ship **production-ready** work: correct behavior, passing checks, reviewed, docu
 1. Implement     → code + tests for the feature
 2. Review loop   → sub-agent review → fix → re-run checks → repeat until green
 3. Create PR     → open/update pull request with verification notes
-4. Understanding → run understanding skill bundle once per PR (not per commit)
+4. Understanding → run pr-explainers skill once per PR (not per commit)
 ```
 
 Do **not** skip steps. Do **not** open a PR before the review loop passes.
@@ -59,7 +59,7 @@ Only after the review loop is green:
 
 ## Step 4 — Understanding layer (once per PR)
 
-After the PR exists, run the **`understanding` skill bundle** (`.cursor/skills/understanding/SKILL.md`):
+After the PR exists, run the **`pr-explainers` skill** (`.cursor/skills/pr-explainers/SKILL.md`):
 
 ```bash
 npm run understanding:index -- --branch "$(git branch --show-current)" --base main

@@ -35,7 +35,7 @@ Use the LAN URL from your terminal (same Wi‑Fi), e.g. `http://192.168.1.42:345
 
 ## Agents
 
-Run the **`understanding` skill bundle**: `.cursor/skills/understanding/SKILL.md`
+Run the **`pr-explainers` skill**: `.cursor/skills/pr-explainers/SKILL.md` (global install at `~/.agents/skills/pr-explainers`). Not Understand Anything (`/understand`).
 
 ```bash
 npm run understanding:index -- --branch "$(git branch --show-current)" --base main

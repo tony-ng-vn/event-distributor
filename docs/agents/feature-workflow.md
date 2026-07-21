@@ -8,7 +8,7 @@ How agents ship production-ready features in this repo.
 1. Implement        Code + tests (focused commits, no understanding docs yet)
 2. Review loop      Sub-agent review → fix → re-run checks → repeat until green
 3. Create PR        Push branch, open/update pull request
-4. Understanding    Run understanding skill bundle once per PR
+4. Understanding    Run pr-explainers skill once per PR
 ```
 
 Rules: `.cursor/rules/feature-goal-workflow.mdc`
@@ -45,7 +45,7 @@ After the PR exists:
 npm run understanding:index -- --branch "$(git branch --show-current)" --base main
 ```
 
-Follow `.cursor/skills/understanding/SKILL.md` — classify commits, write explainers, PR roll-up, add Review guide to PR description.
+Follow `.cursor/skills/pr-explainers/SKILL.md` — classify commits, write explainers, PR roll-up, add Review guide to PR description.
 
 **One pass per PR**, not per commit.
 
@@ -60,4 +60,4 @@ When spawning a sub-agent for implementation, tell it to use the same goal metho
 | `.cursor/rules/feature-goal-workflow.mdc` | Always-on agent rule |
 | `.cursor/rules/understanding-layer.mdc` | Per-PR understanding trigger |
 | `docs/agents/understanding-layer.md` | Explainer layout and tiers |
-| `.cursor/skills/understanding/SKILL.md` | Understanding task checklist |
+| `.cursor/skills/pr-explainers/SKILL.md` | pr-explainers task checklist |

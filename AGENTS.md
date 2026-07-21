@@ -2,15 +2,17 @@
 
 ### Understanding layer (human-in-the-loop)
 
-Run the **`understanding` skill bundle** **once per PR** after the goal-method review loop passes — not during every commit. See `docs/agents/understanding-layer.md` and `.cursor/rules/feature-goal-workflow.mdc`.
+Run the **`pr-explainers` skill** **once per PR** after the goal-method review loop passes — not during every commit. See `docs/agents/understanding-layer.md` and `.cursor/rules/feature-goal-workflow.mdc`.
+
+Do **not** confuse with Understand Anything (`/understand` knowledge graphs).
 
 | What | Where |
 |------|-------|
 | **Feature workflow (goal method)** | `.cursor/rules/feature-goal-workflow.mdc` |
-| **Skill bundle (start here)** | `.cursor/skills/understanding/SKILL.md` |
+| **Skill (start here)** | `pr-explainers` — `.cursor/skills/pr-explainers` → `~/.agents/skills/pr-explainers` |
 | Reading order (humans) | `docs/understanding/branches/<branch>/reading-order.md` |
-| Commit tiers | `.cursor/skills/understanding/commit-policy.md` |
-| Checkpoints | `.cursor/skills/understanding/checkpoints.md` |
+| Commit tiers | `.cursor/skills/pr-explainers/commit-policy.md` |
+| Checkpoints | `.cursor/skills/pr-explainers/checkpoints.md` |
 
 ```bash
 npm run understanding:index -- --branch "$(git branch --show-current)" --base main
