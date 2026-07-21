@@ -5,7 +5,7 @@ Add an entry when a PR merges. Newest first.
 Format: `## vX.Y.Z` heading, date below it, one `**Category**` subheading per area touched, plain-language bullets, then `---` before the older entry.
 Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGENTS.md).
 
-## v0.7.0
+## v0.8.0
 
 2026-07-20
 
@@ -22,6 +22,20 @@ Categories: Feed, Events API, Notifications, Auth, Infrastructure, Docs (see AGE
 **Infrastructure**
 
 - Added a daily scheduled task (Vercel cron) that runs the archive job around midnight US Pacific. It is protected by a shared secret so only the scheduler can trigger it.
+
+---
+
+## v0.7.0
+
+2026-07-20
+
+**Feed**
+
+- Added a "Sync" button to the front-page header so a signed-in member can pull their latest Luma calendar events on demand, without going to Settings first. The button shows a "Syncing..." state while it runs and reports the result ("Added N" or "You're up to date"), announced to screen readers.
+
+**Events API**
+
+- Calendar sync now only ingests events from now forward: upcoming and currently-live events are kept, while events that already ended are skipped. Previously sync pulled events for up to six hours after they ended, which added stale past events to the shared feed.
 
 ---
 

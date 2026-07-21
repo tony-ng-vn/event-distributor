@@ -159,19 +159,99 @@ describe("syncLumaCalendar past-event filter", () => {
     expect(result).toMatchObject({ added: 1, skippedPast: 1 });
   });
 
-  it("keeps an event still within the end-time grace window", async () => {
+  it("excludes an event that ended one minute ago (no backfill)", async () => {
     const ingested: string[] = [];
-    // Event ended 1 hour ago; grace is 6h, so it should still sync.
-    const endedRecently = "BEGIN:VEVENT\r\nDTEND:20260709T170000Z\r\nURL:https://lu.ma/just-ended\r\nEND:VEVENT";
-    await syncLumaCalendar("https://lu.ma/ics", "u1", {
-      now: Date.UTC(2026, 6, 9, 18, 0, 0), // 1h after the 17:00Z end
-      fetchText: async () => endedRecently,
+    const endedAMinuteAgo =
+      "BEGIN:VEVENT\r\nDTEND:20260709T170000Z\r\nURL:https://lu.ma/just-ended\r\nEND:VEVENT";
+    const result = await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9, 17, 1, 0), // 1 minute after the 17:00Z end
+      fetchText: async () => endedAMinuteAgo,
       ingest: async (url) => {
         ingested.push(url);
       },
     });
 
-    expect(ingested).toEqual(["https://lu.ma/just-ended"]);
+    expect(ingested).toEqual([]);
+    expect(result).toMatchObject({ added: 0, skippedPast: 1 });
+  });
+
+  it("keeps a currently-live event (started, not yet ended)", async () => {
+    const ingested: string[] = [];
+    // Started at 17:00Z, ends 19:00Z; now is 18:00Z -> live, still relevant.
+    const live =
+      "BEGIN:VEVENT\r\nDTSTART:20260709T170000Z\r\nDTEND:20260709T190000Z\r\nURL:https://lu.ma/live-now\r\nEND:VEVENT";
+    await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9, 18, 0, 0),
+      fetchText: async () => live,
+      ingest: async (url) => {
+        ingested.push(url);
+      },
+    });
+
+    expect(ingested).toEqual(["https://lu.ma/live-now"]);
+  });
+
+  it("keeps an event whose end is exactly now (end >= now boundary)", async () => {
+    const ingested: string[] = [];
+    const endsNow =
+      "BEGIN:VEVENT\r\nDTEND:20260709T180000Z\r\nURL:https://lu.ma/ends-now\r\nEND:VEVENT";
+    await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9, 18, 0, 0), // exactly the end time
+      fetchText: async () => endsNow,
+      ingest: async (url) => {
+        ingested.push(url);
+      },
+    });
+
+    expect(ingested).toEqual(["https://lu.ma/ends-now"]);
+  });
+
+  it("keeps an event with no parseable date, never silently dropping it", async () => {
+    const ingested: string[] = [];
+    const noDate =
+      "BEGIN:VEVENT\r\nURL:https://lu.ma/no-date\r\nEND:VEVENT";
+    await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9, 18, 0, 0),
+      fetchText: async () => noDate,
+      ingest: async (url) => {
+        ingested.push(url);
+      },
+    });
+
+    expect(ingested).toEqual(["https://lu.ma/no-date"]);
+  });
+
+  it("keeps a just-started event that has no end time (assumed duration)", async () => {
+    const ingested: string[] = [];
+    // Started 10 minutes ago, no DTEND -> still within the assumed 3h window.
+    const startedNoEnd =
+      "BEGIN:VEVENT\r\nDTSTART:20260709T175000Z\r\nURL:https://lu.ma/started-no-end\r\nEND:VEVENT";
+    await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9, 18, 0, 0),
+      fetchText: async () => startedNoEnd,
+      ingest: async (url) => {
+        ingested.push(url);
+      },
+    });
+
+    expect(ingested).toEqual(["https://lu.ma/started-no-end"]);
+  });
+
+  it("drops a long-past event that has no end time (beyond assumed duration)", async () => {
+    const ingested: string[] = [];
+    // Started 4h ago, no DTEND -> past the assumed 3h window, treated as ended.
+    const longPastNoEnd =
+      "BEGIN:VEVENT\r\nDTSTART:20260709T140000Z\r\nURL:https://lu.ma/long-past-no-end\r\nEND:VEVENT";
+    const result = await syncLumaCalendar("https://lu.ma/ics", "u1", {
+      now: Date.UTC(2026, 6, 9, 18, 0, 0),
+      fetchText: async () => longPastNoEnd,
+      ingest: async (url) => {
+        ingested.push(url);
+      },
+    });
+
+    expect(ingested).toEqual([]);
+    expect(result).toMatchObject({ added: 0, skippedPast: 1 });
   });
 });
 
